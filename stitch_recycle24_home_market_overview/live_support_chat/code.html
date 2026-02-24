@@ -1,152 +1,0 @@
-<!DOCTYPE html>
-
-<html class="light" dir="rtl" lang="ar"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Live Support Chat - Recycle24</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#137fec",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#101922",
-                    },
-                    fontFamily: {
-                        "display": ["IBM Plex Sans Arabic", "Public Sans", "sans-serif"],
-                        "sans": ["IBM Plex Sans Arabic", "Public Sans", "sans-serif"],
-                    },
-                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
-                },
-            },
-        }
-    </script>
-<style>
-        /* Custom scrollbar for chat area */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-    </style>
-<style>
-    body {
-      min-height: max(884px, 100dvh);
-    }
-  </style>
-  </head>
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-sans min-h-screen flex flex-col antialiased">
-<!-- Top App Bar -->
-<header class="flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-sm">
-<div class="flex items-center gap-3 flex-1">
-<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-colors">
-<span class="material-symbols-outlined rtl:rotate-180">arrow_forward_ios</span>
-</button>
-<div class="flex items-center gap-3">
-<div class="relative">
-<div class="w-10 h-10 rounded-full bg-slate-200 bg-cover bg-center border border-slate-100 dark:border-slate-700" data-alt="Support agent profile picture showing a professional woman smiling" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDny6lfCtQzki9Vbt2ZbnZs6Qouge310Gak4JUc3SuufXiNWGcMGfUfYRXI8-qUUpKpAgECykXbfFWP0TrkuZKetzBl047yUtuoSwwwbuD22JRO0vLdZ-1Br34jjNdb8RdlXF3I_5j_4BTZOStMSFwjJlEkuILas9_iEeOjceooEQwFCtsWI1Q9riUFjqDqJIllYhQWrm--9syBiqcUnlehvz8u0944ihcfMDOzzt_Jj4z2nVHhBv8val7zrapUrxTfEPI3TQFLi4g');"></div>
-<span class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white dark:ring-slate-900 bg-green-500"></span>
-</div>
-<div class="flex flex-col">
-<h1 class="text-base font-bold text-slate-900 dark:text-white leading-tight">سارة أحمد</h1>
-<span class="text-xs text-primary font-medium">متصل الآن</span>
-</div>
-</div>
-</div>
-<button aria-label="Call Support" class="flex items-center justify-center w-10 h-10 rounded-full bg-slate-50 dark:bg-slate-800 text-primary hover:bg-primary/10 transition-colors">
-<span class="material-symbols-outlined">call</span>
-</button>
-</header>
-<!-- Main Chat Area -->
-<main class="flex-1 flex flex-col p-4 gap-6 overflow-y-auto no-scrollbar pb-24 relative bg-slate-50 dark:bg-background-dark">
-<!-- Date Divider -->
-<div class="flex justify-center my-2">
-<span class="text-xs font-medium text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
-                اليوم، 10:23 صباحاً
-            </span>
-</div>
-<!-- Issue Selector (Sticky Context) -->
-<div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 w-full max-w-lg mx-auto">
-<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">موضوع المحادثة</label>
-<div class="relative">
-<select class="appearance-none w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 py-3 pr-4 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-<option disabled="" selected="" value="">اختر موضوع المشكلة...</option>
-<option value="payment">المدفوعات والفواتير</option>
-<option value="pickup">مشكلة في الاستلام</option>
-<option value="dispute">نزاع حول عملية بيع</option>
-<option value="tech">دعم فني</option>
-</select>
-<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-3 text-slate-500">
-<span class="material-symbols-outlined text-xl">expand_more</span>
-</div>
-</div>
-</div>
-<!-- System Message -->
-<div class="flex items-start gap-3 max-w-[85%]">
-<div class="w-8 h-8 rounded-full bg-slate-200 bg-cover bg-center flex-shrink-0" data-alt="Support agent profile picture small" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCXsw3tCN0XmVqk9MpbSTwTvOZEttU5E9xIPOnU8kHnotF9rV2nRb9ABZvnU_YNKQuIW3GooKZ8z02SYsKKJKa-yfLSmXn1LqerGx3_YGKPIkZ4DdR4YiXRGYocrDkSMrAV_Dzx0563rK8upIh4d3jSs6sZU_iqX1dCxy8vGffoWx0bqCsHBaIRrM_B1Vf_zojoAi7prpeNBm6rsERMe9riq9SBZeiKMxq5BpXP9V6ZjQ5LQmSUb4GGtwGRM_ITVvUmGrNFwpioqUU');"></div>
-<div class="flex flex-col gap-1">
-<div class="bg-white dark:bg-slate-800 p-3.5 rounded-2xl rounded-tr-none shadow-sm border border-slate-100 dark:border-slate-700 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
-<p>مرحباً بك في خدمة عملاء Recycle24. 👋</p>
-<p class="mt-1">أنا سارة، كيف يمكنني مساعدتك اليوم بخصوص عمليات إعادة التدوير الخاصة بك؟</p>
-</div>
-<span class="text-[11px] text-slate-400 mr-1">10:24 صباحاً</span>
-</div>
-</div>
-<!-- User Message -->
-<div class="flex items-end justify-end gap-2 max-w-[85%] self-end">
-<div class="flex flex-col gap-1 items-end">
-<div class="bg-primary text-white p-3.5 rounded-2xl rounded-tl-none shadow-md text-sm leading-relaxed">
-<p>أهلاً سارة، لدي مشكلة في إرفاق الإيصال الخاص بآخر عملية بيع للبلاستيك.</p>
-</div>
-<div class="flex items-center gap-1 ml-1">
-<span class="text-[11px] text-slate-400">10:26 صباحاً</span>
-<span class="material-symbols-outlined text-[14px] text-primary">done_all</span>
-</div>
-</div>
-</div>
-<!-- Agent Typing Indicator -->
-<div class="flex items-center gap-3 max-w-[85%]">
-<div class="w-8 h-8 rounded-full bg-slate-200 bg-cover bg-center flex-shrink-0" data-alt="Support agent profile picture small" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAYn8JrvZ4RHqGH-WXMV6_RcYnqBvbtnv-NXHsPeVIj4IchuBYsnQS6ZdkJsiFuphLKU4kFtWsmzeMo8GBNeixUVQwTZErVQKolGVKeVf6RWJv7aE52N_WVYI0mmbARIBTJuP-w4VH5_UAe7cP_n3CTZO-UmOGqIgne2DVjyPelyN5eMhBg-CpyD718_fZaRweGeaU1_icpTyxfaK02wS6XdqcJWkuhyTAV5Dkr8rijO3okLOyZ7wbb1re3mqQnZ0qhJH8yX4LNxxs');"></div>
-<div class="bg-white dark:bg-slate-800 px-4 py-3 rounded-2xl rounded-tr-none shadow-sm border border-slate-100 dark:border-slate-700 flex items-center gap-1">
-<span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
-<span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-<span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
-</div>
-</div>
-</main>
-<!-- Bottom Input Area -->
-<footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-3 pb-6 safe-area-pb sticky bottom-0 z-20">
-<!-- Quick Actions Overlay (optional, shown just above input) -->
-<div class="absolute -top-12 left-0 w-full px-4 flex justify-end pointer-events-none">
-<!-- Placeholder for potential toast or typing indicators -->
-</div>
-<form class="flex items-end gap-2 max-w-4xl mx-auto" onsubmit="event.preventDefault();">
-<!-- Add Attachment Button -->
-<button class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" type="button">
-<span class="material-symbols-outlined text-2xl rotate-45">attach_file</span>
-</button>
-<!-- Text Input -->
-<div class="flex-1 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center min-h-[48px] border border-transparent focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20 transition-all">
-<textarea class="w-full bg-transparent border-0 focus:ring-0 text-slate-800 dark:text-slate-100 placeholder:text-slate-500 px-4 py-3 resize-none max-h-32 text-base leading-normal" placeholder="اكتب رسالتك هنا..." rows="1" style="min-height: 48px;"></textarea>
-</div>
-<!-- Voice Message Button (Secondary Action) -->
-<button class="flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary transition-colors" type="button">
-<span class="material-symbols-outlined text-2xl">mic</span>
-</button>
-<!-- Send Button -->
-<button class="flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30 hover:bg-blue-600 transition-all active:scale-95" type="submit">
-<span class="material-symbols-outlined text-2xl rtl:rotate-180">send</span>
-</button>
-</form>
-</footer>
-<!-- Safe area padding for bottom of iPhones -->
-<div class="h-6 w-full bg-white dark:bg-slate-900"></div>
-</body></html>
