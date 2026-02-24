@@ -5,7 +5,7 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-const isDemoMode = process.env.DEMO_MODE === "true" ||
+export const isDemoMode = process.env.DEMO_MODE === "true" ||
                    process.env.VERCEL === "1" ||
                    !process.env.DATABASE_URL ||
                    process.env.DATABASE_URL?.includes("file:");
@@ -45,9 +45,7 @@ async function getDb(): Promise<PrismaClient> {
 
 export const db = getDb();
 
-export function isDemoMode(): boolean {
-  return isDemoMode;
-}
+// isDemoMode is exported as a const above
 
 // Example usage of Prisma with proper error handling, type safety, and transaction
 async function updateMetalRecord(metalId: string, newDetails: { weight: number; price: number }) {
