@@ -1,0 +1,470 @@
+// Prisma Schema for Recycle24 Platform
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USER & AUTH ====================
+
+model User {
+  id            String    @id @default(cuid())
+  phone         String?   @unique
+  email         String?   @unique
+  password      String
+  name          String?
+  firstName     String?
+  lastName      String?
+  titleId       String?
+  gender        String    @default("unknown") // male, female, unknown
+  userType      String    @default("TRADER")
+  status        String    @default("PENDING")
+  role          String    @default("TRADER") // TRADER, BUYER, ADMIN
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Security Fields
+  isLocked      Boolean   @default(false)
+  lockReason    String?
+  
+  // Business Info
+  companyName       String?
+  companyType       String?
+  companyTypeOther  String?
+  businessType      String?
+  businessTypeOther String?
+  jobTitle          String?
+  jobTitleOther     String?
+  bio               String?
+  
+  // Notification Settings
+  notifEmail     Boolean @default(true)
+  notifSms       Boolean @default(false)
+  notifWhatsapp  Boolean @default(false)
+  notifTelegram  Boolean @default(false)
+  notifPush      Boolean @default(true)
+  notifDeals     Boolean @default(true)
+  notifAuctions  Boolean @default(true)
+  notifMarketing Boolean @default(false)
+  
+  // Notification Contacts
+  smsPhone        String?
+  whatsappPhone   String?
+  telegramUsername String?
+  
+  // Verification
+  verificationCode   String?
+  verificationExpiry DateTime?
+  
+  // Security Settings
+  twoFactorEnabled Boolean @default(false)
+  twoFactorMethod  String? // whatsapp, sms, email
+  faceIdEnabled    Boolean @default(false)
+  
+  // Privacy Settings
+  showPhone       Boolean @default(false)
+  hideWarehouseLocation Boolean @default(false)
+  allowFactoryContact Boolean @default(true)
+  
+  // Relations
+  trader        Trader?
+  wallet        Wallet?
+  auctions      Auction[]
+  bids          Bid[]
+  alerts        PriceAlert[]
+  deals         Deal[]      @relation("buyer")
+  soldDeals     Deal[]      @relation("seller")
+  sessions      Session[]
+  securityLogs  SecurityLog[]
+  auctionParticipations AuctionParticipant[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  device    String?
+  deviceType String? @default("phone") // phone, laptop, tablet
+  location  String?
+  ip        String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ==================== TRADER VERIFICATION ====================
+
+model Trader {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  businessName      String
+  licenseNumber     String?
+  location          String?
+  verificationStatus String   @default("PENDING") // PENDING, UNDER_REVIEW, APPROVED, REJECTED
+  verifiedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents TraderDocument[]
+
+  @@index([verificationStatus])
+}
+
+model TraderDocument {
+  id        String   @id @default(cuid())
+  traderId  String
+  type      String   // IDENTITY_FRONT, IDENTITY_BACK, BUSINESS_LICENSE, LOCATION_PROOF
+  fileUrl   String
+  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt DateTime @default(now())
+
+  trader Trader @relation(fields: [traderId], references: [id], onDelete: Cascade)
+
+  @@index([traderId])
+  @@index([status])
+}
+
+// ==================== AUCTIONS ====================
+
+model Auction {
+  id            String    @id @default(cuid())
+  sellerId      String
+  title         String
+  category      String    // IRON, COPPER, ALUMINUM, PLASTIC, CARDBOARD, MIXED, BRASS, STEEL, ZINC
+  weight        Float
+  weightUnit    String    @default("KG") // KG, TON
+  location      String
+  startingBid   Float
+  buyNowPrice   Float?
+  securityDeposit Float @default(0) // Set by seller, matched by buyers
+  entryFee      Float @default(0) // Non-refundable platform fee per participant
+  duration      Int       // in hours
+  status        String    @default("SCHEDULED") // SCHEDULED, LIVE, ENDED, CANCELLED
+  scheduledAt   DateTime? // When auction will start
+  startedAt     DateTime?
+  endsAt        DateTime?
+  winnerId      String?
+  finalPrice    Float?
+  currentBid    Float?    // Cached highest bid for performance
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  seller User @relation(fields: [sellerId], references: [id])
+  bids   Bid[]
+  images AuctionImage[]
+  participants AuctionParticipant[]
+
+  @@index([sellerId])
+  @@index([category])
+  @@index([status])
+  @@index([endsAt])
+}
+
+model AuctionParticipant {
+  id              String   @id @default(cuid())
+  auctionId       String
+  userId          String
+  depositPaid     Float    @default(0)
+  entryFeePaid    Float    @default(0)
+  isExempt        Boolean  @default(false) // True for GOVERNMENT accounts
+  depositStatus   String   @default("HELD") // HELD, REFUNDED, APPLIED_TO_DEAL, FORFEITED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@unique([auctionId, userId]) // User can only participate once per auction
+  @@index([auctionId])
+  @@index([userId])
+}
+
+model AuctionImage {
+  id        String   @id @default(cuid())
+  auctionId String
+  imageUrl  String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+
+  @@index([auctionId])
+}
+
+model Bid {
+  id        String   @id @default(cuid())
+  auctionId String
+  bidderId  String
+  amount    Float
+  createdAt DateTime @default(now())
+
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  bidder  User    @relation(fields: [bidderId], references: [id])
+
+  @@index([auctionId, createdAt])
+}
+
+// ==================== DEALS & CONTRACTS ====================
+
+model Deal {
+  id              String    @id @default(cuid())
+  auctionId       String?   // If from auction
+  sellerId        String
+  buyerId         String
+  materialType    String
+  weight          Float
+  totalAmount     Float
+  platformFee     Float
+  status          String    @default("PENDING") // PENDING, CONTRACT_SIGNED, DEPOSIT_PAID, COMPLETED, CANCELLED, DISPUTED
+  contractSigned  Boolean   @default(false)
+  signedAt        DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  seller User @relation("seller", fields: [sellerId], references: [id])
+  buyer  User @relation("buyer", fields: [buyerId], references: [id])
+  transactions Transaction[]
+
+  @@index([sellerId])
+  @@index([buyerId])
+  @@index([status])
+}
+
+// ==================== WALLET & TRANSACTIONS ====================
+
+model Wallet {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  balanceSYP  Float    @default(0)
+  balanceUSD  Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([userId])
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  walletId    String
+  dealId      String?
+  type        String   // DEPOSIT, WITHDRAWAL, PAYMENT, REFUND, FEE, REWARD
+  amount      Float
+  currency    String   // SYP, USD
+  status      String   // PENDING, COMPLETED, FAILED, CANCELLED
+  description String?
+  createdAt   DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id])
+  deal   Deal?  @relation(fields: [dealId], references: [id])
+
+  @@index([walletId])
+  @@index([dealId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==================== MARKET INTELLIGENCE ====================
+
+model PriceAlert {
+  id          String   @id @default(cuid())
+  userId      String
+  metal       String
+  targetPrice Float
+  condition   String   // ABOVE, BELOW
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isActive])
+}
+
+// ==================== REWARDS & POINTS ====================
+
+model RecyclePoints {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  points     Int      @default(0)
+  level      Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  userId      String
+  badgeType   String
+  unlockedAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ==================== SECURITY & COMPLIANCE ====================
+
+model SecurityLog {
+  id        String   @id @default(cuid())
+  level     String   // INFO, WARN, CRITICAL, AUDIT
+  event     String   // LOGIN, FAILED_LOGIN, API_ABUSE, ADMIN_ACTION
+  details   String?
+  ip        String?
+  userAgent String?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@index([event])
+  @@index([level])
+  @@index([createdAt])
+}
+
+// ==================== SUPREME ORCHESTRATOR ====================
+
+model Agent {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  type          String   // TASK_MANAGER, SECURITY, RECOVERY, PERFORMANCE, etc.
+  status        String   @default("IDLE") // IDLE, WORKING, OFFLINE, FAILED
+  lastHeartbeat DateTime @default(now())
+  metadata      String?  // JSON string for additional state data
+  ipAddress     String?  // Optional IP address of where the agent is running
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tasks         AgentTask[] @relation("assignedAgent")
+
+  @@index([type])
+  @@index([status])
+  @@index([lastHeartbeat])
+}
+
+model AgentTask {
+  id            String   @id @default(cuid())
+  type          String   // Type of task, e.g., SECURITY_SCAN, SYSTEM_CHECK
+  priority      Int      @default(0) // Higher number = higher priority
+  status        String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, FAILED
+  payload       String?  // JSON string containing task parameters
+  result        String?  // JSON string containing task output/error
+  error         String?
+  assignedToId  String?
+  retryCount    Int      @default(0)
+  maxRetries    Int      @default(3)
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  assignedAgent Agent?   @relation("assignedAgent", fields: [assignedToId], references: [id])
+
+  @@index([status])
+  @@index([priority])
+  @@index([type])
+  @@index([assignedToId])
+}
+
+// ==================== TRANSPORT ====================
+
+model TransportBooking {
+  id                  String   @id @default(cuid())
+  userId              String
+  trackingId          String   @unique
+  materialType        String
+  weight              Float
+  pickupAddress       String
+  pickupGovernorate   String
+  deliveryAddress     String
+  deliveryGovernorate String
+  pickupDate          DateTime
+  notes               String?
+  transportType       String   // pickup, medium, large
+  status              String   @default("PENDING") // PENDING, CONFIRMED, IN_TRANSIT, DELIVERED, CANCELLED
+  estimatedPrice      Float
+  actualPrice         Float?
+  driverId            String?
+  driverName          String?
+  driverPhone         String?
+  vehicleType         String?
+  plateNumber         String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([userId])
+  @@index([trackingId])
+  @@index([status])
+  @@index([driverId])
+}
+
+// ==================== SUPPORT ====================
+
+model SupportTicket {
+  id        String   @id @default(cuid())
+  userId    String
+  ticketId  String   @unique
+  subject   String
+  category  String   @default("عام") // تقني, مدفوعات, مزادات, صفقات, عام
+  priority  String   @default("MEDIUM") // LOW, MEDIUM, HIGH
+  status    String   @default("OPEN") // OPEN, PENDING, RESOLVED, CLOSED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages SupportTicketMessage[]
+
+  @@index([userId])
+  @@index([ticketId])
+  @@index([status])
+  @@index([priority])
+}
+
+model SupportTicketMessage {
+  id         String   @id @default(cuid())
+  ticketId   String
+  userId     String?
+  content    String
+  senderType String   // USER, SUPPORT, AGENT
+  createdAt  DateTime @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([createdAt])
+}
+
+// ==================== AI AGENT REPORTS ====================
+
+model AgentReport {
+  id         String   @id @default(cuid())
+  agentName  String
+  taskType   String
+  severity   String   @default("INFO") // INFO, WARNING, ERROR, CRITICAL
+  category   String   // lint, security, performance, ux, backend, api, db, etc.
+  file       String?  // affected file path
+  line       Int?
+  message    String
+  suggestion String?  // what should be done
+  codeBefore String?  // original code snippet
+  codeAfter  String?  // new code written by agent
+  autoFixed  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([severity])
+  @@index([agentName])
+  @@index([taskType])
+  @@index([autoFixed])
+  @@index([createdAt])
+}

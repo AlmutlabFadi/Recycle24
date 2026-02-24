@@ -1,0 +1,194 @@
+@import "tailwindcss";
+
+/* ==========================================
+   Metalix24 — Design System
+   ========================================== */
+
+@theme inline {
+  /* Primary Colors */
+  --color-primary: #137fec;
+  --color-primary-dark: #0f66bd;
+  --color-secondary: #f97316;
+
+  /* Background */
+  --color-bg-light: #f6f7f8;
+  --color-bg-dark: #101922;
+
+  /* Surface */
+  --color-surface-dark: #1c2630;
+  --color-surface-highlight: #233648;
+  --color-surface-light: #ffffff;
+
+  /* Status */
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+
+  /* Typography */
+  --font-display: "Noto Sans Arabic", "Cairo", "Inter", sans-serif;
+  --font-arabic: "Noto Sans Arabic", "Cairo", sans-serif;
+  --font-english: "Inter", sans-serif;
+  --font-numbers: "Inter", sans-serif;
+}
+
+
+/* ==========================================
+   Base Styles
+   ========================================== */
+html {
+  direction: rtl;
+}
+
+body {
+  font-family: var(--font-display);
+  background-color: var(--color-bg-dark);
+  color: #fff;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Material Symbols configuration */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  /* Failsafe for text overflow */
+  max-width: 1em;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* ==========================================
+   Utility Classes
+   ========================================== */
+
+/* Hide scrollbar for clean mobile experience */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(16, 25, 34, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Direction utilities */
+.dir-ltr {
+  direction: ltr;
+}
+
+/* Safe area padding for iOS */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ==========================================
+   Font Utilities
+   ========================================== */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-arabic {
+  font-family: var(--font-arabic);
+}
+
+.font-english {
+  font-family: var(--font-english);
+  direction: ltr;
+}
+
+/* ==========================================
+   Animations
+   ========================================== */
+@keyframes slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* ==========================================
+   Custom Scrollbar Styles
+   ========================================== */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(19, 127, 236, 0.5);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(19, 127, 236, 0.7);
+}
+
+.scrollbar-thumb-primary\/50::-webkit-scrollbar-thumb {
+  background: rgba(19, 127, 236, 0.5);
+}
+
+.scrollbar-track-surface-dark::-webkit-scrollbar-track {
+  background: #1c2630;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Firefox scrollbar */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(19, 127, 236, 0.5) transparent;
+}
