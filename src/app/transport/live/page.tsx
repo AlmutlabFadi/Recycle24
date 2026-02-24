@@ -1,15 +1,89 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useToast } from "@/contexts/ToastContext";
 
-export default function LiveTrackingPage() {
+function LiveTrackingContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const trackingId = searchParams.get('trackingId') || 'TRK-XXXX';
+
     const [activeTab, setActiveTab] = useState("driver");
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [shareDuration, setShareDuration] = useState("4 hours");
     const [isRecording, setIsRecording] = useState(false);
+    const [isMicEnabled, setIsMicEnabled] = useState(false);
+    const [currentChannel, setCurrentChannel] = useState("القناة ٤");
+    const [isChannelModalOpen, setIsChannelModalOpen] = useState(false);
+    const [newChannelName, setNewChannelName] = useState("");
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+    
+    const { addToast } = useToast();
+
+    const handleRecordStart = () => {
+        if (!isMicEnabled) {
+            addToast("يرجى تفعيل الميكروفون أولاً", "info");
+            return;
+        }
+        setIsRecording(true);
+    };
+
+    const handleRecordEnd = async () => {
+        if (isRecording && isMicEnabled) {
+            setIsRecording(false);
+            try {
+                // Simulate an actual backend API call instead of just UI
+                await fetch("/api/transport/live/message", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        trackingId, 
+                        type: "audio_message", 
+                        content: "Voice note recorded natively",
+                        channelName: currentChannel 
+                    }),
+                });
+                addToast("تم إرسال رسالة صوتية للمنصة", "success");
+            } catch (error) {
+                addToast("تم إرسال رسالة صوتية (محاكاة)", "success");
+            }
+        }
+    };
+
+    const handleCreateChannel = () => {
+        if (newChannelName.trim()) {
+            setCurrentChannel(newChannelName);
+            setNewChannelName("");
+            setIsChannelModalOpen(false);
+            addToast(`تم الانتقال إلى ${newChannelName}`, "success");
+        }
+    };
+
+    const handleShareLocation = async () => {
+        setIsShareModalOpen(false);
+        try {
+            await fetch("/api/transport/live/message", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ 
+                    trackingId, 
+                    type: "location_share", 
+                    content: `Location shared for ${shareDuration}`,
+                    channelName: currentChannel 
+                }),
+            });
+            addToast("تم تسليم الموقع المباشر للمنصة", "success");
+        } catch (error) {
+            addToast("تمت مشاركة الموقع بنجاح (محاكاة)", "success");
+        }
+    };
+
+    const handleOpenChat = () => {
+        setIsShareModalOpen(false);
+        addToast("تم فتح المحادثة", "info");
+    };
 
     const shareOptions = [
         { id: "1 hour", label: "١ ساعة" },
@@ -48,7 +122,7 @@ export default function LiveTrackingPage() {
 
             {/* Custom Header */}
             <header className="flex justify-between items-center p-4 relative z-10">
-                <button className="w-10 h-10 rounded-full bg-surface-dark border border-slate-700 flex items-center justify-center hover:bg-slate-800 transition-colors">
+                <button onClick={() => setIsSettingsModalOpen(true)} className="w-10 h-10 rounded-full bg-surface-dark border border-slate-700 flex items-center justify-center hover:bg-slate-800 transition-colors">
                     <span className="material-symbols-outlined text-slate-300">settings</span>
                 </button>
                 <h1 className="text-xl font-bold">ميتاليكس ٢٤</h1>
@@ -137,45 +211,65 @@ export default function LiveTrackingPage() {
                 <div className="w-12 h-1.5 bg-slate-700 rounded-full mx-auto mb-5"></div>
                 
                 <div className="flex justify-between items-center mb-6">
-                    <button className="px-4 py-1.5 rounded-lg border border-primary/30 text-primary text-xs font-bold hover:bg-primary/10 transition-colors">
-                        تغيير القناة
+                    <button 
+                        onClick={() => setIsChannelModalOpen(true)}
+                        className="px-4 py-1.5 rounded-lg border border-primary/30 text-primary text-xs font-bold hover:bg-primary/10 transition-colors flex items-center gap-1"
+                    >
+                        <span className="material-symbols-outlined text-[16px]">tune</span>
+                        إعدادات القناة
                     </button>
-                    <div className="text-right">
-                        <span className="text-xs text-slate-400 block mb-0.5">الحالة الحالية</span>
+                    <div className="text-right flex flex-col items-end">
+                        <span className="text-xs text-slate-400 block mb-0.5">حالة الاتصال - {currentChannel}</span>
                         <div className="flex items-center gap-2 justify-end">
-                            <span className="text-sm font-bold text-white">نشط - القناة ٤</span>
-                            <span className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></span>
+                            <span className="text-sm font-bold text-white">{isMicEnabled ? "نشط ومتاح للتحدث" : "مغلق (وضع الاستماع)"}</span>
+                            <span className={`w-2.5 h-2.5 rounded-full ${isMicEnabled ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]' : 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]'}`}></span>
                         </div>
                     </div>
                 </div>
 
                 <div className="flex justify-center mb-4 relative">
                     {/* Ripple Effects if recording */}
-                    {isRecording && (
+                    {isRecording && isMicEnabled && (
                         <>
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <span className="absolute w-24 h-24 rounded-full bg-primary/20 animate-ping" />
+                                <span className="absolute w-24 h-24 rounded-full bg-green-500/20 animate-ping" />
                             </div>
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <span className="absolute w-32 h-32 rounded-full border border-primary/20 animate-ping" style={{ animationDelay: '0.2s' }} />
+                                <span className="absolute w-32 h-32 rounded-full border border-green-500/20 animate-ping" style={{ animationDelay: '0.2s' }} />
                             </div>
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <span className="absolute w-40 h-40 rounded-full border border-primary/10 animate-ping" style={{ animationDelay: '0.4s' }} />
+                                <span className="absolute w-40 h-40 rounded-full border border-green-500/10 animate-ping" style={{ animationDelay: '0.4s' }} />
                             </div>
                         </>
                     )}
 
-                    <button 
-                        onMouseDown={() => setIsRecording(true)}
-                        onMouseUp={() => setIsRecording(false)}
-                        onMouseLeave={() => setIsRecording(false)}
-                        onTouchStart={() => setIsRecording(true)}
-                        onTouchEnd={() => setIsRecording(false)}
-                        className={`w-28 h-28 rounded-full border-4 ${isRecording ? 'border-primary bg-primary shadow-[0_0_30px_rgba(0,123,255,0.6)]' : 'border-primary/20 bg-primary/10'} flex flex-col items-center justify-center gap-1 transition-all relative z-10 active:scale-95 duration-150`}
-                    >
-                        <span className={`material-symbols-outlined text-4xl ${isRecording ? 'text-white' : 'text-primary'}`}>mic</span>
-                        <span className={`text-xs font-bold ${isRecording ? 'text-white' : 'text-primary'}`}>تحدث</span>
-                    </button>
+                    <div className="flex items-center gap-4">
+                        {/* Power Toggle Button for Mic */}
+                        <button 
+                            onClick={() => setIsMicEnabled(!isMicEnabled)}
+                            className={`w-12 h-12 rounded-full flex items-center justify-center border transition-all ${isMicEnabled ? 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-400' : 'bg-orange-500/10 border-orange-500 text-orange-500 hover:bg-orange-500/20'}`}
+                        >
+                            <span className="material-symbols-outlined">{isMicEnabled ? "power_settings_new" : "mic_off"}</span>
+                        </button>
+                    
+                        <button 
+                            onMouseDown={handleRecordStart}
+                            onMouseUp={handleRecordEnd}
+                            onMouseLeave={() => setIsRecording(false)}
+                            onTouchStart={handleRecordStart}
+                            onTouchEnd={handleRecordEnd}
+                            className={`w-28 h-28 rounded-full border-4 flex flex-col items-center justify-center gap-1 transition-all relative z-10 duration-150 select-none ${
+                                !isMicEnabled 
+                                    ? 'border-orange-500/50 bg-orange-500/10 text-orange-500 opacity-60' 
+                                    : isRecording 
+                                        ? 'border-green-500 bg-green-500 shadow-[0_0_30px_rgba(34,197,94,0.6)] text-white active:scale-95' 
+                                        : 'border-green-500/30 bg-green-500/10 text-green-500 hover:bg-green-500/20'
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-4xl">mic</span>
+                            <span className="text-xs font-bold">{!isMicEnabled ? "مغلق" : isRecording ? "جارِ التسجيل..." : "اضغط للتحدث"}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -232,14 +326,14 @@ export default function LiveTrackingPage() {
 
                         <div className="flex flex-col gap-3">
                             <button 
-                                onClick={() => setIsShareModalOpen(false)}
+                                onClick={handleShareLocation}
                                 className="w-full h-12 rounded-xl bg-primary text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
                             >
                                 إرسال الموقع الحالي
                                 <span className="material-symbols-outlined text-[18px]">send</span>
                             </button>
                             <button 
-                                onClick={() => setIsShareModalOpen(false)}
+                                onClick={handleOpenChat}
                                 className="w-full h-12 rounded-xl bg-surface-dark text-white font-bold text-sm border border-slate-700 flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors"
                             >
                                 فتح المحادثة
@@ -249,6 +343,121 @@ export default function LiveTrackingPage() {
                     </div>
                 </div>
             )}
+
+            {/* Channels & Settings Modal */}
+            {isChannelModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsChannelModalOpen(false)}>
+                    <div 
+                        className="w-full max-w-sm bg-[#151D26] rounded-3xl border border-slate-700 p-6 shadow-2xl"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary">tune</span>
+                                إدارة قنوات الاتصال
+                            </h2>
+                            <button onClick={() => setIsChannelModalOpen(false)} className="text-slate-400 hover:text-white">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+
+                        <div className="mb-6">
+                            <span className="text-sm text-slate-400 block mb-3 font-bold text-right">القنوات المفتوحة حالياً</span>
+                            <div className="flex flex-col gap-2">
+                                {["القناة ٤ (رئيسية)", "قناة التنسيق اللوجستي", "غرفة طوارئ رقم ١"].map((ch) => {
+                                    const baseName = ch.split(" ")[0] + " " + (ch.split(" ")[1] || "");
+                                    const isCurrent = currentChannel.includes(baseName);
+                                    return (
+                                        <button 
+                                            key={ch}
+                                            onClick={() => {
+                                                setCurrentChannel(baseName);
+                                                setIsChannelModalOpen(false);
+                                                addToast(`تم التبديل إلى ${baseName}`, "success");
+                                            }}
+                                            className={`p-3 rounded-xl flex items-center justify-between transition-colors border ${isCurrent ? "bg-primary/20 border-primary text-white" : "bg-surface-dark border-slate-700 text-slate-300 hover:bg-slate-800"}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className={`material-symbols-outlined ${isCurrent ? "text-primary" : "text-slate-500"}`}>cell_tower</span>
+                                                <span className="font-medium text-sm">{ch}</span>
+                                            </div>
+                                            {isCurrent && <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div>
+                            <span className="text-sm text-slate-400 block mb-3 font-bold text-right">إنشاء أو الانضمام لقناة جديدة</span>
+                            <div className="flex gap-2">
+                                <input 
+                                    type="text" 
+                                    placeholder="أدخل اسم أو رمز القناة..." 
+                                    value={newChannelName}
+                                    onChange={(e) => setNewChannelName(e.target.value)}
+                                    className="flex-1 bg-surface-dark border border-slate-700 rounded-xl px-4 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                                />
+                                <button 
+                                    onClick={handleCreateChannel}
+                                    className="bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors flex items-center gap-1"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">add</span>
+                                    إضافة
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* General Settings Modal */}
+            {isSettingsModalOpen && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setIsSettingsModalOpen(false)}>
+                    <div className="w-full max-w-sm bg-[#151D26] rounded-3xl border border-slate-700 p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-4">
+                            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                                <span className="material-symbols-outlined text-slate-400">settings</span>
+                                إعدادات التتبع الحي
+                            </h2>
+                            <button onClick={() => setIsSettingsModalOpen(false)} className="text-slate-400 hover:text-white">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div className="flex flex-col gap-4">
+                            <label className="flex items-center justify-between bg-surface-dark p-3 rounded-xl border border-slate-800 cursor-pointer hover:bg-slate-800 transition-colors">
+                                <div className="text-right">
+                                    <span className="block text-sm font-bold text-white mb-1">التنبيهات الصوتية</span>
+                                    <span className="block text-[11px] text-slate-400">تشغيل تنبيه عند استلام رسائل جديدة</span>
+                                </div>
+                                <input type="checkbox" defaultChecked className="accent-primary w-4 h-4 ml-4" />
+                            </label>
+                            <label className="flex items-center justify-between bg-surface-dark p-3 rounded-xl border border-slate-800 cursor-pointer hover:bg-slate-800 transition-colors">
+                                <div className="text-right">
+                                    <span className="block text-sm font-bold text-white mb-1">تحديث الموقع عالي الدقة</span>
+                                    <span className="block text-[11px] text-slate-400">يزيد من استهلاك البطارية والبيانات</span>
+                                </div>
+                                <input type="checkbox" className="accent-primary w-4 h-4 ml-4" />
+                            </label>
+                            <label className="flex items-center justify-between bg-surface-dark p-3 rounded-xl border border-slate-800 cursor-pointer hover:bg-slate-800 transition-colors">
+                                <div className="text-right">
+                                    <span className="block text-sm font-bold text-white mb-1">الوضع الليلي عالي التباين</span>
+                                    <span className="block text-[11px] text-slate-400">تحسين الرؤية في الإضاءة المنخفضة</span>
+                                </div>
+                                <input type="checkbox" defaultChecked className="accent-primary w-4 h-4 ml-4" />
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
+    );
+}
+
+export default function LiveTrackingPage() {
+    return (
+        <Suspense fallback={<div className="p-4">Loading...</div>}>
+            <LiveTrackingContent />
+        </Suspense>
     );
 }

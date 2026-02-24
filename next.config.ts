@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async rewrites() {
     return [
       {

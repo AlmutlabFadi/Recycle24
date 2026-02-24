@@ -44,6 +44,9 @@ next-env.d.ts
 # Local env files
 .env
 .env.*
+.env.local
+.env.production.local
+.env.test.local
 
 # dist
 dist/
