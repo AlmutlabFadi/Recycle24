@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 Consultation Dashboard</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["IBM Plex Sans Arabic", "Public Sans", "sans-serif"],
+                        "sans": ["IBM Plex Sans Arabic", "Public Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar hiding for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen relative pb-24">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-40 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
+<div class="flex items-center gap-2">
+<!-- Menu Button -->
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+<h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">استشاراتي</h1>
+<div class="flex items-center gap-3">
+<!-- User Profile -->
+<button class="relative group">
+<div class="w-9 h-9 rounded-full bg-slate-200 overflow-hidden ring-2 ring-transparent group-hover:ring-primary/20 transition">
+<img class="w-full h-full object-cover" data-alt="User profile picture of a young man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJ-DG0b_xtoIySyaTJyNx1R_at5lqUjJVnlbYyOHNhFLpXWRxfmWUwPeKrBZYNSHVUQmxJj4GLHkaIhMxQkBdaWucgHUWtqwfEUH-sXqk290iU10GmgtZwh7_ygc0P1N0HY61uJULkfrHRsrRwSU_kQu6pp-ChdkHyne-562_kDv0wE0fqzJYdiqWaRENECVjN-V6PN2wKlxdOyHfaF4R5KFhfXVDXf9L5ZTsRJDiVSv-kGKPzUqHWJu97Ut4ge6xXWoc8rQpsP0g"/>
+</div>
+<div class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-background-light dark:border-background-dark rounded-full"></div>
+</button>
+</div>
+</header>
+<!-- Tab Segmented Control -->
+<div class="px-4 py-4 sticky top-[60px] z-30 bg-background-light dark:bg-background-dark transition-colors duration-300">
+<div class="flex p-1.5 bg-slate-200 dark:bg-slate-800 rounded-xl relative shadow-inner">
+<!-- Active Tab Background Indicator -->
+<div class="w-1/2 h-[calc(100%-8px)] absolute right-1 top-1 bg-white dark:bg-slate-700 rounded-lg shadow-sm transition-all duration-300 ease-out"></div>
+<button class="flex-1 relative z-10 py-2.5 text-sm font-bold text-primary text-center transition-colors">
+                القادمة
+            </button>
+<button class="flex-1 relative z-10 py-2.5 text-sm font-medium text-slate-500 dark:text-slate-400 text-center hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                السابقة
+            </button>
+</div>
+</div>
+<!-- Main Content List -->
+<main class="px-4 space-y-6 flex flex-col">
+<!-- Upcoming Section -->
+<section class="space-y-4">
+<div class="flex items-center justify-between px-1">
+<h2 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">الجلسات النشطة</h2>
+</div>
+<!-- Card 1: Active / Starting Soon -->
+<article class="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-slate-100 dark:border-slate-700 relative overflow-hidden">
+<!-- Status Strip -->
+<div class="absolute top-0 right-0 w-1.5 h-full bg-primary"></div>
+<div class="flex items-start gap-4 mb-5">
+<div class="relative shrink-0">
+<img class="w-14 h-14 rounded-full object-cover border-2 border-slate-100 dark:border-slate-600" data-alt="Dr. Sarah Al-Omari profile picture, professional woman smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0dcOfh3oj8Uc8FBZqSK6EnWvTmnQXZY9XG5VBhW2U_6T82WIe_D4b9Dg70FYHr7BffN9zJFK6Sq7ow3NqGlDJPwwotkgK9nKDHyIbbMkC8U6_2lM8HwbZOdC2YrQ_lIrq0sJp36wy0UGzt4ncA7lRhmB_AM1-DimvLVybPVq1ra6AFEYNEGESu_DR2Lj_woRW1_-duAHkbhe1r5a4qZ8Vr3VqJumVazNr_pju6DzkaF8dpoSmCjAPQuTvxZM9rOxVcYduNa0AbTY"/>
+<span class="absolute -bottom-0.5 -left-0.5 flex h-4 w-4">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white dark:border-slate-800"></span>
+</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start gap-2">
+<div>
+<h3 class="font-bold text-slate-900 dark:text-white text-lg leading-tight truncate">د. سارة العمري</h3>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">خبيرة الاستدامة البيئية</p>
+</div>
+<div class="flex flex-col items-end">
+<span class="bg-primary/10 text-primary text-[10px] font-bold px-2 py-1 rounded-full whitespace-nowrap">
+                                    يبدأ خلال ١٠ د
+                                 </span>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-background-light dark:bg-slate-900/50 rounded-lg p-3 mb-5 border border-slate-100 dark:border-slate-700/50">
+<h4 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2 leading-snug">استراتيجيات إعادة تدوير البلاستيك للمنشآت الصغيرة</h4>
+<div class="flex items-center flex-wrap gap-3 text-slate-500 dark:text-slate-400 text-xs mt-2">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+<span>اليوم، ٠٣:٠٠ م</span>
+</div>
+<span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+<span>٤٥ دقيقة</span>
+</div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 bg-primary hover:bg-blue-600 active:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/20 active:shadow-none active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]">videocam</span>
+                        انضم للغرفة
+                    </button>
+<button class="w-12 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</article>
+<!-- Card 2: Future Appointment -->
+<article class="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex items-center gap-4 mb-4">
+<img class="w-12 h-12 rounded-full object-cover grayscale opacity-90 ring-1 ring-slate-200 dark:ring-slate-600" data-alt="Eng. Ahmed Al-Mahmoud profile picture, man in suit" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGExi0jtxKf6rQkY2kpom6RxEq0MppUa7pLDGEduEfcTAs1KwRbwENm8hn7yBdEC59oK9rN2JHoJcq7B_Rr-vCLHtH6TAl-dKjXRgzcE3kM9mUVOrmzuKbOJR1j1UvK3qT9TEmr38lOFSwr9jOgFkVM7rxsF1aBBL3Y43zzoZIML4D_9Gd9JGB40aC3ki1-7ZXS7OoCTe25rz4mBYQ7KPSruFbR29sAf3BSgsLEurcUCtiYd5lWErJZmBzfbHwLMNzAO6y_egrNRs"/>
+<div class="flex-1">
+<h3 class="font-bold text-slate-900 dark:text-white text-base">م. أحمد المحمود</h3>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">مستشار الطاقة المتجددة</p>
+</div>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1">
+<span class="material-symbols-outlined">edit_calendar</span>
+</button>
+</div>
+<div class="ps-4 border-s-2 border-slate-200 dark:border-slate-600 mb-4">
+<h4 class="text-sm font-semibold text-slate-800 dark:text-slate-200">تدقيق استهلاك الطاقة للمصانع</h4>
+<p class="text-xs text-slate-500 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">event</span>
+                        ١٥ نوفمبر ٢٠٢٣ • ١٠:٠٠ ص
+                     </p>
+</div>
+</article>
+</section>
+<!-- Past Section (Included for design completeness) -->
+<section class="space-y-4 pt-4 relative">
+<!-- Visual Separator -->
+<div class="flex items-center gap-4 px-1 py-2">
+<div class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
+<h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">الأرشيف</h2>
+<div class="h-px flex-1 bg-slate-200 dark:bg-slate-700"></div>
+</div>
+<!-- Card 3: Past Completed -->
+<article class="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex justify-between items-start mb-4">
+<div class="flex items-center gap-3">
+<img class="w-10 h-10 rounded-full object-cover ring-2 ring-slate-50 dark:ring-slate-700" data-alt="Layla Hassan profile picture, woman with curly hair" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnI7UxBx0TS3i5lkQuUooVgNKIESnvq4v3Sbu2k4pF0Pjkr21qFOWwe18KkYDrDAKyrRzL4Yju-iTPaW0HsiWjNdkZUovoI9Zr7EgOimWBIM3d9pQ9KJIvMx09dq7n_mhduPbfshlsjqQQ2GXbK84cFIRqbKetsqeOtRcAdUNSnLnoeISUecB3NoYWrtL1J7uXrcSHnSdu8NWsG-7i4e3zVt_WJ50Tgc_4uhTVXpz6fNirZ0-ETTpOe7B-Z2o3OyPdDK4K1RNbisw"/>
+<div>
+<h3 class="font-bold text-slate-900 dark:text-white text-sm">أ. ليلى حسن</h3>
+<p class="text-[10px] text-slate-400">١٠ أكتوبر ٢٠٢٣</p>
+</div>
+</div>
+<span class="inline-flex items-center rounded-md bg-green-50 dark:bg-green-900/20 px-2.5 py-1 text-xs font-medium text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20 gap-1">
+<span class="material-symbols-outlined text-[14px] icon-filled">check_circle</span>
+                        مكتملة
+                    </span>
+</div>
+<!-- Summary Notes Area -->
+<div class="bg-slate-50 dark:bg-slate-700/30 rounded-lg p-3 mb-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-slate-400 text-sm">sticky_note_2</span>
+<span class="text-xs font-bold text-slate-700 dark:text-slate-300">ملخص الجلسة</span>
+</div>
+<p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
+                        تمت مناقشة حلول التغليف المستدام واقتراح استخدام مواد قابلة للتحلل بنسبة ٨٠٪ لتقليل البصمة الكربونية للمنتجات الجديدة.
+                    </p>
+<button class="text-[10px] text-primary mt-2 font-bold hover:underline flex items-center gap-0.5">
+                        قراءة المزيد
+                        <span class="material-symbols-outlined text-[10px] rotate-180">chevron_right</span>
+</button>
+</div>
+<!-- Actions Grid -->
+<div class="grid grid-cols-2 gap-3">
+<button class="group flex items-center justify-center gap-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition">
+<span class="material-symbols-outlined text-[18px] text-primary group-hover:-translate-y-0.5 transition-transform">download</span>
+                        تحميل التقرير
+                    </button>
+<button class="flex items-center justify-center gap-2 rounded-lg bg-primary/5 px-3 py-2.5 text-xs font-semibold text-primary hover:bg-primary/10 transition border border-transparent hover:border-primary/20">
+<span class="material-symbols-outlined text-[18px] icon-filled">star</span>
+                        تقييم الجلسة
+                    </button>
+</div>
+</article>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 pt-2 px-6 pb-8 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.1)] z-50">
+<div class="flex justify-between items-center">
+<a class="flex flex-col items-center gap-1.5 p-2 text-slate-400 hover:text-primary transition group" href="#">
+<span class="material-symbols-outlined text-[26px] group-hover:scale-110 transition">home</span>
+<span class="text-[10px] font-medium">الرئيسية</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 p-2 text-primary transition group relative" href="#">
+<span class="material-symbols-outlined text-[26px] icon-filled group-hover:scale-110 transition">calendar_month</span>
+<span class="text-[10px] font-bold">استشاراتي</span>
+<span class="absolute top-2 right-4 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+</a>
+<!-- FAB (Floating Action Button style for center item) -->
+<div class="relative -top-6">
+<a class="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-blue-500/40 hover:scale-105 active:scale-95 transition ring-4 ring-background-light dark:ring-background-dark" href="#">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</a>
+</div>
+<a class="flex flex-col items-center gap-1.5 p-2 text-slate-400 hover:text-primary transition group" href="#">
+<span class="material-symbols-outlined text-[26px] group-hover:scale-110 transition">chat</span>
+<span class="text-[10px] font-medium">المحادثات</span>
+</a>
+<a class="flex flex-col items-center gap-1.5 p-2 text-slate-400 hover:text-primary transition group" href="#">
+<span class="material-symbols-outlined text-[26px] group-hover:scale-110 transition">person</span>
+<span class="text-[10px] font-medium">حسابي</span>
+</a>
+</div>
+</nav>
+</body></html>

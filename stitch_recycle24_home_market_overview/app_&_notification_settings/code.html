@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>App Preferences - Recycle24</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&amp;family=Noto+Sans+Arabic:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Theme Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#137fec",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101922",
+              "surface-light": "#ffffff",
+              "surface-dark": "#1e2936",
+            },
+            fontFamily: {
+              "display": ["Public Sans", "Noto Sans Arabic", "sans-serif"],
+              "sans": ["Public Sans", "Noto Sans Arabic", "sans-serif"],
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        /* Custom styles for consistent cross-browser rendering */
+        body { font-family: 'Public Sans', 'Noto Sans Arabic', sans-serif; }
+        
+        /* Smooth scrolling */
+        html { scroll-behavior: smooth; }
+        
+        /* Hide scrollbar for clean UI but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex justify-center antialiased">
+<!-- Main Mobile Container -->
+<div class="relative flex h-full min-h-screen w-full max-w-md flex-col bg-background-light dark:bg-background-dark group/design-root overflow-x-hidden shadow-2xl border-x border-slate-200 dark:border-slate-800">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-20 flex items-center bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md p-4 pb-2 border-b border-slate-200 dark:border-slate-800/50 transition-colors">
+<button aria-label="Go back" class="flex size-10 shrink-0 items-center justify-center rounded-full text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 active:scale-95 transition-all">
+<span class="material-symbols-outlined rtl:rotate-180">arrow_forward_ios</span>
+</button>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pe-10 font-display">إعدادات التطبيق</h2>
+</div>
+<!-- Scrollable Settings Content -->
+<div class="flex-1 overflow-y-auto p-4 space-y-6 pb-24 no-scrollbar">
+<!-- Section: General -->
+<section>
+<h3 class="text-slate-500 dark:text-slate-400 text-xs font-bold px-4 pb-2 uppercase tracking-widest font-display">عام</h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700/50 divide-y divide-slate-100 dark:divide-slate-700/50">
+<!-- Language Selector -->
+<div class="p-4">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-3 text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined text-slate-400">translate</span>
+<span class="text-sm font-medium font-display">اللغة</span>
+</div>
+</div>
+<!-- Segmented Control -->
+<div class="flex h-10 w-full items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-900/50 p-1">
+<label class="flex cursor-pointer h-full grow items-center justify-center rounded-md px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-slate-700 has-[:checked]:shadow-sm transition-all duration-200 text-slate-500 dark:text-slate-400 has-[:checked]:text-primary dark:has-[:checked]:text-primary font-medium text-sm">
+<span class="font-display">English</span>
+<input class="hidden" name="language" type="radio" value="en"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center rounded-md px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-slate-700 has-[:checked]:shadow-sm transition-all duration-200 text-slate-500 dark:text-slate-400 has-[:checked]:text-primary dark:has-[:checked]:text-primary font-medium text-sm">
+<span class="font-display">العربية</span>
+<input checked="" class="hidden" name="language" type="radio" value="ar"/>
+</label>
+</div>
+</div>
+<!-- Theme Selector -->
+<div class="p-4">
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-3 text-slate-700 dark:text-slate-200">
+<span class="material-symbols-outlined text-slate-400">contrast</span>
+<span class="text-sm font-medium font-display">المظهر</span>
+</div>
+</div>
+<div class="flex h-10 w-full items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-900/50 p-1">
+<label class="flex cursor-pointer h-full grow items-center justify-center rounded-md px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-slate-700 has-[:checked]:shadow-sm transition-all duration-200 text-slate-500 dark:text-slate-400 has-[:checked]:text-primary dark:has-[:checked]:text-primary font-medium text-sm gap-2">
+<span class="material-symbols-outlined text-[18px]">dark_mode</span>
+<span class="font-display">داكن</span>
+<input class="hidden" name="theme" type="radio" value="dark"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center rounded-md px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-slate-700 has-[:checked]:shadow-sm transition-all duration-200 text-slate-500 dark:text-slate-400 has-[:checked]:text-primary dark:has-[:checked]:text-primary font-medium text-sm gap-2">
+<span class="material-symbols-outlined text-[18px]">light_mode</span>
+<span class="font-display">فاتح</span>
+<input checked="" class="hidden" name="theme" type="radio" value="light"/>
+</label>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Notifications -->
+<section>
+<h3 class="text-slate-500 dark:text-slate-400 text-xs font-bold px-4 pb-2 uppercase tracking-widest font-display">الإشعارات</h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700/50 divide-y divide-slate-100 dark:divide-slate-700/50">
+<!-- Push Notification Item -->
+<div class="flex items-center justify-between p-4 group">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 dark:text-red-400">
+<span class="material-symbols-outlined text-[20px]">notifications_active</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-slate-100 font-display">إشعارات التطبيق</span>
+<span class="text-xs text-slate-500 dark:text-slate-400 font-display">تنبيهات فورية عن حالة الطلب</span>
+</div>
+</div>
+<!-- Toggle Switch -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary shadow-inner"></div>
+</label>
+</div>
+<!-- SMS Item -->
+<div class="flex items-center justify-between p-4 group">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 dark:text-blue-400">
+<span class="material-symbols-outlined text-[20px]">sms</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-slate-100 font-display">رسائل نصية (SMS)</span>
+<span class="text-xs text-slate-500 dark:text-slate-400 font-display">للتحديثات الهامة فقط</span>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary shadow-inner"></div>
+</label>
+</div>
+<!-- WhatsApp Item -->
+<div class="flex items-center justify-between p-4 group">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-500 dark:text-green-400">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-slate-100 font-display">واتساب</span>
+<span class="text-xs text-slate-500 dark:text-slate-400 font-display">تواصل مباشر مع السائق</span>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#25D366] shadow-inner"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Section: Data Usage -->
+<section>
+<h3 class="text-slate-500 dark:text-slate-400 text-xs font-bold px-4 pb-2 uppercase tracking-widest font-display">البيانات والأداء</h3>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700/50 divide-y divide-slate-100 dark:divide-slate-700/50">
+<!-- Low Data Mode -->
+<div class="flex items-center justify-between p-4 group">
+<div class="flex items-center gap-3">
+<div class="size-9 flex items-center justify-center text-slate-400 dark:text-slate-500">
+<span class="material-symbols-outlined">data_saver_on</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-slate-100 font-display">توفير البيانات</span>
+<span class="text-xs text-slate-500 dark:text-slate-400 font-display">تحميل صور بجودة أقل</span>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary shadow-inner"></div>
+</label>
+</div>
+<!-- Image Quality Dropdown -->
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-3">
+<div class="size-9 flex items-center justify-center text-slate-400 dark:text-slate-500">
+<span class="material-symbols-outlined">image</span>
+</div>
+<div class="flex flex-col">
+<span class="text-sm font-bold text-slate-900 dark:text-slate-100 font-display">جودة رفع الصور</span>
+</div>
+</div>
+<div class="relative w-32">
+<select class="appearance-none font-display bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 text-sm font-medium rounded-lg focus:ring-primary focus:border-primary block w-full p-2 ps-3 pe-8 transition-colors cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700">
+<option selected="">عالية</option>
+<option value="low">منخفضة</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 end-0 flex items-center px-2 text-slate-500">
+<span class="material-symbols-outlined text-[20px]">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Fixed Footer -->
+<div class="absolute bottom-0 w-full p-4 bg-background-light/95 dark:bg-background-dark/95 border-t border-slate-200 dark:border-slate-800 backdrop-blur-sm z-30">
+<button class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 group">
+<span class="font-display">حفظ الإعدادات</span>
+<span class="material-symbols-outlined text-[20px] group-hover:-translate-x-1 transition-transform">check</span>
+</button>
+<p class="text-center text-[10px] text-slate-400 mt-4 font-display opacity-60">Recycle24 v1.0.4</p>
+</div>
+</div>
+</body></html>

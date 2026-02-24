@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 - Video Tutorials</title>
+<!-- Fonts: Inter for numbers/latin, Noto Sans Arabic for Arabic text -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922", // Deep charcoal/black
+                        "surface-dark": "#192633", // Slightly lighter for cards
+                        "text-secondary": "#92adc9",
+                    },
+                    fontFamily: {
+                        "display": ['"Noto Sans Arabic"', '"Inter"', "sans-serif"],
+                        "body": ['"Noto Sans Arabic"', '"Inter"', "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hiding for horizontal scroll areas */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased selection:bg-primary selection:text-white pb-24">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-50 bg-[#111a22]/95 backdrop-blur-sm border-b border-white/5">
+<div class="flex items-center justify-between p-4 pb-2">
+<!-- Back Button (RTL context: points right visually to go 'back' to previous screen in flow, but conventionally arrows flip. Material arrow_forward points right) -->
+<button class="flex size-10 items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<h2 class="text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center">فيديو تعليمي</h2>
+<!-- Notification Button -->
+<button class="flex size-10 items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 left-2 block h-2 w-2 rounded-full bg-primary ring-2 ring-[#111a22]"></span>
+</button>
+</div>
+<!-- Search Bar -->
+<div class="px-4 py-2">
+<label class="relative flex w-full items-center">
+<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-text-secondary">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="block w-full rounded-lg border-none bg-surface-dark py-3 pr-10 pl-4 text-sm text-white placeholder-text-secondary focus:ring-2 focus:ring-primary shadow-sm" placeholder="بحث في المواضيع (Search topics)" type="text"/>
+</label>
+</div>
+<!-- Horizontal Filter Tabs -->
+<div class="flex gap-3 overflow-x-auto px-4 py-3 no-scrollbar">
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20">
+                الكل
+            </button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-surface-dark px-5 text-sm font-medium text-text-secondary hover:bg-surface-dark/80 hover:text-white transition-colors">
+                الملف الشخصي
+            </button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-surface-dark px-5 text-sm font-medium text-text-secondary hover:bg-surface-dark/80 hover:text-white transition-colors">
+                التداول
+            </button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-surface-dark px-5 text-sm font-medium text-text-secondary hover:bg-surface-dark/80 hover:text-white transition-colors">
+                الأمان
+            </button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-surface-dark px-5 text-sm font-medium text-text-secondary hover:bg-surface-dark/80 hover:text-white transition-colors">
+                السوق
+            </button>
+</div>
+</div>
+<!-- Main Content -->
+<main class="flex flex-col gap-6 p-4">
+<!-- Hero Video Section -->
+<section>
+<div class="group relative overflow-hidden rounded-xl bg-surface-dark shadow-md ring-1 ring-white/5">
+<!-- Video Thumbnail -->
+<div class="aspect-video w-full bg-gray-800 bg-cover bg-center relative" data-alt="Industrial worker looking at tablet in a factory setting with blue overlay" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCqzlT7SBxI2NX5b2Q5TLBEqM3u0NR2oXaehQ6AOgUOevOuNxjAXDJuhL1IEqR53mkd9Fppo1I0nuRT_VQrWak_T0Bs__pmW2JFhM9l-ckqR6eppNUw7AnveZTO-Y8R7KgklcdO3uyTFPI14v8qZrkhALeycUXVu_BxhshPytGo_uVAqkJsLmqH5zw_C39yrjthxtV6iua5RoYvVs2592P-3n46bLsjVdMAlokKV_Yi1BrjmtGHeGRkBcAgIZbyVqCtw4nFJvZmhHM');">
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+<!-- Play Button Overlay -->
+<div class="absolute inset-0 flex items-center justify-center opacity-90 group-hover:scale-110 transition-transform duration-300">
+<div class="flex h-14 w-14 items-center justify-center rounded-full bg-primary/90 text-white shadow-xl backdrop-blur-sm">
+<span class="material-symbols-outlined" style="font-size: 32px;">play_arrow</span>
+</div>
+</div>
+<!-- Duration Badge -->
+<div class="absolute bottom-3 left-3 rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white backdrop-blur-md font-sans">
+                        4:20
+                    </div>
+</div>
+<!-- Card Content -->
+<div class="p-4">
+<div class="flex items-start justify-between gap-4">
+<div class="flex flex-col gap-1">
+<h3 class="text-lg font-bold text-white leading-tight">كيف تبدأ التداول في Recycle24</h3>
+<p class="text-sm text-text-secondary line-clamp-1">دليل شامل للمبتدئين حول استخدام المنصة</p>
+</div>
+<button class="shrink-0 text-text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined">bookmark_border</span>
+</button>
+</div>
+<div class="mt-3">
+<button class="w-full rounded-lg bg-primary/10 py-2 text-sm font-bold text-primary hover:bg-primary hover:text-white transition-colors">
+                            شاهد الآن
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Latest Videos Grid -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-bold text-white">أحدث الفيديوهات</h3>
+<button class="text-sm text-primary font-medium hover:text-primary/80">عرض الكل</button>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<!-- Video Item 1 -->
+<div class="group flex flex-col gap-2">
+<div class="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-surface-dark">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105" data-alt="Close up of metal scraps and industrial machinery parts" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBgMXdR6zn9KdGa9pvftngLYOnqEsC9I1Tju8NUJYIH-q46Q_GWpfZ3C9GAaGCaYlORjA860OSYBOx9pietiVVbSWMeaWkls3ONoK0NwrWE0-5CobYIZ5frVHbEOF9q7eTmEzVMlI38k8a4aOIe9M3h-PGW_w658wdVxgrykoPUuiAk8KuxW-fZ6lDVTbQtTMYPidkmIXOMZy17J7UUNZxpqbBdmvnRFempkGigP38WlhfOZPudDtHsccOGvAZqvtcMSE2CTyAyYbs');"></div>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+<!-- Play Icon Small -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20">
+<span class="material-symbols-outlined">play_arrow</span>
+</div>
+</div>
+<!-- Duration -->
+<div class="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white font-sans">
+                            3:45
+                        </div>
+</div>
+<div class="flex items-start justify-between gap-2">
+<h4 class="text-sm font-bold text-white line-clamp-2 leading-snug">كيفية التحقق من ملف المصنع</h4>
+<button class="shrink-0 text-text-secondary hover:text-white mt-0.5">
+<span class="material-symbols-outlined text-[20px]">bookmark_border</span>
+</button>
+</div>
+<p class="text-xs text-text-secondary mt-[-4px]">الملف الشخصي</p>
+</div>
+<!-- Video Item 2 -->
+<div class="group flex flex-col gap-2">
+<div class="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-surface-dark">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105" data-alt="Financial charts on a screen showing stock market data" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAV05Qcxj_aCRmJfgawpQxd_RcA-gkSK0Ib7puUJ3BWD2kYGpGjAACebNG8AAVR1R_dMURxeifPBFdiWKZqZjnFZ_Qosp4v3CCGMmIvmYtBaH4Hr4rxLZGvHw2YPosUtxlf9tFR0pIAL3A8pzt_zd0RU-VtIQAwsQ618KxB-lIJPyYtqK4jRsmWq0rTj45BkasI005l99k4MKcPF_i0w9fe7FWYGrFZRC7MYNOVZAt-tCAWODMk3s_NxCqNbUeeEaoAirMbM3jjhGE');"></div>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20">
+<span class="material-symbols-outlined">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white font-sans">
+                            5:10
+                        </div>
+</div>
+<div class="flex items-start justify-between gap-2">
+<h4 class="text-sm font-bold text-white line-clamp-2 leading-snug">فهم مخططات LME العالمية</h4>
+<button class="shrink-0 text-text-secondary hover:text-white mt-0.5">
+<span class="material-symbols-outlined text-[20px]">bookmark_border</span>
+</button>
+</div>
+<p class="text-xs text-text-secondary mt-[-4px]">التداول</p>
+</div>
+<!-- Video Item 3 -->
+<div class="group flex flex-col gap-2">
+<div class="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-surface-dark">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105" data-alt="Person holding a geiger counter device near metal waste" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCde97OU34cKLqmgoh7vNt6FayGemCOlbjIOKZxvpWTQ1uife1dw6c4SBzrjpLJ2i0eAmyXAJvfeSf7Fg8i_oA7_kvn8AFSrhyOEuTHImR3pzPyiS4mcUzjsjYoHDzQmkXBE_DSuXLn4zXfUIUNeAYk_GT9Df9yhO87Ly4lfv3Uc7ercM_oHWyvTdhnZFgAKPAAgPY0DIo_e8EOvOugfm7ozt6eFcleZ_MKPCLep8aAKRQuLF7xSasxK3reOnSKoy7l-0rSBKN7jc8');"></div>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20">
+<span class="material-symbols-outlined">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white font-sans">
+                            2:30
+                        </div>
+</div>
+<div class="flex items-start justify-between gap-2">
+<h4 class="text-sm font-bold text-white line-clamp-2 leading-snug">تحديد الخردة المشعة والتعامل معها</h4>
+<button class="shrink-0 text-text-secondary hover:text-white mt-0.5">
+<span class="material-symbols-outlined text-[20px]">bookmark_border</span>
+</button>
+</div>
+<p class="text-xs text-text-secondary mt-[-4px]">الأمان</p>
+</div>
+<!-- Video Item 4 -->
+<div class="group flex flex-col gap-2">
+<div class="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-surface-dark">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105" data-alt="Secure digital payment concept with padlock icon on smartphone" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCKS_b8AvE4mZsYbd-fMkkTpXiNOkXvkFEPk-Sq29i70Mn-h9OET5cHTSXXFMEJTskKDBr-us97vQz3NyC3SMA6dzVNvrb-amLWnhiSa7GnLeJkldYPjBoQr0TA6fUxXfirJie8m7Akf7PMMqkyKGmp-gI3CRKnevsesKizL4MxLvb0YZhplf5EcFkDCFCHtIIRpWyKJkDPAzHrY7aPnBkAXAod6t9OVqZsOnwKKVWWaeHttXwQh3u9CSFRgIbkd-3m6xPyf4g28MY');"></div>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm border border-white/20">
+<span class="material-symbols-outlined">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-2 left-2 rounded bg-black/70 px-1.5 py-0.5 text-[10px] font-bold text-white font-sans">
+                            1:15
+                        </div>
+</div>
+<div class="flex items-start justify-between gap-2">
+<h4 class="text-sm font-bold text-white line-clamp-2 leading-snug">طرق الدفع الآمنة المتاحة</h4>
+<button class="shrink-0 text-text-secondary hover:text-white mt-0.5">
+<span class="material-symbols-outlined text-[20px]">bookmark_border</span>
+</button>
+</div>
+<p class="text-xs text-text-secondary mt-[-4px]">المالية</p>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="mt-2">
+<div class="flex items-center justify-between rounded-xl bg-gradient-to-l from-primary/20 to-surface-dark p-4 border border-primary/20">
+<div class="flex flex-col">
+<h3 class="font-bold text-white">هل تحتاج مساعدة؟</h3>
+<p class="text-xs text-text-secondary mt-1">تواصل مع فريق الدعم الفني مباشرة</p>
+</div>
+<button class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[18px]">headset_mic</span>
+                    الدعم
+                </button>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar (iOS Style) -->
+<div class="fixed bottom-0 left-0 right-0 z-50 bg-[#111a22]/95 border-t border-white/5 pb-5 pt-2 backdrop-blur-lg">
+<div class="flex items-center justify-around px-2">
+<button class="flex flex-col items-center gap-1 p-2 text-text-secondary hover:text-white group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">home</span>
+<span class="text-[10px] font-medium">الرئيسية</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-text-secondary hover:text-white group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">query_stats</span>
+<span class="text-[10px] font-medium">السوق</span>
+</button>
+<!-- Active State -->
+<button class="flex flex-col items-center gap-1 p-2 text-primary group relative">
+<div class="absolute -top-2 h-1 w-8 rounded-b-lg bg-primary shadow-[0_0_10px_rgba(19,127,236,0.6)]"></div>
+<span class="material-symbols-outlined fill-current">smart_display</span>
+<span class="text-[10px] font-bold">تعليم</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-text-secondary hover:text-white group">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">person</span>
+<span class="text-[10px] font-medium">حسابي</span>
+</button>
+</div>
+</div>
+</body></html>

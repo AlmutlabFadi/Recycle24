@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 - Auctions Lobby</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "primary-dark": "#0b63bd",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1a2634",
+                        "surface-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ['"IBM Plex Sans Arabic"', "Inter", "sans-serif"],
+                        "body": ['"IBM Plex Sans Arabic"', "Inter", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom Scrollbar for hidden horizontal scrolling */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-gray-900 dark:text-gray-100 font-body antialiased selection:bg-primary selection:text-white min-h-screen flex flex-col">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 bg-white/90 dark:bg-background-dark/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
+<div class="flex items-center justify-between p-4 h-16">
+<!-- Profile Avatar -->
+<div class="flex items-center gap-3">
+<button class="relative group">
+<div class="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 bg-cover bg-center ring-2 ring-transparent group-hover:ring-primary transition-all duration-300" data-alt="User profile avatar" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA71awnrBOo_SPEmEWUkHLBz2jVHvRfGcIG_h2ocs51mIwGG38oNC_yRvjFOIwMPGOCeQ4yuMUGxzOA_qcHYu-xuaMdDSWi5LbhDxbiRtkVyU_DsN3j3MyLRazfkLlxhH9mhqEJwtQDx83ddgAFrw9Pq8ceCE_8ncl1Fp6blBrNsJtqz80zrKaVEIHmzwmvzUd301uaJlLshNs26UjN8IXMLyqEZhFLt4j5WGbbo1djUFOup-qMRRlfz4HsAvcPxD2eDn-2zOGeBg4');"></div>
+<span class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white dark:border-background-dark"></span>
+</button>
+</div>
+<!-- Title -->
+<h1 class="text-xl font-bold text-gray-900 dark:text-white absolute left-1/2 -translate-x-1/2">
+                صالة المزادات
+            </h1>
+<!-- Currency Toggle -->
+<div class="flex items-center justify-end">
+<div class="flex items-center bg-gray-100 dark:bg-surface-dark rounded-lg p-1 border border-gray-200 dark:border-gray-700">
+<button class="px-2 py-1 text-xs font-bold rounded text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">USD</button>
+<div class="w-px h-3 bg-gray-300 dark:bg-gray-600 mx-1"></div>
+<button class="px-2 py-1 text-xs font-bold rounded bg-white dark:bg-gray-700 text-primary shadow-sm">ل.س</button>
+</div>
+</div>
+</div>
+<!-- Filter Tabs -->
+<div class="px-4 pb-3 pt-1">
+<div class="flex p-1 bg-gray-100 dark:bg-surface-dark rounded-xl">
+<label class="flex-1 text-center cursor-pointer">
+<input checked="" class="peer sr-only" name="filter" type="radio" value="live"/>
+<span class="block py-2 text-sm font-medium text-gray-500 dark:text-gray-400 rounded-lg transition-all duration-200 peer-checked:bg-white dark:peer-checked:bg-gray-700 peer-checked:text-primary peer-checked:shadow-sm">
+                        مباشر <span class="hidden sm:inline-block w-1.5 h-1.5 bg-red-500 rounded-full mr-1 mb-0.5 animate-pulse"></span>
+</span>
+</label>
+<label class="flex-1 text-center cursor-pointer">
+<input class="peer sr-only" name="filter" type="radio" value="ending"/>
+<span class="block py-2 text-sm font-medium text-gray-500 dark:text-gray-400 rounded-lg transition-all duration-200 peer-checked:bg-white dark:peer-checked:bg-gray-700 peer-checked:text-primary peer-checked:shadow-sm">
+                        ينتهي قريباً
+                    </span>
+</label>
+<label class="flex-1 text-center cursor-pointer">
+<input class="peer sr-only" name="filter" type="radio" value="upcoming"/>
+<span class="block py-2 text-sm font-medium text-gray-500 dark:text-gray-400 rounded-lg transition-all duration-200 peer-checked:bg-white dark:peer-checked:bg-gray-700 peer-checked:text-primary peer-checked:shadow-sm">
+                        قادم
+                    </span>
+</label>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+<!-- Market Stats Summary -->
+<div class="grid grid-cols-2 gap-3 mb-2">
+<div class="bg-white dark:bg-surface-dark p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">المزادات النشطة</p>
+<p class="text-lg font-bold text-gray-900 dark:text-white">24</p>
+</div>
+<div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg">gavel</span>
+</div>
+</div>
+<div class="bg-white dark:bg-surface-dark p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm flex items-center justify-between">
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400 mb-1">إجمالي التداول</p>
+<p class="text-lg font-bold text-gray-900 dark:text-white font-mono">1.2M</p>
+</div>
+<div class="h-8 w-8 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
+<span class="material-symbols-outlined text-lg">trending_up</span>
+</div>
+</div>
+</div>
+<!-- High Value Auction (Featured) -->
+<div class="relative group rounded-xl overflow-hidden bg-white dark:bg-surface-dark shadow-md border border-amber-500/30 dark:border-amber-500/20">
+<div class="absolute top-0 right-0 z-10 bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">star</span> مميز
+            </div>
+<div class="flex flex-col sm:flex-row">
+<!-- Image Section -->
+<div class="sm:w-1/3 h-40 sm:h-auto relative bg-gray-200 dark:bg-gray-800">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Close up of copper wiring scrap" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD4_DukJWSIumd8P4z4Fqn6kn67GPa8WpP9lqxkzySlJDgqx_RoAvbUuiJjWGV-HKcrfSiZGw65ScLV7vI2zOaixeyxB2fLZLmcTD9aRqNtjkhGbRAEr4q6Hz_W-n1OfeFlwE9a7vbcCB927u4lyakfHHyC5Q7hloNzo_e7t2Y3BuYB6cqrf4GEYI5pfRDQHBJxh5sPGeaP3ihieQvSvgqldFVUZbtjHfBywn4Vn1OV_sdi79dnfPWDBveMLd4B9gjQjLKh-wCRi-U');">
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent sm:bg-gradient-to-l"></div>
+<div class="absolute bottom-3 right-3 sm:bottom-auto sm:top-3 sm:right-3">
+<span class="bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+<span class="material-symbols-outlined text-sm text-amber-400">bolt</span> نحاس أحمر
+                         </span>
+</div>
+</div>
+<!-- Content Section -->
+<div class="p-4 sm:w-2/3 flex flex-col justify-between">
+<div>
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-lg font-bold text-gray-900 dark:text-white leading-tight">نحاس أحمر ممتاز (سلك)</h3>
+<span class="bg-red-500/10 text-red-500 text-xs px-2 py-0.5 rounded font-medium border border-red-500/20 animate-pulse">مباشر</span>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-4">
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400">الكمية</p>
+<p class="text-sm font-semibold text-gray-900 dark:text-gray-200">500 كغ</p>
+</div>
+<div>
+<p class="text-xs text-gray-500 dark:text-gray-400">أعلى سعر حالياً</p>
+<p class="text-sm font-bold text-primary font-mono">45,000,000 ل.س</p>
+</div>
+</div>
+<!-- Progress Bar for Timer urgency -->
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full mb-2 overflow-hidden">
+<div class="bg-gradient-to-l from-red-500 to-orange-500 h-full rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+<div class="flex items-center text-red-500 font-mono font-bold text-sm">
+<span class="material-symbols-outlined text-base mr-1 ml-1">timer</span>
+                            00:14:59
+                        </div>
+<button class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center gap-2">
+<span>زايد الآن</span>
+<span class="material-symbols-outlined text-sm">gavel</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Normal Auction Card (Live) -->
+<div class="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col gap-3">
+<div class="flex items-center gap-3">
+<div class="h-12 w-12 rounded-lg bg-gray-100 dark:bg-gray-800 bg-cover bg-center shrink-0 border border-gray-200 dark:border-gray-700" data-alt="Recycled plastic bottles crushed" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDIFeU5We0ply_2NmKkWZEuSdQRDpK05s4FsTDN3-bEsIWiab6mLkDGpi3LTWuJCFXf6LGGveTllifaaJ4SQ5rfNGJrixL5X4Gz2aztBFC2g-7AuP4HTQ9M4o_tJEzNR_O3zG2ZmkPQOkk37dkoelYz4rEbtuKBeoukufiE03Mn2i0NGrPbLC9rm9U8WTVRLfI5flBxHMnGVl6yto2U-xqLjxfgkVke83pZK2SeU9wNwXG9UfZuaAM1chMRgDz8jm5lafpfbwaHEFU');"></div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-gray-900 dark:text-white truncate">بلاستيك HDPE شفاف</h3>
+<span class="material-symbols-outlined text-blue-400 text-sm" title="Verified Seller">verified</span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">صناعي</span>
+<span class="text-xs text-gray-400">• دمشق</span>
+</div>
+</div>
+</div>
+<div class="bg-background-light dark:bg-background-dark rounded-lg p-3 grid grid-cols-2 gap-px divide-x divide-x-reverse divide-gray-200 dark:divide-gray-700">
+<div class="px-2 text-center">
+<span class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">الوزن الكلي</span>
+<span class="block text-sm font-bold text-gray-900 dark:text-gray-200">2.5 طن</span>
+</div>
+<div class="px-2 text-center">
+<span class="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">السعر الحالي</span>
+<span class="block text-sm font-bold text-primary font-mono">12,500,000 ل.س</span>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-xs text-gray-500">ينتهي خلال</span>
+<span class="text-sm font-bold text-orange-500 font-mono">01:45:20</span>
+</div>
+<button class="flex-1 mr-4 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 text-sm font-bold py-2 rounded-lg transition-colors flex justify-center items-center gap-2">
+                    عرض التفاصيل
+                </button>
+</div>
+</div>
+<!-- Normal Auction Card (Ending Soon - Urgent) -->
+<div class="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-red-500/20 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-1 h-full bg-red-500"></div>
+<div class="flex items-start justify-between mb-3 pl-2 pr-2">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300">
+<span class="material-symbols-outlined">dataset</span>
+</div>
+<div>
+<h3 class="font-bold text-gray-900 dark:text-white text-sm">خردة ألمنيوم مخلوط</h3>
+<p class="text-xs text-gray-500">شركة الاتحاد للمعادن</p>
+</div>
+</div>
+<div class="text-red-500 font-bold text-xs animate-pulse flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">local_fire_department</span>
+                    ساخن
+                </div>
+</div>
+<div class="flex items-end justify-between mb-3">
+<div>
+<p class="text-2xl font-bold text-gray-900 dark:text-white font-mono">8,200,000</p>
+<p class="text-xs text-gray-500 mt-0.5">ليرة سورية / طن</p>
+</div>
+<div class="text-left">
+<div class="text-xs text-gray-500 mb-1">الوقت المتبقي</div>
+<div class="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2 py-1 rounded font-mono font-bold text-sm">
+                        00:03:12
+                    </div>
+</div>
+</div>
+<button class="w-full bg-primary hover:bg-primary-dark text-white font-bold py-2.5 rounded-lg shadow-md shadow-primary/20 transition-all active:scale-95 flex justify-center items-center gap-2">
+                زايد بـ 8,250,000
+                <span class="material-symbols-outlined text-sm">arrow_upward</span>
+</button>
+</div>
+<!-- Upcoming Auction Card -->
+<div class="group bg-white dark:bg-surface-dark rounded-xl p-0 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col overflow-hidden">
+<div class="h-28 w-full bg-cover bg-center relative" data-alt="Pile of steel bars scrap" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDmrlaF4-Zgiy0YtR1sb6n950hEnpXYaa3u7R_gITgDvfwQka7VoNAKmMpqZFn98lRW6C9exMgwUSA7Cr2isDJgG_XYMZ4QhpS5EkFlW41mdeqTC3J3VEuscJFnlUaS1J4-OsUrdE78Jwiik2zKqDfkFyaCuWSFtlesI48maurY361BMlydKaYdGv4nrATE9lTyn8VGjDgTqAMU8wh6khA-CFpx7xY_muq57NDMZWWow_T0dORs3tpNpyf_UIBY4pU2qsrJK7Un9iQ');">
+<div class="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all"></div>
+<div class="absolute bottom-2 right-2">
+<span class="bg-black/60 backdrop-blur text-white text-xs px-2 py-1 rounded">حديد تسليح</span>
+</div>
+<div class="absolute top-2 left-2">
+<span class="bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">قادم</span>
+</div>
+</div>
+<div class="p-4">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-bold text-gray-900 dark:text-white text-base">حديد سكراب (كميات كبيرة)</h3>
+</div>
+<div class="flex items-center gap-4 mb-4 text-sm">
+<div class="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+<span class="material-symbols-outlined text-base">scale</span>
+<span>15 طن</span>
+</div>
+<div class="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+<span class="material-symbols-outlined text-base">attach_money</span>
+<span>يبدأ بـ $5,000</span>
+</div>
+</div>
+<div class="flex items-center justify-between gap-3">
+<div class="text-xs text-gray-500">
+                        يبدأ في <span class="text-gray-900 dark:text-white font-bold">12 أيار، 09:00 ص</span>
+</div>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 hover:border-primary text-gray-600 dark:text-gray-300 hover:text-primary transition-colors text-sm font-medium">
+<span class="material-symbols-outlined text-lg">notifications_active</span>
+                        ذكرني
+                    </button>
+</div>
+</div>
+</div>
+<!-- Section Divider -->
+<div class="relative py-2 flex items-center justify-center">
+<div class="h-px bg-gray-200 dark:bg-gray-800 w-full absolute"></div>
+<span class="relative bg-background-light dark:bg-background-dark px-4 text-xs text-gray-400 font-medium">نهاية القائمة</span>
+</div>
+</main>
+<!-- Floating Action Button (Filter) -->
+<button class="fixed bottom-24 left-4 z-40 bg-gray-900 dark:bg-white text-white dark:text-black p-3 rounded-full shadow-lg shadow-black/20 hover:scale-105 transition-transform flex items-center justify-center">
+<span class="material-symbols-outlined">tune</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-surface-dark border-t border-gray-200 dark:border-gray-800 pb-safe pt-2 px-4 z-50">
+<div class="flex items-center justify-around h-16 pb-2">
+<button class="flex flex-col items-center justify-center w-16 h-full text-primary">
+<span class="material-symbols-outlined text-2xl mb-1">gavel</span>
+<span class="text-[10px] font-medium">المزادات</span>
+</button>
+<button class="flex flex-col items-center justify-center w-16 h-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+<span class="material-symbols-outlined text-2xl mb-1">history_edu</span>
+<span class="text-[10px] font-medium">مزايداتي</span>
+</button>
+<!-- Center Add Button Placeholder (Optional for selling) -->
+<button class="flex flex-col items-center justify-center w-12 h-12 -mt-6 bg-gradient-to-br from-primary to-blue-600 rounded-full shadow-lg shadow-blue-500/30 text-white hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-2xl">add</span>
+</button>
+<button class="flex flex-col items-center justify-center w-16 h-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+<span class="material-symbols-outlined text-2xl mb-1">account_balance_wallet</span>
+<span class="text-[10px] font-medium">المحفظة</span>
+</button>
+<button class="flex flex-col items-center justify-center w-16 h-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+<span class="material-symbols-outlined text-2xl mb-1">person</span>
+<span class="text-[10px] font-medium">حسابي</span>
+</button>
+</div>
+</nav>
+</body></html>

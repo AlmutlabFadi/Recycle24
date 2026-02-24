@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>تنبيهات الأسعار - Recycle24</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "Noto Sans Arabic", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', 'Noto Sans Arabic', sans-serif;
+        }
+        .ios-toggle:checked ~ .toggle-bg {
+            background-color: #137fec;
+        }
+        .ios-toggle:checked ~ .toggle-dot {
+            transform: translateX(-20px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased">
+<!-- Wrapper for Mobile View -->
+<div class="relative flex h-screen max-w-md mx-auto flex-col bg-background-light dark:bg-background-dark overflow-hidden border-x border-slate-200 dark:border-slate-800 shadow-2xl">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-30 flex items-center justify-between bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 py-4 border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined text-2xl">menu</span>
+</button>
+</div>
+<h1 class="text-lg font-bold tracking-tight">تنبيهات الأسعار</h1>
+<div class="flex items-center gap-1">
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined text-2xl">settings</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto px-4 py-6 space-y-4 pb-24">
+<!-- Market Update Banner -->
+<div class="bg-primary/10 border border-primary/20 rounded-xl p-4 flex items-center justify-between mb-2">
+<div class="flex items-center gap-3">
+<div class="bg-primary text-white p-2 rounded-lg">
+<span class="material-symbols-outlined text-sm">update</span>
+</div>
+<div>
+<p class="text-xs text-primary font-medium">آخر تحديث للأسواق العالمية</p>
+<p class="text-sm font-bold">منذ دقيقتين</p>
+</div>
+</div>
+<button class="text-primary text-xs font-bold underline">تحديث</button>
+</div>
+<!-- List Section Title -->
+<h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 px-1 uppercase tracking-wider">التنبيهات النشطة</h3>
+<!-- Alert Card 1: Steel LME -->
+<div class="bg-white dark:bg-[#1c2a38] rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-800/50 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-green-500/10 text-green-500 shrink-0 w-12 h-12">
+<span class="material-symbols-outlined text-2xl">trending_up</span>
+</div>
+<div class="flex flex-col">
+<p class="text-base font-bold leading-tight">حديد سكراب LME</p>
+<div class="flex items-center gap-1 mt-1 text-slate-500 dark:text-slate-400">
+<span class="text-sm font-medium">أكبر من</span>
+<span class="text-sm font-bold text-primary">$450 / طن</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-12 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg transition-colors duration-200 ease-in-out"></div>
+<div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out toggle-dot"></div>
+</label>
+</div>
+</div>
+<!-- Alert Card 2: Gold -->
+<div class="bg-white dark:bg-[#1c2a38] rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-800/50 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 shrink-0 w-12 h-12">
+<span class="material-symbols-outlined text-2xl">trending_down</span>
+</div>
+<div class="flex flex-col">
+<p class="text-base font-bold leading-tight">ذهب (عيار 24)</p>
+<div class="flex items-center gap-1 mt-1 text-slate-500 dark:text-slate-400">
+<span class="text-sm font-medium">أقل من</span>
+<span class="text-sm font-bold text-primary">$2,000 / أونصة</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-12 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg transition-colors duration-200 ease-in-out"></div>
+<div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out toggle-dot"></div>
+</label>
+</div>
+</div>
+<!-- Alert Card 3: Copper -->
+<div class="bg-white dark:bg-[#1c2a38] rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-800/50 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-red-500/10 text-red-500 shrink-0 w-12 h-12">
+<span class="material-symbols-outlined text-2xl">trending_down</span>
+</div>
+<div class="flex flex-col">
+<p class="text-base font-bold leading-tight">نحاس أحمر ممتاز</p>
+<div class="flex items-center gap-1 mt-1 text-slate-500 dark:text-slate-400">
+<span class="text-sm font-medium">أقل من</span>
+<span class="text-sm font-bold text-primary">$8,000 / طن</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-12 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg transition-colors duration-200 ease-in-out"></div>
+<div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out toggle-dot"></div>
+</label>
+</div>
+</div>
+<!-- Alert Card 4: Aluminum -->
+<div class="bg-white dark:bg-[#1c2a38] rounded-xl p-4 shadow-sm border border-slate-200 dark:border-slate-800/50 flex items-center justify-between opacity-70">
+<div class="flex items-center gap-4">
+<div class="flex items-center justify-center rounded-lg bg-slate-500/10 text-slate-500 dark:text-slate-400 shrink-0 w-12 h-12">
+<span class="material-symbols-outlined text-2xl">trending_up</span>
+</div>
+<div class="flex flex-col">
+<p class="text-base font-bold leading-tight">ألمنيوم خردة</p>
+<div class="flex items-center gap-1 mt-1 text-slate-500 dark:text-slate-400">
+<span class="text-sm font-medium">أكبر من</span>
+<span class="text-sm font-bold text-primary">$2,100 / طن</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-xl">edit</span>
+</button>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only ios-toggle" type="checkbox"/>
+<div class="w-12 h-6 bg-slate-200 dark:bg-slate-700 rounded-full toggle-bg transition-colors duration-200 ease-in-out"></div>
+<div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out toggle-dot"></div>
+</label>
+</div>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 left-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-xl hover:bg-primary/90 active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<!-- Bottom Tab Bar (iOS style) -->
+<nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/90 dark:bg-[#111a22]/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 flex justify-around py-3 px-2 z-50">
+<div class="flex flex-col items-center text-slate-400">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] mt-1">الرئيسية</span>
+</div>
+<div class="flex flex-col items-center text-slate-400">
+<span class="material-symbols-outlined">storefront</span>
+<span class="text-[10px] mt-1">السوق</span>
+</div>
+<div class="flex flex-col items-center text-primary">
+<span class="material-symbols-outlined font-bold">notifications_active</span>
+<span class="text-[10px] mt-1 font-bold">التنبيهات</span>
+</div>
+<div class="flex flex-col items-center text-slate-400">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] mt-1">حسابي</span>
+</div>
+</nav>
+<!-- Home Indicator (iOS style) -->
+<div class="fixed bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-slate-300 dark:bg-slate-700 rounded-full z-[60]"></div>
+</div>
+</body></html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trader Verification - Recycle24</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;family=Noto+Sans+Arabic:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#192633",
+                        "border-dark": "#324d67",
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans Arabic", "Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Hide scrollbar for clean look */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased selection:bg-primary/30">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden pb-24 mx-auto max-w-md bg-white dark:bg-background-dark shadow-2xl">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between px-4 py-3 sticky top-0 z-50 bg-white/90 dark:bg-background-dark/90 backdrop-blur-md border-b border-slate-100 dark:border-border-dark/30 transition-colors duration-300">
+<button class="flex items-center justify-center w-10 h-10 -mr-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/5 active:scale-95 transition-all text-slate-900 dark:text-white">
+<span class="material-symbols-outlined" style="font-size: 24px;">arrow_forward</span>
+</button>
+<h1 class="text-lg font-bold leading-tight tracking-tight text-center flex-1 pl-8">تحقق التاجر</h1>
+</header>
+<!-- Stepper Progress -->
+<div class="w-full px-6 py-6 bg-white dark:bg-background-dark">
+<div class="relative flex items-center justify-between">
+<!-- Connecting Line -->
+<div class="absolute top-[14px] left-4 right-4 h-[2px] bg-slate-100 dark:bg-border-dark -z-0">
+<!-- Active Line Progress (33% for Step 1 done/active) -->
+<div class="h-full w-[0%] bg-primary rounded-full"></div>
+</div>
+<!-- Step 1: Identity -->
+<div class="relative z-10 flex flex-col items-center gap-2 group cursor-pointer">
+<div class="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white shadow-[0_0_0_4px_rgba(255,255,255,1)] dark:shadow-[0_0_0_4px_rgba(16,25,34,1)] ring-2 ring-primary/20 ring-offset-2 ring-offset-white dark:ring-offset-background-dark transition-all">
+<span class="text-sm font-bold">1</span>
+</div>
+<span class="text-xs font-bold text-primary">الهوية</span>
+</div>
+<!-- Step 2: License -->
+<div class="relative z-10 flex flex-col items-center gap-2 group opacity-50">
+<div class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-border-dark text-slate-500 dark:text-slate-400 shadow-[0_0_0_4px_rgba(255,255,255,1)] dark:shadow-[0_0_0_4px_rgba(16,25,34,1)] transition-all">
+<span class="text-sm font-bold">2</span>
+</div>
+<span class="text-xs font-medium text-slate-500 dark:text-slate-400">الرخصة</span>
+</div>
+<!-- Step 3: Location -->
+<div class="relative z-10 flex flex-col items-center gap-2 group opacity-50">
+<div class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-border-dark text-slate-500 dark:text-slate-400 shadow-[0_0_0_4px_rgba(255,255,255,1)] dark:shadow-[0_0_0_4px_rgba(16,25,34,1)] transition-all">
+<span class="text-sm font-bold">3</span>
+</div>
+<span class="text-xs font-medium text-slate-500 dark:text-slate-400">الموقع</span>
+</div>
+</div>
+</div>
+<!-- Hero Card -->
+<div class="px-4 mb-2">
+<div class="relative w-full overflow-hidden rounded-2xl bg-surface-dark group shadow-lg ring-1 ring-white/5">
+<!-- Background Image -->
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105" data-alt="Industrial metal texture background with sparks" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBfRrvLnyfDKXelLhQoyx6mJRDvaHWd-tdhEDhiCjKMPA7YxPJnG4B2v0w6uFt4tGlipFuZUwXIiE42Ail0iaYRVYdFI0zJQwGXKfgtKF_nXkx3ofFPR8v1VpqrBbMqHhNCfWwrWSM5Fgishe9F_aihQSNmOWvOVEnzRjcYCvLWSTEbP2ZM35o0VegU1E-XyBtfzP5hcQULlGO6dspmnXQpgdX7vZqce_iU5M84W3FC3wckdPuKehprd5TwYYEtimx7IiD0Yho9zJU');">
+</div>
+<!-- Gradient Overlay -->
+<div class="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/80 to-primary/20 mix-blend-multiply"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-background-dark via-transparent to-transparent"></div>
+<!-- Content -->
+<div class="relative flex flex-col justify-end min-h-[220px] p-6">
+<div class="flex items-center gap-2 mb-3 bg-white/10 w-fit px-3 py-1 rounded-full backdrop-blur-sm border border-white/10">
+<span class="material-symbols-outlined filled text-yellow-400 text-[18px]">verified</span>
+<span class="text-white text-xs font-bold tracking-wide">كن شريكاً معتمداً</span>
+</div>
+<h2 class="text-white text-2xl font-black leading-tight mb-2 tracking-tight">
+                        افتح صفقات المصانع الحصرية وعزز سمعتك
+                    </h2>
+<p class="text-slate-300 text-sm font-normal leading-relaxed max-w-[90%]">
+                        أكمل إجراءات التحقق لتصبح تاجراً موثوقاً في السوق السوري.
+                    </p>
+</div>
+</div>
+</div>
+<!-- Benefits Section -->
+<div class="px-4 py-6 flex flex-col gap-5">
+<div class="flex flex-col gap-1 px-1">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">لماذا يجب عليك التحقق؟</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">احصل على هذه المزايا الحصرية فور الانتهاء</p>
+</div>
+<div class="grid gap-3">
+<!-- Benefit Card 1 -->
+<div class="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-border-dark shadow-sm hover:border-primary/50 transition-colors">
+<div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-primary shrink-0">
+<span class="material-symbols-outlined filled text-[24px]">trending_up</span>
+</div>
+<div class="flex flex-col gap-1">
+<h4 class="text-base font-bold text-slate-900 dark:text-white leading-tight">ظهور أعلى في البحث</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                            يتم إعطاء الأولوية لملفك الشخصي في نتائج البحث للمشترين والمصانع.
+                        </p>
+</div>
+</div>
+<!-- Benefit Card 2 -->
+<div class="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-border-dark shadow-sm hover:border-primary/50 transition-colors">
+<div class="flex items-center justify-center w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 shrink-0">
+<span class="material-symbols-outlined filled text-[24px]">verified_user</span>
+</div>
+<div class="flex flex-col gap-1">
+<h4 class="text-base font-bold text-slate-900 dark:text-white leading-tight">شارة التاجر الموثوق</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                            تظهر شارة الثقة بجانب اسمك لزيادة مصداقيتك ومبيعاتك.
+                        </p>
+</div>
+</div>
+<!-- Benefit Card 3 -->
+<div class="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-dark border border-slate-100 dark:border-border-dark shadow-sm hover:border-primary/50 transition-colors">
+<div class="flex items-center justify-center w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 shrink-0">
+<span class="material-symbols-outlined filled text-[24px]">factory</span>
+</div>
+<div class="flex flex-col gap-1">
+<h4 class="text-base font-bold text-slate-900 dark:text-white leading-tight">صفقات المصانع المباشرة</h4>
+<p class="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                            الوصول إلى المزادات المغلقة والعروض الحصرية من كبرى المصانع.
+                        </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Trust Footer -->
+<div class="mt-auto px-6 py-4 flex flex-col items-center justify-center text-center gap-2 opacity-80">
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+<span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-[16px]">lock</span>
+<span class="text-xs font-medium text-slate-600 dark:text-slate-300">بياناتك مشفرة ومحمية بنسبة 100%</span>
+</div>
+</div>
+<!-- Sticky Action Button -->
+<div class="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-slate-200 dark:border-border-dark max-w-md mx-auto">
+<button class="relative w-full group overflow-hidden bg-primary hover:bg-primary/90 active:bg-primary/95 text-white font-bold text-base py-4 rounded-xl shadow-lg shadow-primary/25 transition-all duration-200 flex items-center justify-center gap-2">
+<span class="relative z-10">ابدأ التحقق الآن</span>
+<span class="material-symbols-outlined relative z-10 text-[20px] rtl:-scale-x-100 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1">arrow_right_alt</span>
+</button>
+</div>
+</div>
+</body></html>

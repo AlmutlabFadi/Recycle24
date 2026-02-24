@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>تحليل أسعار المواد - Recycle24</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Noto+Sans+Arabic:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1a2632",
+                        "success": "#0bda5b",
+                        "warning": "#f59e0b",
+                        "danger": "#ef4444",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "Noto Sans Arabic", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', 'Noto Sans Arabic', sans-serif;
+        }
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 4px;
+        }
+        .heatmap-cell {
+            aspect-ratio: 1 / 1;
+            border-radius: 4px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-50 bg-background-light dark:bg-background-dark border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center p-4 justify-between max-w-md mx-auto">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-2xl cursor-pointer">arrow_forward</span>
+<h1 class="text-lg font-bold tracking-tight">تحليل أسعار المواد</h1>
+</div>
+<button class="p-2 hover:bg-slate-200 dark:hover:bg-surface-dark rounded-full">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+<!-- Time Range Selector -->
+<div class="px-4 pb-4 max-w-md mx-auto">
+<div class="flex h-10 w-full items-center justify-center rounded-lg bg-slate-200 dark:bg-surface-dark p-1">
+<label class="flex cursor-pointer h-full grow items-center justify-center rounded-md px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-background-dark has-[:checked]:shadow-sm transition-all text-slate-500 dark:text-slate-400 has-[:checked]:text-primary text-sm font-medium">
+<span class="truncate">يومي</span>
+<input class="hidden" name="timeframe" type="radio" value="daily"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center rounded-md px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-background-dark has-[:checked]:shadow-sm transition-all text-slate-500 dark:text-slate-400 has-[:checked]:text-primary text-sm font-medium">
+<span class="truncate">أسبوعي</span>
+<input checked="" class="hidden" name="timeframe" type="radio" value="weekly"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center rounded-md px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-background-dark has-[:checked]:shadow-sm transition-all text-slate-500 dark:text-slate-400 has-[:checked]:text-primary text-sm font-medium">
+<span class="truncate">شهري</span>
+<input class="hidden" name="timeframe" type="radio" value="monthly"/>
+</label>
+</div>
+</div>
+</div>
+<main class="max-w-md mx-auto pb-24">
+<!-- Material Chips Scroll -->
+<div class="flex gap-3 px-4 py-4 overflow-x-auto no-scrollbar whitespace-nowrap">
+<div class="flex h-9 shrink-0 items-center justify-center px-5 rounded-full bg-primary text-white text-sm font-medium shadow-lg shadow-primary/20">الكل</div>
+<div class="flex h-9 shrink-0 items-center justify-center px-5 rounded-full bg-slate-200 dark:bg-surface-dark text-slate-600 dark:text-slate-300 text-sm font-medium border border-transparent hover:border-primary/50">حديد</div>
+<div class="flex h-9 shrink-0 items-center justify-center px-5 rounded-full bg-slate-200 dark:bg-surface-dark text-slate-600 dark:text-slate-300 text-sm font-medium border border-transparent">نحاس</div>
+<div class="flex h-9 shrink-0 items-center justify-center px-5 rounded-full bg-slate-200 dark:bg-surface-dark text-slate-600 dark:text-slate-300 text-sm font-medium border border-transparent">ألمنيوم</div>
+<div class="flex h-9 shrink-0 items-center justify-center px-5 rounded-full bg-slate-200 dark:bg-surface-dark text-slate-600 dark:text-slate-300 text-sm font-medium border border-transparent">خردة صلبة</div>
+</div>
+<!-- Volume Chart Section -->
+<div class="px-4 mb-6">
+<div class="bg-white dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">حجم المشتريات (طن)</h3>
+<div class="flex items-baseline gap-2">
+<span class="text-2xl font-black">١,٢٤٠</span>
+<span class="text-success text-sm font-bold flex items-center">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+                                ١٢٪+
+                            </span>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-400">bar_chart</span>
+</div>
+<div class="flex items-end justify-between h-40 gap-3 px-2">
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-primary/20 rounded-t-lg relative group h-[85%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary rounded-t-lg h-[80%] transition-all"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-400">حديد</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-primary/20 rounded-t-lg relative h-[45%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary/60 rounded-t-lg h-[70%]"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-400">نحاس</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-primary/20 rounded-t-lg relative h-[65%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary rounded-t-lg h-[90%]"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-400">ألمنيوم</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-primary/20 rounded-t-lg relative h-[30%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary/40 rounded-t-lg h-[60%]"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-400">رصاص</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-primary/20 rounded-t-lg relative h-[55%]">
+<div class="absolute inset-x-0 bottom-0 bg-primary/70 rounded-t-lg h-[85%]"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-400">صلب</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Profitability Heatmap Section -->
+<div class="px-4 mb-6">
+<div class="bg-white dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-bold text-sm">خريطة حرارية للربحية</h3>
+<div class="flex items-center gap-1">
+<span class="text-[10px] text-slate-400">Global vs Local</span>
+<span class="material-symbols-outlined text-xs text-primary">info</span>
+</div>
+</div>
+<!-- Heatmap Labels -->
+<div class="grid grid-cols-6 mb-2 text-center">
+<span class="text-[9px] font-bold text-slate-400">أحد</span>
+<span class="text-[9px] font-bold text-slate-400">اثنين</span>
+<span class="text-[9px] font-bold text-slate-400">ثلاثاء</span>
+<span class="text-[9px] font-bold text-slate-400">أربعاء</span>
+<span class="text-[9px] font-bold text-slate-400">خميس</span>
+<span class="text-[9px] font-bold text-slate-400">جمعة</span>
+</div>
+<!-- The Heatmap Grid -->
+<div class="heatmap-grid mb-6">
+<!-- Row 1: Iron -->
+<div class="heatmap-cell bg-success/30"></div>
+<div class="heatmap-cell bg-success/80"></div>
+<div class="heatmap-cell bg-success/50"></div>
+<div class="heatmap-cell bg-warning/40"></div>
+<div class="heatmap-cell bg-success/90"></div>
+<div class="heatmap-cell bg-success/60"></div>
+<!-- Row 2: Copper -->
+<div class="heatmap-cell bg-warning/20"></div>
+<div class="heatmap-cell bg-danger/40"></div>
+<div class="heatmap-cell bg-warning/60"></div>
+<div class="heatmap-cell bg-success/40"></div>
+<div class="heatmap-cell bg-warning/30"></div>
+<div class="heatmap-cell bg-danger/20"></div>
+<!-- Row 3: Alum -->
+<div class="heatmap-cell bg-success/70"></div>
+<div class="heatmap-cell bg-success/40"></div>
+<div class="heatmap-cell bg-success/90"></div>
+<div class="heatmap-cell bg-success/80"></div>
+<div class="heatmap-cell bg-warning/50"></div>
+<div class="heatmap-cell bg-success/60"></div>
+<!-- Row 4: Steel -->
+<div class="heatmap-cell bg-danger/30"></div>
+<div class="heatmap-cell bg-warning/40"></div>
+<div class="heatmap-cell bg-warning/20"></div>
+<div class="heatmap-cell bg-danger/50"></div>
+<div class="heatmap-cell bg-warning/30"></div>
+<div class="heatmap-cell bg-danger/40"></div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1">
+<div class="size-2 rounded-full bg-success"></div>
+<span class="text-[10px] font-medium text-slate-500">ربح مرتفع</span>
+</div>
+<div class="flex items-center gap-1">
+<div class="size-2 rounded-full bg-warning"></div>
+<span class="text-[10px] font-medium text-slate-500">متوسط</span>
+</div>
+<div class="flex items-center gap-1">
+<div class="size-2 rounded-full bg-danger"></div>
+<span class="text-[10px] font-medium text-slate-500">منخفض</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Comparison Cards -->
+<div class="grid grid-cols-2 gap-4 px-4">
+<div class="bg-white dark:bg-surface-dark p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
+<span class="text-[10px] font-bold text-slate-400 block mb-1">متوسط السعر المحلي</span>
+<div class="text-lg font-black">٤٨,٥٠٠ <span class="text-[10px] font-normal text-slate-500">ل.س</span></div>
+<div class="mt-2 text-[10px] text-danger font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">trending_down</span>
+                    ٢.٤٪- من الأمس
+                </div>
+</div>
+<div class="bg-white dark:bg-surface-dark p-4 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
+<span class="text-[10px] font-bold text-primary block mb-1">سعر Metalix24 العالمي</span>
+<div class="text-lg font-black">$٧٤٢.٥٠</div>
+<div class="mt-2 text-[10px] text-success font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">trending_up</span>
+                    ١.٨٪+ عالمياً
+                </div>
+</div>
+</div>
+<!-- Detailed List Header -->
+<div class="flex items-center justify-between px-4 mt-8 mb-4">
+<h3 class="font-bold">أداء المواد المخصصة</h3>
+<button class="text-primary text-xs font-bold">عرض الكل</button>
+</div>
+<!-- Material Item Rows -->
+<div class="space-y-3 px-4">
+<div class="flex items-center justify-between p-4 bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">precision_manufacturing</span>
+</div>
+<div>
+<div class="font-bold text-sm">حديد مجلفن</div>
+<div class="text-xs text-slate-500">٨٤٠ طن تم شراؤه</div>
+</div>
+</div>
+<div class="text-left">
+<div class="font-black text-sm text-success">+٢٤.٥٪</div>
+<div class="text-[10px] text-slate-500">هامش الربح</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-4 bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-orange-500">layers</span>
+</div>
+<div>
+<div class="font-bold text-sm">نحاس أحمر</div>
+<div class="text-xs text-slate-500">١٢٠ طن تم شراؤه</div>
+</div>
+</div>
+<div class="text-left">
+<div class="font-black text-sm text-warning">+١٢.٢٪</div>
+<div class="text-[10px] text-slate-500">هامش الربح</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 inset-x-0 bg-white/80 dark:bg-background-dark/80 backdrop-blur-lg border-t border-slate-100 dark:border-slate-800 pb-6 pt-2">
+<div class="flex items-center justify-around max-w-md mx-auto">
+<button class="flex flex-col items-center gap-1 p-2">
+<span class="material-symbols-outlined text-slate-400">home</span>
+<span class="text-[10px] font-medium text-slate-400">الرئيسية</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-primary">
+<span class="material-symbols-outlined fill-1">analytics</span>
+<span class="text-[10px] font-bold">التحليل</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2">
+<span class="material-symbols-outlined text-slate-400">storefront</span>
+<span class="text-[10px] font-medium text-slate-400">المتجر</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2">
+<span class="material-symbols-outlined text-slate-400">person</span>
+<span class="text-[10px] font-medium text-slate-400">حسابي</span>
+</button>
+</div>
+</nav>
+</body></html>

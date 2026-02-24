@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 - Step 3: Compare &amp; Choose Buyer</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#192633",
+                        "surface-darker": "#111a22",
+                    },
+                    fontFamily: {
+                        "display": ["IBM Plex Sans Arabic", "Inter", "sans-serif"],
+                        "sans": ["IBM Plex Sans Arabic", "Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hiding for horizontal scroll areas */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display min-h-screen flex flex-col antialiased selection:bg-primary selection:text-white">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 bg-surface-darker/95 backdrop-blur-md border-b border-slate-700/30">
+<div class="flex items-center justify-between p-4 pb-2">
+<button class="text-white flex size-10 shrink-0 items-center justify-center hover:bg-white/5 rounded-full transition-colors">
+<span class="material-symbols-outlined !text-[24px]">arrow_forward</span> <!-- RTL arrow -->
+</button>
+<h2 class="text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center">الخطوة 3: اختيار المشتري</h2>
+<button class="flex items-center justify-center rounded-lg size-10 text-primary hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined !text-[24px]">map</span>
+</button>
+</div>
+<!-- Progress Bar (Step 3 of 4) -->
+<div class="w-full h-1 bg-surface-dark mt-1">
+<div class="h-full bg-primary w-3/4 rounded-r-full"></div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col w-full max-w-md mx-auto relative">
+<!-- Summary Card -->
+<div class="p-4">
+<div class="flex flex-col gap-4 rounded-xl border border-slate-700/50 bg-surface-dark p-5 shadow-lg relative overflow-hidden group">
+<!-- Decorative background accent -->
+<div class="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-primary/5 to-transparent pointer-events-none"></div>
+<div class="flex items-center justify-between relative z-10">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">category</span>
+</div>
+<div class="flex flex-col">
+<p class="text-slate-400 text-xs font-medium">المادة المختارة</p>
+<p class="text-white text-lg font-bold leading-tight">نحاس أحمر</p>
+</div>
+</div>
+<button class="text-xs font-medium text-primary hover:text-primary/80 underline decoration-primary/30 underline-offset-4">تغيير</button>
+</div>
+<div class="h-px w-full bg-slate-700/50"></div>
+<div class="flex flex-col gap-1 relative z-10">
+<p class="text-slate-400 text-xs font-medium">القيمة التقديرية (تقريبية)</p>
+<p class="text-2xl font-bold text-white tracking-tight">≈ 250,000 <span class="text-base font-medium text-slate-400">ل.س</span></p>
+</div>
+</div>
+</div>
+<!-- Filters / Tabs -->
+<div class="px-4 pb-2 sticky top-[70px] z-40 bg-background-dark/95 backdrop-blur-sm py-2 -mx-1 shadow-md shadow-black/10">
+<div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+<!-- Filter: Highest Price (Active) -->
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary pl-3 pr-4 border border-primary shadow-lg shadow-primary/20 transition-all hover:brightness-110">
+<span class="material-symbols-outlined text-white !text-[18px]">currency_lira</span>
+<span class="text-white text-sm font-bold leading-normal">الأعلى سعراً</span>
+</button>
+<!-- Filter: Nearest -->
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-surface-dark border border-slate-700/50 pl-3 pr-4 hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-400 !text-[18px]">near_me</span>
+<span class="text-slate-300 text-sm font-medium leading-normal">الأقرب إليك</span>
+</button>
+<!-- Filter: Verified -->
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-surface-dark border border-slate-700/50 pl-3 pr-4 hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-400 !text-[18px]">verified_user</span>
+<span class="text-slate-300 text-sm font-medium leading-normal">مؤكد فقط</span>
+</button>
+</div>
+</div>
+<!-- Results List -->
+<div class="flex flex-col gap-4 p-4 pt-2 pb-24">
+<!-- Result Card 1: Best Match -->
+<div class="flex flex-col rounded-xl overflow-hidden bg-surface-dark shadow-md border border-slate-700/30 group hover:border-primary/50 transition-all duration-300">
+<!-- Map Header -->
+<div class="h-28 w-full bg-slate-800 relative">
+<div class="w-full h-full bg-cover bg-center opacity-60 mix-blend-overlay" data-alt="Dark abstract industrial metal texture background" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBtWsj_I6ApFCFclutLUojyscyMndfgEcKp9-D2CFvbEBD77km4vhHh8nOY_NZSwc9xKafHAn0lr6TqvI57HI6g1EsJmLH3zD6LQFHFgt6ihaRpVG-8XgD02-2w3AKbmFfMJvQhNCGU9HwO-ut7_I6D3r0w0ftYr6ufGe5ZaROGeVVI7KE1r5RGPWfJzws5c3UHEKv5YUEI6pkmtjcO8U6Ruc2MkCvOGjLfDQDoKCsNwa17Aek6pxxt0W6SHznaBvRw17Kpt_1mntI')"></div>
+<!-- Badge -->
+<div class="absolute top-3 right-3 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined !text-[12px]">trending_up</span>
+                        أفضل سعر
+                    </div>
+<!-- Map Pin Mockup -->
+<div class="absolute bottom-[-16px] left-4 bg-surface-dark border-4 border-surface-dark rounded-lg overflow-hidden shadow-lg w-16 h-16 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary !text-[32px]">factory</span>
+</div>
+</div>
+<div class="flex flex-col p-4 pt-6 gap-3">
+<!-- Title & Verified -->
+<div class="flex justify-between items-start">
+<div>
+<div class="flex items-center gap-1.5 mb-0.5">
+<h3 class="text-white text-lg font-bold leading-tight">شركة المعادن الحديثة</h3>
+<span class="material-symbols-outlined text-primary !text-[18px]" title="مشتري مؤكد">verified</span>
+</div>
+<p class="text-slate-400 text-xs">المنطقة الصناعية، دمشق</p>
+</div>
+<div class="flex items-center gap-1 bg-yellow-500/10 px-2 py-1 rounded text-yellow-500">
+<span class="text-sm font-bold">4.8</span>
+<span class="material-symbols-outlined !text-[14px] fill-current">star</span>
+</div>
+</div>
+<!-- Specs Grid -->
+<div class="grid grid-cols-2 gap-3 mt-1">
+<div class="bg-background-dark/50 p-2.5 rounded-lg border border-slate-700/30">
+<p class="text-slate-400 text-[10px]">السعر للكيلو</p>
+<p class="text-primary font-bold text-lg">15,000 <span class="text-xs font-normal text-slate-400">ل.س</span></p>
+</div>
+<div class="bg-background-dark/50 p-2.5 rounded-lg border border-slate-700/30">
+<p class="text-slate-400 text-[10px]">المسافة</p>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-slate-400 !text-[16px]">distance</span>
+<p class="text-white font-bold text-base">2.5 <span class="text-xs font-normal text-slate-400">كم</span></p>
+</div>
+</div>
+</div>
+<!-- CTA -->
+<button class="w-full mt-2 cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-primary py-3 text-white text-sm font-bold shadow-lg shadow-primary/25 hover:bg-primary/90 hover:shadow-primary/40 active:scale-[0.98] transition-all">
+<span>بيع لهذا المشتري</span>
+<span class="material-symbols-outlined !text-[18px]">sell</span>
+</button>
+</div>
+</div>
+<!-- Result Card 2: Verified -->
+<div class="flex flex-col rounded-xl overflow-hidden bg-surface-dark shadow-md border border-slate-700/30 group hover:border-primary/50 transition-all duration-300">
+<div class="flex flex-col p-4 gap-3">
+<div class="flex justify-between items-start">
+<div class="flex gap-3">
+<div class="size-12 bg-slate-800 rounded-lg flex items-center justify-center border border-slate-700 shrink-0">
+<span class="material-symbols-outlined text-slate-400">warehouse</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5 mb-0.5">
+<h3 class="text-white text-lg font-bold leading-tight">مؤسسة الأمانة</h3>
+<span class="material-symbols-outlined text-primary !text-[18px]" title="مشتري مؤكد">verified</span>
+</div>
+<div class="flex items-center gap-2 text-xs text-slate-400">
+<span>حي القابون</span>
+<span class="size-1 bg-slate-600 rounded-full"></span>
+<span class="text-green-500 font-medium">مفتوح الآن</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-1 text-slate-400">
+<span class="text-sm font-bold">4.5</span>
+<span class="material-symbols-outlined !text-[14px] text-yellow-500 fill-current">star</span>
+</div>
+</div>
+<!-- Key Info Row -->
+<div class="flex items-center justify-between bg-background-dark/50 p-3 rounded-lg border border-slate-700/30">
+<div>
+<p class="text-xs text-slate-400 mb-0.5">السعر المعروض</p>
+<p class="text-white font-bold">14,800 <span class="text-xs text-slate-500">ل.س</span></p>
+</div>
+<div class="h-8 w-px bg-slate-700/50"></div>
+<div>
+<p class="text-xs text-slate-400 mb-0.5">المسافة</p>
+<p class="text-white font-bold">1.2 <span class="text-xs text-slate-500">كم</span></p>
+</div>
+<div class="h-8 w-px bg-slate-700/50"></div>
+<div class="text-center">
+<span class="material-symbols-outlined text-green-500 !text-[20px]">local_shipping</span>
+<p class="text-[10px] text-green-500 mt-0.5">نقل مجاني</p>
+</div>
+</div>
+<button class="w-full mt-1 cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-surface-darker border border-primary/30 text-primary hover:bg-primary hover:text-white py-2.5 text-sm font-bold transition-all">
+<span>بيع لهذا المشتري</span>
+</button>
+</div>
+</div>
+<!-- Result Card 3: Standard -->
+<div class="flex flex-col rounded-xl overflow-hidden bg-surface-dark shadow-md border border-slate-700/30 group hover:border-primary/50 transition-all duration-300 opacity-90">
+<div class="flex flex-col p-4 gap-3">
+<div class="flex justify-between items-start">
+<div class="flex gap-3">
+<div class="size-12 bg-slate-800 rounded-lg flex items-center justify-center border border-slate-700 shrink-0">
+<span class="text-xl font-bold text-slate-500">ع</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5 mb-0.5">
+<h3 class="text-white text-lg font-bold leading-tight">ورشة العماد</h3>
+</div>
+<p class="text-slate-400 text-xs">منطقة الزبلطاني</p>
+</div>
+</div>
+<div class="flex items-center gap-1 text-slate-400">
+<span class="text-sm font-bold">4.0</span>
+<span class="material-symbols-outlined !text-[14px] text-yellow-500/70 fill-current">star</span>
+</div>
+</div>
+<div class="flex items-center justify-between px-2">
+<div class="flex items-baseline gap-1">
+<span class="text-slate-300 text-lg font-bold">14,200</span>
+<span class="text-xs text-slate-500">ل.س / كغ</span>
+</div>
+<div class="flex items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined !text-[16px]">location_on</span>
+<span class="text-sm">5.1 كم</span>
+</div>
+</div>
+<button class="w-full mt-1 cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-surface-darker border border-slate-600 text-slate-300 hover:bg-primary hover:border-primary hover:text-white py-2.5 text-sm font-bold transition-all">
+<span>بيع لهذا المشتري</span>
+</button>
+</div>
+</div>
+<!-- Result Card 4: Standard -->
+<div class="flex flex-col rounded-xl overflow-hidden bg-surface-dark shadow-md border border-slate-700/30 group hover:border-primary/50 transition-all duration-300 opacity-90">
+<div class="flex flex-col p-4 gap-3">
+<div class="flex justify-between items-start">
+<div class="flex gap-3">
+<div class="size-12 bg-slate-800 rounded-lg flex items-center justify-center border border-slate-700 shrink-0">
+<span class="material-symbols-outlined text-slate-400">recycling</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5 mb-0.5">
+<h3 class="text-white text-lg font-bold leading-tight">مركز إعادة التدوير الشامل</h3>
+</div>
+<p class="text-slate-400 text-xs">طريق المطار</p>
+</div>
+</div>
+<div class="flex items-center gap-1 text-slate-400">
+<span class="text-sm font-bold">3.9</span>
+<span class="material-symbols-outlined !text-[14px] text-yellow-500/70 fill-current">star</span>
+</div>
+</div>
+<div class="flex items-center justify-between px-2">
+<div class="flex items-baseline gap-1">
+<span class="text-slate-300 text-lg font-bold">13,900</span>
+<span class="text-xs text-slate-500">ل.س / كغ</span>
+</div>
+<div class="flex items-center gap-1 text-slate-400">
+<span class="material-symbols-outlined !text-[16px]">location_on</span>
+<span class="text-sm">8.4 كم</span>
+</div>
+</div>
+<button class="w-full mt-1 cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-surface-darker border border-slate-600 text-slate-300 hover:bg-primary hover:border-primary hover:text-white py-2.5 text-sm font-bold transition-all">
+<span>بيع لهذا المشتري</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Floating Map FAB -->
+<button class="fixed bottom-24 left-4 z-50 flex items-center gap-2 bg-surface-darker text-white px-4 py-3 rounded-full shadow-xl border border-slate-700 hover:bg-slate-800 transition-transform hover:scale-105 active:scale-95">
+<span class="material-symbols-outlined !text-[20px]">map</span>
+<span class="text-sm font-bold ml-1">الخريطة</span>
+</button>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 w-full bg-surface-darker border-t border-slate-800 pb-safe z-50">
+<div class="flex justify-around items-center h-16 max-w-md mx-auto">
+<a class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-primary transition-colors gap-1" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">الرئيسية</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-primary transition-colors gap-1" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="text-[10px] font-medium">سجلي</span>
+</a>
+<!-- Center Action Button (Placeholder for main action if needed, or just part of nav) -->
+<div class="relative -top-5">
+<button class="size-14 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 border-4 border-surface-darker">
+<span class="material-symbols-outlined text-white !text-[28px]">add</span>
+</button>
+</div>
+<a class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-primary transition-colors gap-1" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="text-[10px] font-medium">إشعارات</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-primary transition-colors gap-1" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">حسابي</span>
+</a>
+</div>
+</nav>
+<!-- Safe area spacing for iOS home indicator -->
+<div class="h-6 w-full bg-surface-darker fixed bottom-0 z-50 pointer-events-none"></div>
+</body></html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Business Identity &amp; Docs</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Public Sans and Arabic font (Cairo or Noto Sans Arabic) for better RTL support -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100..900&amp;family=Public+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        /* Ensuring font consistency */
+        body {
+            font-family: 'Noto Sans Arabic', 'Public Sans', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans Arabic", "Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white min-h-screen flex flex-col pb-24 relative overflow-x-hidden">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between p-4 h-16">
+<button class="p-2 -mr-2 text-slate-900 dark:text-white hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<h1 class="text-lg font-bold text-center flex-1">ملف الشركة</h1>
+<button class="p-2 -ml-2 text-primary hover:bg-blue-50 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+<!-- Main Content -->
+<main class="flex flex-col gap-6 w-full max-w-md mx-auto">
+<!-- Header Section: Cover & Avatar -->
+<div class="relative w-full">
+<!-- Cover Photo -->
+<div class="relative h-40 w-full bg-slate-200 dark:bg-slate-700 overflow-hidden group">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="Industrial recycling facility interior with conveyor belts" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBHUgJ4M77smDKvJcQpabbVFgv0lDirQEcSxtKfimH5tcB7YZxe_D-tAaY0_zAWmANzFyyvlW9ezsLV3XJO7klbDN0cBRREIFAi33C6zVnyf92R9QfkttSpJ4ad_liAIY3pb2musDIC6U7TlJIdV9n2lCMgGSI_x1GoRQLamLXj-EOUa9klxN2TlD3SyvKR7o1HG8sGJZi3Y4FFdV5vGzQUfDNNAHWNwYnX_h8UEOEdqWOMONXdacEfivcj_Qq_FS4Dyw3TsR9L5bk');"></div>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors"></div>
+<button aria-label="Edit cover photo" class="absolute top-3 left-3 bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 p-2 rounded-full shadow-sm hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[20px]">photo_camera</span>
+</button>
+</div>
+<!-- Avatar & Quick Info -->
+<div class="px-5 -mt-12 flex flex-col items-center">
+<div class="relative">
+<div class="w-24 h-24 rounded-full border-4 border-background-light dark:border-background-dark bg-white dark:bg-slate-800 overflow-hidden shadow-md">
+<div class="w-full h-full bg-cover bg-center" data-alt="Abstract geometric business logo" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB79RA2FITtlJLVtcFKhP_1cNABE3VbND9Ni8VC-gRer1dBPMZQIkn9cjEMmG_eY5SxWiD4W_V8Kdp7g8DTU0AvZ2T3jYb596kSQlzMALaygnpbG45TZrInTvKzCFAO7yoeFhJkl3yUI-r0cuJMMFym8__cEiG9Kwn7VsusmZak-Mwwe73iHyAHxza2kLydiR-VAtQrW0cKVuv374Xnlu_AlKz59JhxbktS_A_mv7pnrxkp2hmLVqluFX26hSXFFOJ7hPk2EcYbiTw');"></div>
+</div>
+<button class="absolute bottom-0 left-0 bg-primary text-white p-1.5 rounded-full shadow-md border-2 border-background-light dark:border-background-dark hover:bg-blue-600 transition-colors">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+<div class="mt-3 text-center">
+<h2 class="text-xl font-bold text-slate-900 dark:text-white">مصنع الاتحاد للتدوير</h2>
+<div class="flex items-center justify-center gap-1 text-slate-500 dark:text-slate-400 text-sm mt-1">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span>المنطقة الصناعية، جدة</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Trust & Credibility Card -->
+<div class="px-4">
+<div class="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+<div class="flex justify-between items-start mb-4">
+<div>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">نقاط الثقة</p>
+<div class="flex items-baseline gap-1">
+<span class="text-3xl font-bold text-primary">85</span>
+<span class="text-slate-400 text-sm">/100</span>
+</div>
+</div>
+<!-- Simple Circular Progress Indicator representation -->
+<div class="relative size-12 rounded-full border-4 border-slate-100 dark:border-slate-700 flex items-center justify-center">
+<svg class="size-full -rotate-90" viewbox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+<!-- Background Circle -->
+<path class="text-slate-100 dark:text-slate-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="4"></path>
+<!-- Progress Circle (85%) -->
+<path class="text-primary" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-dasharray="85, 100" stroke-linecap="round" stroke-width="4"></path>
+</svg>
+<span class="material-symbols-outlined text-primary absolute text-[20px] filled">shield</span>
+</div>
+</div>
+<!-- Badges -->
+<div class="flex gap-2 flex-wrap">
+<div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-bold border border-green-100 dark:border-green-900/30">
+<span class="material-symbols-outlined text-[16px] filled">verified</span>
+                        مصنع موثق
+                    </div>
+<div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-xs font-bold border border-amber-100 dark:border-amber-900/30">
+<span class="material-symbols-outlined text-[16px] filled">workspace_premium</span>
+                        عضو ذهبي
+                    </div>
+</div>
+</div>
+</div>
+<!-- Identity Form -->
+<div class="px-4 space-y-4">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">بيانات المنشأة</h3>
+<div class="space-y-4">
+<div class="space-y-1.5">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300" for="businessName">اسم المنشأة</label>
+<input class="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-3 px-4" dir="rtl" id="businessName" type="text" value="مصنع الاتحاد للتدوير"/>
+</div>
+<div class="space-y-1.5">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300" for="bio">نبذة عن الشركة</label>
+<textarea class="w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-3 px-4 resize-none" dir="rtl" id="bio" rows="4">نحن شركة رائدة في مجال إعادة تدوير البلاستيك والمعادن، نعمل منذ عام 2010 في جدة. نسعى لتوفير بيئة نظيفة ومستدامة.</textarea>
+</div>
+</div>
+</div>
+<!-- Facility Photos -->
+<div class="px-4 space-y-3">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">صور المرفق</h3>
+<button class="text-primary text-sm font-semibold hover:underline">عرض الكل</button>
+</div>
+<div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x" dir="rtl">
+<!-- Add Photo Button -->
+<button class="shrink-0 snap-start w-28 h-28 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-600 flex flex-col items-center justify-center gap-2 text-slate-500 dark:text-slate-400 hover:border-primary hover:text-primary hover:bg-blue-50 dark:hover:bg-slate-800 transition-all">
+<span class="material-symbols-outlined text-[28px]">add_a_photo</span>
+<span class="text-xs font-medium">إضافة صورة</span>
+</button>
+<!-- Photo 1 -->
+<div class="shrink-0 snap-start w-36 h-28 rounded-lg overflow-hidden relative group">
+<div class="w-full h-full bg-cover bg-center" data-alt="Warehouse interior with stacked cardboard bales" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAHVNEsMnPKe6JWAjefixnyfb9uTPbmf_HAdnGcUpPorNN_rFDh_lQhnj8RMQD4rPp1b1RcEHOJVc74SNcxmeU2L4G6VE0u2Q17Fz7Rul5y7ySmAxGuhGOU5QwJB9dBumQZnysqxHKJIZMkRMbC7FhMKMCAak_9mzIXr2wWAyvEB1u4Mbg22T66v7AP3xqaE3RbjF-NtEV1hptKZZ_wAmudbQT0dcfPTwE9mi0tqZ_1LmFhAB6q3kCXXz2bZIwU4Os-4LKD1CzzYh8');"></div>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<button class="text-white p-1 hover:text-red-400"><span class="material-symbols-outlined">delete</span></button>
+</div>
+</div>
+<!-- Photo 2 -->
+<div class="shrink-0 snap-start w-36 h-28 rounded-lg overflow-hidden relative group">
+<div class="w-full h-full bg-cover bg-center" data-alt="Industrial machine processing plastic waste" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA8RGiPQIsL-aaeY9x18fWgMnsUWbEVYB2Nm1yoCB25iFCMc_l4Edk0iOXQshdjTKJBq35JAlMBtLuRAN1nwIb0vxhSCpNU8CYFrABOvRAUehLZ4ijxm-HoGyGOdmRRlQSdtobaZ1mgCPcQRRvcFylgxPdmR2q6jc_6KObpNtOcDfssICxQRdJ_Xwz8hC3X6tPTKWf1vqwZkypMnELErWBhJrOHrn3LB7i0IDUe-fbGsbSTbVlm8A9X8sTtfslF2MWxf7jWKDlISXg');"></div>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<button class="text-white p-1 hover:text-red-400"><span class="material-symbols-outlined">delete</span></button>
+</div>
+</div>
+<!-- Photo 3 -->
+<div class="shrink-0 snap-start w-36 h-28 rounded-lg overflow-hidden relative group">
+<div class="w-full h-full bg-cover bg-center" data-alt="Workers in safety gear inspecting materials" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDqYQNclhrnBoMgWvPyFcQuH8AVcgXDLmU2CK16a5JCIq-_AU5MYEqcPyODtrE8rPFkKbCrVZjZxjZqIH0C42l_s5jS5DGkjrHEen8XxlaIUwSDQM_TPN6ovZ6CwCCyl2zs-Z0kH0jGXjpe0lq26o8DqAnBdMRU7B46xjuqAIwUx7MeWrkTLlW31aTlyyn2_Nm8rXqi-UEogCVWppW8GD-71-PUDvqzywvAd0nxzLTg69g326DPgH7-UC6bG81GdcoJ0RohbgsYaug');"></div>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<button class="text-white p-1 hover:text-red-400"><span class="material-symbols-outlined">delete</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Legal Documents -->
+<div class="px-4 space-y-4">
+<h3 class="text-lg font-bold text-slate-900 dark:text-white">المستندات القانونية</h3>
+<div class="flex flex-col gap-3">
+<!-- Document Item 1: Verified -->
+<div class="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700 flex items-center gap-3 shadow-sm">
+<div class="size-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">badge</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h4 class="text-sm font-bold text-slate-900 dark:text-white truncate">السجل التجاري</h4>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                نشط
+                            </span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">ينتهي في: 1446/05/20</p>
+</div>
+<button class="p-2 text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+</div>
+<!-- Document Item 2: Pending -->
+<div class="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700 flex items-center gap-3 shadow-sm">
+<div class="size-10 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h4 class="text-sm font-bold text-slate-900 dark:text-white truncate">الرقم الضريبي</h4>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                                قيد المراجعة
+                            </span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">تم الرفع: 2023/10/15</p>
+</div>
+<button class="p-2 text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+<!-- Document Item 3: Expired/Action needed -->
+<div class="bg-white dark:bg-slate-800 rounded-lg p-3 border border-red-200 dark:border-red-900/30 flex items-center gap-3 shadow-sm relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+<div class="size-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start">
+<h4 class="text-sm font-bold text-slate-900 dark:text-white truncate">ترخيص البلدية</h4>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                منتهي
+                            </span>
+</div>
+<button class="text-xs font-bold text-red-600 dark:text-red-400 mt-1 hover:underline flex items-center gap-1">
+                            تحديث المستند
+                            <span class="material-symbols-outlined text-[14px]">upload</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Spacer for Sticky Footer -->
+<div class="h-8"></div>
+</main>
+<!-- Sticky Footer Action -->
+<div class="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40">
+<div class="max-w-md mx-auto">
+<button class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">save</span>
+                حفظ التغييرات
+            </button>
+</div>
+</div>
+</body></html>

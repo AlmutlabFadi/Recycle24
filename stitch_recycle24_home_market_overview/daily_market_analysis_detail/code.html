@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Daily Market Analysis Detail</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Noto+Sans+Arabic:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#137fec",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101922",
+              "surface-dark": "#1c2630",
+              "surface-light": "#ffffff",
+            },
+            fontFamily: {
+              "display": ["Newsreader", "serif"],
+              "arabic": ["Noto Sans Arabic", "sans-serif"], // Fallback/Complementary for Arabic UI elements if Newsreader lacks glyphs or for contrast
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.5);
+            border-radius: 20px;
+        }
+        /* Ensure font application */
+        body {
+            font-family: 'Newsreader', 'Noto Sans Arabic', serif;
+        }
+        /* Arabic specific adjustments */
+        .font-arabic-ui {
+            font-family: 'Noto Sans Arabic', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-50 transition-colors duration-200">
+<div class="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark border-x border-gray-200 dark:border-gray-800">
+<!-- Top App Bar (Sticky) -->
+<div class="sticky top-0 z-50 flex items-center bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md p-4 border-b border-gray-200 dark:border-gray-800 justify-between">
+<div class="flex items-center gap-4">
+<button class="text-slate-900 dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined !text-[24px]">arrow_forward</span>
+</button>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-slate-900 dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined !text-[24px]">bookmark_border</span>
+</button>
+<button class="text-slate-900 dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined !text-[24px]">share</span>
+</button>
+</div>
+</div>
+<!-- Article Content -->
+<div class="flex flex-col px-5 pb-24">
+<!-- Hero Section -->
+<div class="pt-6 pb-4">
+<div class="flex flex-wrap gap-2 mb-4 font-arabic-ui">
+<span class="inline-flex items-center rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">#خام_الحديد</span>
+<span class="inline-flex items-center rounded-md bg-gray-100 dark:bg-gray-800 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 ring-1 ring-inset ring-gray-500/10">#السوق_العالمي</span>
+</div>
+<h1 class="text-3xl font-bold leading-tight tracking-tight text-slate-900 dark:text-white mb-3">
+                    تحليل سوق الحديد الخام: اتجاهات الأسعار العالمية للأسبوع القادم
+                </h1>
+<div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 font-arabic-ui">
+<div class="relative h-8 w-8 rounded-full overflow-hidden bg-gray-200">
+<img alt="Profile picture of Ahmed Al-Fayed" class="h-full w-full object-cover" data-alt="Portrait of a professional analyst in a suit" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB83dS84xtXb7vtDNoqnTeGBYHENCjkehOO41UoOp4HwRhRJ2PA45MoigjN0k0oI82_KFB2o4Bsl0Jjr6XhkkUUNaSiJ4v73qb6IBnodJjWuKATnS9vwZzXAoJCHnHBfggdFzdGFccALHlCIK3hYQExYOSRU8IFRKCc2GS6ndbL4-nKM2W_o7vA5tQAq5kM5XJRuhbnVh62OTmbPxUqSc7ImCbdnhaFyX9Kxdlzem1d2VtkMjafSi9ofYbzQXR8MLx010OnFdJt990"/>
+</div>
+<div class="flex flex-col">
+<span class="font-semibold text-slate-900 dark:text-slate-200">أحمد الفايد</span>
+<span class="text-xs">٢٤ أكتوبر ٢٠٢٣ • قراءة ٥ دقائق</span>
+</div>
+</div>
+</div>
+<!-- Sentiment Gauge Widget -->
+<div class="my-4 p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-800 shadow-sm">
+<div class="flex justify-between items-center mb-3">
+<h3 class="font-arabic-ui text-sm font-bold text-slate-900 dark:text-white">مشاعر الخبراء</h3>
+<span class="font-arabic-ui text-xs font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">صعودي (Bullish)</span>
+</div>
+<!-- Gauge Visual -->
+<div class="relative h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+<div class="absolute top-0 right-0 h-full bg-gradient-to-l from-red-500 via-yellow-400 to-green-500 w-full opacity-30"></div>
+<!-- Indicator Positioned towards Bullish (Left side in RTL is 0, so we need high percentage for left or calculate right) -->
+<!-- In RTL context: right is start. So we want the bar to fill from right to left? Or just a marker? Let's do a marker. -->
+<div class="absolute top-0 bottom-0 w-1 bg-primary z-10 shadow-[0_0_10px_rgba(19,127,236,0.8)] transition-all duration-1000" style="right: 75%;"></div>
+</div>
+<div class="flex justify-between mt-1 text-[10px] text-gray-400 font-arabic-ui">
+<span>هبوطي قوي</span>
+<span>محايد</span>
+<span>صعودي قوي</span>
+</div>
+<p class="mt-3 text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-arabic-ui">
+                    تشير المؤشرات الفنية والأساسية إلى استمرار الزخم الإيجابي على المدى القصير، مدعوماً بزيادة الطلب من المصانع الآسيوية.
+                </p>
+</div>
+<!-- Key Takeaways -->
+<div class="mb-6 rounded-xl bg-primary/5 border border-primary/10 p-5">
+<div class="flex items-center gap-2 mb-3 text-primary">
+<span class="material-symbols-outlined text-[20px]">lightbulb</span>
+<h3 class="font-arabic-ui font-bold text-sm">أبرز النقاط</h3>
+</div>
+<ul class="space-y-3">
+<li class="flex items-start gap-3">
+<span class="mt-1.5 size-1.5 rounded-full bg-primary shrink-0"></span>
+<p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">ارتفاع مخزونات الموانئ بنسبة ٤٪ مما قد يضغط على الأسعار الأسبوع المقبل.</p>
+</li>
+<li class="flex items-start gap-3">
+<span class="mt-1.5 size-1.5 rounded-full bg-primary shrink-0"></span>
+<p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">تعافي قطاع البناء في الصين يعزز التوقعات بزيادة الواردات.</p>
+</li>
+<li class="flex items-start gap-3">
+<span class="mt-1.5 size-1.5 rounded-full bg-primary shrink-0"></span>
+<p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">أسعار الشحن البحري تستقر عند أدنى مستوياتها منذ ٣ أشهر.</p>
+</li>
+</ul>
+</div>
+<!-- Chart Container -->
+<div class="mb-8">
+<div class="flex items-center justify-between mb-2">
+<h3 class="font-bold text-lg text-slate-900 dark:text-white font-arabic-ui">الرسم البياني الفني</h3>
+<button class="text-xs text-primary font-medium hover:underline font-arabic-ui">توسيع</button>
+</div>
+<div class="relative w-full aspect-[4/3] bg-surface-dark rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 group shadow-lg">
+<!-- Placeholder for TradingView Chart -->
+<div class="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900 flex flex-col items-center justify-center">
+<!-- Simulated Chart Lines -->
+<svg class="w-full h-full opacity-30 absolute inset-0 text-primary" preserveaspectratio="none" viewbox="0 0 100 100">
+<path d="M0 80 C 20 70, 40 90, 60 50 S 80 40, 100 20" fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+<path d="M0 80 L 100 80 L 100 20 L 60 50 L 40 90 L 20 70 Z" fill="url(#gradient)" opacity="0.2"></path>
+<defs>
+<lineargradient id="gradient" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:currentColor;stop-opacity:1"></stop>
+<stop offset="100%" style="stop-color:currentColor;stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+</svg>
+<div class="z-10 text-white font-arabic-ui flex flex-col items-center gap-2">
+<span class="material-symbols-outlined text-4xl">candlestick_chart</span>
+<span class="text-sm font-medium">الرسم البياني التفاعلي (TradingView)</span>
+</div>
+</div>
+<!-- Interactive overlay hint -->
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+<span class="bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-medium border border-white/20 font-arabic-ui">انقر للتفاعل</span>
+</div>
+</div>
+<p class="mt-2 text-xs text-gray-500 font-arabic-ui text-center">بيانات متأخرة ١٥ دقيقة • المصدر: TradingView</p>
+</div>
+<!-- Main Body Text -->
+<article class="prose prose-lg dark:prose-invert prose-headings:font-bold prose-headings:text-slate-900 dark:prose-headings:text-white prose-p:text-slate-700 dark:prose-p:text-gray-300 prose-a:text-primary max-w-none">
+<p class="leading-8 text-[18px]">
+                    شهدت أسواق خام الحديد تقلبات ملحوظة خلال الأسبوع الماضي، حيث تأرجحت الأسعار بين مستويات الدعم والمقاومة الرئيسية. يأتي هذا في ظل ترقب المستثمرين لبيانات التصنيع الجديدة من الاقتصادات الكبرى، والتي ستشكل عاملاً حاسماً في تحديد الاتجاه القادم.
+                </p>
+<h3 class="text-xl mt-6 mb-3 font-arabic-ui">تأثير سلاسل التوريد</h3>
+<p class="leading-8 text-[18px]">
+                    على الرغم من استقرار الإنتاج في المناجم الرئيسية في أستراليا والبرازيل، إلا أن بعض الاضطرابات اللوجستية الطفيفة قد بدأت تظهر في الأفق. تشير التقارير الواردة من الموانئ إلى أن أوقات الانتظار قد زادت بنسبة طفيفة، مما قد يؤدي إلى ضغط مؤقت على المعروض الفوري في الأسواق الآسيوية.
+                </p>
+<blockquote class="border-r-4 border-primary pl-4 pr-4 py-2 my-6 bg-gray-100 dark:bg-surface-dark/50 rounded-l-lg italic text-lg text-slate-800 dark:text-slate-200">
+                    "إن التوازن الحالي في السوق هش للغاية، وأي تحرك غير متوقع في جانب الطلب قد يسبب قفزات سعرية سريعة."
+                </blockquote>
+<h3 class="text-xl mt-6 mb-3 font-arabic-ui">نظرة مستقبلية</h3>
+<p class="leading-8 text-[18px]">
+                    بالنظر إلى الأسابيع القادمة، نتوقع أن يختبر خام الحديد مستوى ١٢٠ دولاراً للطن. إذا تم كسر هذا الحاجز بقوة، فقد نشهد موجة صعودية تستهدف مستويات ١٣٥ دولاراً. ومع ذلك، يجب على المتداولين البقاء حذرين ومراقبة مستويات المخزون في الموانئ الصينية، حيث أنها تظل المؤشر الأكثر دقة لصحة الطلب الفعلي.
+                </p>
+</article>
+<!-- Divider -->
+<div class="h-px w-full bg-gray-200 dark:bg-gray-800 my-8"></div>
+<!-- Related Assets/Analysis -->
+<div>
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-bold text-lg text-slate-900 dark:text-white font-arabic-ui">تحليلات ذات صلة</h3>
+<a class="text-sm text-primary font-medium font-arabic-ui" href="#">عرض الكل</a>
+</div>
+<div class="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar" style="scrollbar-width: none;">
+<!-- Card 1 -->
+<div class="min-w-[260px] snap-center rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-800 p-4 shadow-sm hover:border-primary/50 transition-colors cursor-pointer">
+<div class="flex items-center justify-between mb-3">
+<span class="text-xs font-bold text-gray-500 font-arabic-ui">نحاس</span>
+<span class="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full font-arabic-ui">هبوطي</span>
+</div>
+<h4 class="font-bold text-slate-900 dark:text-white mb-2 line-clamp-2">النحاس يواجه ضغوط بيع عند مستويات المقاومة</h4>
+<p class="text-xs text-gray-500 dark:text-gray-400">قبل ساعتين • محمد علي</p>
+</div>
+<!-- Card 2 -->
+<div class="min-w-[260px] snap-center rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-800 p-4 shadow-sm hover:border-primary/50 transition-colors cursor-pointer">
+<div class="flex items-center justify-between mb-3">
+<span class="text-xs font-bold text-gray-500 font-arabic-ui">ألومنيوم</span>
+<span class="text-xs font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full font-arabic-ui">صعودي</span>
+</div>
+<h4 class="font-bold text-slate-900 dark:text-white mb-2 line-clamp-2">توقعات بارتفاع أسعار الألومنيوم مع نقص الطاقة</h4>
+<p class="text-xs text-gray-500 dark:text-gray-400">أمس • سارة حسن</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+        // Simple dark mode toggle logic for preview purposes if needed, 
+        // though the prompt requested just the HTML output assuming the class is set.
+        // The html tag has class="dark" by default as requested.
+    </script>
+</body></html>

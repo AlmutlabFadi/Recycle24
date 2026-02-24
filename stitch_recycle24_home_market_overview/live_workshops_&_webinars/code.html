@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Live Workshops &amp; Webinars - Recycle24</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1A2633", // Slightly lighter than bg-dark for cards
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "Noto Sans Arabic", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hiding for horizontal lists */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-white pb-24 selection:bg-primary selection:text-white">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-50 bg-background-light dark:bg-background-dark border-b border-gray-200 dark:border-gray-800">
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center text-gray-900 dark:text-white">
+<!-- Flipped for RTL context -->
+<span class="material-symbols-outlined transform rotate-180">arrow_back</span>
+</button>
+<h1 class="text-xl font-bold tracking-tight">ورش عمل مباشرة</h1>
+</div>
+<button class="relative flex items-center justify-center text-gray-900 dark:text-white">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-[#101922]"></span>
+</button>
+</div>
+</div>
+<!-- Live Now Section -->
+<div class="pt-6 px-4">
+<div class="flex items-center justify-between mb-3">
+<h2 class="text-2xl font-bold flex items-center gap-2">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 hidden"></span> <!-- Animation disabled per rules, but structure kept -->
+<span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+</span>
+                مباشر الآن
+            </h2>
+<span class="text-primary text-sm font-medium">عرض الجميع</span>
+</div>
+<div class="relative w-full rounded-xl overflow-hidden shadow-lg bg-surface-dark group">
+<!-- Video Thumbnail -->
+<div class="aspect-video w-full bg-gray-800 relative">
+<div class="absolute inset-0 bg-cover bg-center opacity-80" data-alt="Workers handling industrial metal scrap machinery in a factory setting" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCx5N6ih7RWy8v7Crgpof0JfZ1mcKaDnxBGfl7QopodczrMoO6jUfknpHsdWTgCfQEsHaf8LNsrkaj90D58DyOE0JN1iwyTLP0KvSbqTFIkHw11hZ_XnP1pS5swEndWOy2T8axhHkEDrD6WckuM0dIgbM5iTsk085p_NmfB0kfi6fWm99-baNVHThUNDzNcQagrrtCjLrtYHdyCsqEucM3wMw9xQs27UII0wUhoIVGUkBsgRZ6CmcIkDNyB7aTDajX9TrUvjE_s3Lg');"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+<!-- Live Badge -->
+<div class="absolute top-3 right-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">sensors</span>
+                    مباشر
+                </div>
+<!-- Viewers Count -->
+<div class="absolute top-3 left-3 bg-black/50 backdrop-blur-sm text-white text-xs font-medium px-2 py-1 rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">visibility</span>
+                    450 مشاهد
+                </div>
+<!-- Play Button Overlay -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="bg-white/20 backdrop-blur-md rounded-full p-3 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-4xl">play_arrow</span>
+</div>
+</div>
+</div>
+<!-- Content -->
+<div class="p-4">
+<h3 class="text-lg font-bold text-white mb-1">التعامل الآمن مع الخردة الصناعية</h3>
+<p class="text-gray-400 text-sm mb-4">مع المهندس أحمد السوري • خبير السلامة المهنية</p>
+<button class="w-full h-10 bg-primary hover:bg-blue-600 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[20px]">videocam</span>
+                    انضم الآن
+                </button>
+</div>
+</div>
+</div>
+<!-- Categories Filters -->
+<div class="pt-8 px-0">
+<h2 class="text-xl font-bold px-4 mb-3">تصفح الفئات</h2>
+<div class="flex gap-3 overflow-x-auto px-4 no-scrollbar pb-2">
+<!-- Active Pill -->
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-full whitespace-nowrap text-sm font-medium">
+<span class="material-symbols-outlined text-[18px]">engineering</span>
+                حديث الخبراء
+            </button>
+<!-- Inactive Pills -->
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-dark border border-gray-700 text-gray-300 rounded-full whitespace-nowrap text-sm font-medium">
+<span class="material-symbols-outlined text-[18px]">health_and_safety</span>
+                تدريب السلامة
+            </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-dark border border-gray-700 text-gray-300 rounded-full whitespace-nowrap text-sm font-medium">
+<span class="material-symbols-outlined text-[18px]">analytics</span>
+                تحليل السوق
+            </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-dark border border-gray-700 text-gray-300 rounded-full whitespace-nowrap text-sm font-medium">
+<span class="material-symbols-outlined text-[18px]">recycling</span>
+                التكنولوجيا الخضراء
+            </button>
+</div>
+</div>
+<!-- Upcoming Workshops -->
+<div class="pt-6 px-4">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-xl font-bold">ورش عمل قادمة</h2>
+<button class="text-primary text-sm font-medium flex items-center">
+                الجدول الكامل
+                <span class="material-symbols-outlined text-[16px] mr-1 rotate-180">arrow_right_alt</span>
+</button>
+</div>
+<div class="flex flex-col gap-4">
+<!-- Card 1 -->
+<div class="bg-surface-dark rounded-lg p-3 flex gap-4 shadow-sm border border-gray-800">
+<div class="w-24 h-24 shrink-0 rounded-lg bg-gray-700 bg-cover bg-center relative" data-alt="Stock market graph chart on a tablet analyzing copper prices" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDasxe_pU-jyo99RbLsgY4a3gDVoxJ_9QDk6CRlBRXKW4cBUuXKJhGbqh3yglDFkf-TJD7dYLjLHYTKKdV0xip7lBROEleNbFXvhuM7cDKJw6_uuaw2bI5kk520-eY9oMd21XHJUR55BC9GuMi6kHollwW-lngeU9E01YIF3fCjbdHZoFqDClaYULWhK2KX_BIBlVYiNkcgTHcjIhIwUKb-I4cznk9x5tdeeWqa53pJbNlFv6i9YmMtG7IpwDiKnZp9XsbvKAUq3tc');">
+<div class="absolute top-1 right-1 bg-black/60 rounded px-1.5 py-0.5 text-[10px] text-white font-bold">
+                        اليوم
+                     </div>
+</div>
+<div class="flex flex-col flex-1 justify-between">
+<div>
+<h3 class="font-bold text-white text-sm line-clamp-2">اتجاهات سوق النحاس 2024</h3>
+<p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+                            يبدأ خلال: <span class="text-primary font-mono dir-ltr">02:14:55</span>
+</p>
+</div>
+<div class="flex items-center justify-between mt-2">
+<span class="text-xs text-gray-500">25 أكتوبر • 4:00 م</span>
+<button class="bg-primary/20 hover:bg-primary/30 text-primary text-xs font-bold px-3 py-1.5 rounded transition-colors">
+                            سجل الآن
+                        </button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-dark rounded-lg p-3 flex gap-4 shadow-sm border border-gray-800">
+<div class="w-24 h-24 shrink-0 rounded-lg bg-gray-700 bg-cover bg-center" data-alt="Close up of green recycling symbol and sustainable materials" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBZc1xQEoG6Q_yrz8YNSLKKatv8XEYGIFV9noBSKl3q7dc6vdrKDyE6CKKbkmmiHywHrKCkmYT2eiezlijPKYb5O1FQ1oifjJ5OiGn2kFZ9uxLt1EkRzMP1NKd8HGfpvi0KSSuGlM8YDmbGHbZz-As_PpFYtb4K2zWtXXYDP2fa3xwEokUJZXHBVK0NfhXoCUDlvc8fgcI2t1F727WNMKhDJQbvcl400mcaChasxaN_RBx4O7xmec4nSULMwfTVhvMVwVRhFKQgekU');"></div>
+<div class="flex flex-col flex-1 justify-between">
+<div>
+<h3 class="font-bold text-white text-sm line-clamp-2">أحدث تقنيات إعادة التدوير البلاستيكي</h3>
+<p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">event</span>
+                            غداً
+                        </p>
+</div>
+<div class="flex items-center justify-between mt-2">
+<span class="text-xs text-gray-500">26 أكتوبر • 10:00 ص</span>
+<button class="bg-primary/20 hover:bg-primary/30 text-primary text-xs font-bold px-3 py-1.5 rounded transition-colors">
+                            سجل الآن
+                        </button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-dark rounded-lg p-3 flex gap-4 shadow-sm border border-gray-800">
+<div class="w-24 h-24 shrink-0 rounded-lg bg-gray-700 bg-cover bg-center" data-alt="Industrial worker inspecting metal gears with a tablet" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDGUAfA4tq5rCrd2rH1rsfLFWDtEUe02K1wlXzvNJdlT4VOUu9GsSPPZpJPVSiVmaZSefc-3D8UkM-3ippj4LZ419klLD7JsBQ2jLZ1VhMJhtxfVGbjxy4-IfuGziDxgS4YHg_ajAcNJQROaxBbvD8j2j-xP_m2xDs1Zc-g4n6jinrn43F-Y2CeymH8gNPJRprh-9dBIKlCbIlZNjQPmae0Kgj-ijvn3GxmruGsMmuD4ubkHkp9wF3_QoyAwD7AOLybnvxnPdLoiPY');"></div>
+<div class="flex flex-col flex-1 justify-between">
+<div>
+<h3 class="font-bold text-white text-sm line-clamp-2">صيانة المعدات الثقيلة: دليل المبتدئين</h3>
+<p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">event</span>
+                            الخميس القادم
+                        </p>
+</div>
+<div class="flex items-center justify-between mt-2">
+<span class="text-xs text-gray-500">28 أكتوبر • 2:00 م</span>
+<button class="bg-primary/20 hover:bg-primary/30 text-primary text-xs font-bold px-3 py-1.5 rounded transition-colors">
+                            سجل الآن
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<div class="fixed bottom-0 w-full bg-[#101922]/95 backdrop-blur-md border-t border-gray-800 z-50">
+<div class="flex justify-around items-center h-16 px-2">
+<button class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-200 gap-1">
+<span class="material-symbols-outlined text-[24px]">storefront</span>
+<span class="text-[10px] font-medium">السوق</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full h-full text-primary gap-1">
+<span class="material-symbols-outlined text-[24px] fill-1">live_tv</span>
+<span class="text-[10px] font-medium">مباشر</span>
+</button>
+<div class="relative -top-5">
+<button class="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-white shadow-lg shadow-primary/40 border-4 border-[#101922]">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+</div>
+<button class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-200 gap-1">
+<span class="material-symbols-outlined text-[24px]">forum</span>
+<span class="text-[10px] font-medium">المجتمع</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full h-full text-gray-400 hover:text-gray-200 gap-1">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="text-[10px] font-medium">حسابي</span>
+</button>
+</div>
+<!-- iPhone Home Indicator Spacer -->
+<div class="h-1 w-full bg-transparent"></div>
+</div>
+</body></html>

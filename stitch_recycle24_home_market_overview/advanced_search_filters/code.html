@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Advanced Search Filters - Recycle24</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans Arabic", "Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-white overflow-hidden">
+<!-- Mock Background for Context -->
+<div class="fixed inset-0 z-0 pointer-events-none opacity-30">
+<div class="w-full h-full bg-cover bg-center" data-alt="blurred recycling facility background" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url('https://lh3.googleusercontent.com/aida-public/AB6AXuA5rWbq7czCxdLofavcwNVKvaMOituCIxM375IC0YlQmy9EsaHJUJjhEmEnLBezvh51S3k0V8p9Sx5h25grWv4GRWNfUnRA7CN5s0hqjqoDcpa-sqhTEwMTkKNcoY5z-jNmniC1Fi1-FeUYSYhpx2l_p1h-CZV0MOytj4KEZJfB7Rzze2hD_FmRX3gnHxb-tjAv5EvfNAjpoI6ZrQjktboIVVe8x30O-ZepE8eGwbeRYZDRNhB60OuycfBESiThEmEqHpkGRydEAGs');"></div>
+</div>
+<!-- Bottom Sheet Container -->
+<div class="relative flex h-full min-h-screen w-full flex-col justify-end">
+<!-- Backdrop -->
+<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-10 transition-opacity"></div>
+<!-- Sheet Content -->
+<div class="relative z-20 flex w-full flex-col rounded-t-[32px] bg-background-light dark:bg-background-dark shadow-[0_-4px_24px_rgba(0,0,0,0.25)] max-h-[90vh]">
+<!-- Handle -->
+<div class="flex w-full items-center justify-center pt-3 pb-1">
+<div class="h-1.5 w-12 rounded-full bg-gray-300 dark:bg-gray-700"></div>
+</div>
+<!-- Header -->
+<div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+<h2 class="text-xl font-bold leading-tight">تصفية متقدمة</h2>
+<button class="text-primary text-sm font-medium hover:text-blue-400 transition-colors">
+                    إعادة تعيين
+                </button>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto px-6 py-2 space-y-8">
+<!-- Price Range Section -->
+<div class="pt-4">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-base font-bold text-gray-800 dark:text-white">نطاق السعر (SAR)</h3>
+</div>
+<!-- Slider Visual -->
+<div class="relative w-full h-8 mb-6">
+<!-- Track Background -->
+<div class="absolute top-1/2 left-0 w-full h-1.5 -translate-y-1/2 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+<!-- Active Range -->
+<div class="absolute top-1/2 left-[20%] right-[30%] h-1.5 -translate-y-1/2 rounded-full bg-primary"></div>
+<!-- Left Thumb -->
+<div class="absolute top-1/2 left-[20%] -translate-x-1/2 -translate-y-1/2 size-7 rounded-full bg-white dark:bg-background-dark border-2 border-primary shadow-md flex items-center justify-center cursor-pointer z-10">
+<div class="size-2 rounded-full bg-primary"></div>
+</div>
+<!-- Right Thumb -->
+<div class="absolute top-1/2 right-[30%] translate-x-1/2 -translate-y-1/2 size-7 rounded-full bg-white dark:bg-background-dark border-2 border-primary shadow-md flex items-center justify-center cursor-pointer z-10">
+<div class="size-2 rounded-full bg-primary"></div>
+</div>
+<!-- Tooltips (Static for design) -->
+<div class="absolute -top-7 left-[20%] -translate-x-1/2 text-xs font-medium text-gray-500 dark:text-gray-400">50</div>
+<div class="absolute -top-7 right-[30%] translate-x-1/2 text-xs font-medium text-gray-500 dark:text-gray-400">500</div>
+</div>
+<!-- Inputs -->
+<div class="flex gap-4">
+<div class="flex-1 relative">
+<span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">من</span>
+<input class="w-full bg-white dark:bg-[#1A2633] border border-gray-200 dark:border-gray-700 rounded-xl py-3 pr-10 pl-4 text-left text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder-gray-400 dark:text-white" dir="ltr" type="number" value="50"/>
+</div>
+<div class="flex-1 relative">
+<span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">إلى</span>
+<input class="w-full bg-white dark:bg-[#1A2633] border border-gray-200 dark:border-gray-700 rounded-xl py-3 pr-10 pl-4 text-left text-sm font-medium focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder-gray-400 dark:text-white" dir="ltr" type="number" value="500"/>
+</div>
+</div>
+</div>
+<!-- Rating Section -->
+<div>
+<h3 class="text-base font-bold text-gray-800 dark:text-white mb-4">الحد الأدنى لتقييم المشتري</h3>
+<div class="flex flex-wrap gap-3">
+<button class="flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-primary bg-primary/10 text-primary text-sm font-semibold transition-all">
+<span>4+</span>
+<span class="material-symbols-outlined text-lg leading-none filled-icon icon-filled">star</span>
+</button>
+<button class="flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm font-medium transition-all">
+<span>3+</span>
+<span class="material-symbols-outlined text-lg leading-none">star</span>
+</button>
+<button class="flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm font-medium transition-all">
+<span>2+</span>
+<span class="material-symbols-outlined text-lg leading-none">star</span>
+</button>
+<button class="flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-gray-200 dark:border-gray-700 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm font-medium transition-all">
+<span>1+</span>
+<span class="material-symbols-outlined text-lg leading-none">star</span>
+</button>
+</div>
+</div>
+<!-- Toggles Section -->
+<div class="space-y-6 pb-6 border-b border-gray-200 dark:border-gray-800">
+<!-- Open Now -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<div class="flex flex-col">
+<span class="text-base font-medium text-gray-900 dark:text-white">مفتوح الآن</span>
+<span class="text-xs text-gray-500 dark:text-gray-400">إظهار المشترين المتاحين حالياً</span>
+</div>
+</div>
+<!-- Toggle Switch Active -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[calc(100%-26px)] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary rtl:peer-checked:after:-translate-x-full rtl:peer-checked:after:left-[2px] rtl:after:right-auto rtl:after:left-[calc(100%-26px)]"></div>
+</label>
+</div>
+<!-- Fast Pickup -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 dark:text-green-400">
+<span class="material-symbols-outlined">local_shipping</span>
+</div>
+<div class="flex flex-col">
+<span class="text-base font-medium text-gray-900 dark:text-white">الاستلام السريع متاح</span>
+<span class="text-xs text-gray-500 dark:text-gray-400">الاستلام خلال ساعة واحدة</span>
+</div>
+</div>
+<!-- Toggle Switch Inactive -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-12 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[calc(100%-26px)] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-primary rtl:peer-checked:after:-translate-x-full rtl:peer-checked:after:left-[2px] rtl:after:right-auto rtl:after:left-[calc(100%-26px)]"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- Footer Action -->
+<div class="p-6 pt-2 pb-8 bg-background-light dark:bg-background-dark border-t border-gray-200 dark:border-gray-800">
+<button class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-blue-500/30 transition-all active:scale-[0.98]">
+<span>عرض 24 نتيجة</span>
+<span class="material-symbols-outlined text-lg rtl:rotate-180">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<style>
+        /* Custom styles for filled icons in Material Symbols */
+        .material-symbols-outlined.filled-icon {
+          font-variation-settings:
+          'FILL' 1,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+        
+        /* Adjusting toggle for RTL specifically since Tailwind sometimes struggles with peer-checked direction in RTL */
+        [dir="rtl"] .peer-checked\:after\:-translate-x-full:checked::after {
+            transform: translateX(-100%);
+        }
+    </style>
+</body></html>

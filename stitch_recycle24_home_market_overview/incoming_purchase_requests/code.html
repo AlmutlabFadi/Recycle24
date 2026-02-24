@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 - Incoming Requests</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#13ec5b",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#102216",
+                        "surface-dark": "#193322",
+                        "text-secondary": "#92c9a4",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "Noto Sans Arabic", "sans-serif"],
+                        "body": ["Inter", "Noto Sans Arabic", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', 'Noto Sans Arabic', sans-serif;
+        }
+        /* Hide scrollbar for clean mobile look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col items-center justify-start overflow-hidden">
+<!-- Mobile Container -->
+<div class="w-full max-w-md h-full min-h-screen flex flex-col bg-background-light dark:bg-background-dark relative shadow-2xl overflow-hidden">
+<!-- Top App Bar -->
+<header class="flex items-center justify-between p-4 pt-6 pb-2 bg-background-light dark:bg-background-dark sticky top-0 z-20">
+<button class="p-2 -ml-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-gray-900 dark:text-white">arrow_back</span>
+</button>
+<h1 class="text-gray-900 dark:text-white text-lg font-bold leading-tight flex-1 text-center font-display">Incoming Requests</h1>
+<button class="p-2 -mr-2 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-gray-900 dark:text-white">tune</span>
+</button>
+</header>
+<!-- Filter Chips -->
+<div class="px-4 pb-2">
+<div class="flex gap-2 overflow-x-auto no-scrollbar py-2">
+<button class="flex h-8 shrink-0 items-center justify-center px-4 rounded-full bg-primary text-background-dark text-sm font-semibold transition-transform active:scale-95">
+                    All
+                </button>
+<button class="flex h-8 shrink-0 items-center justify-center px-4 rounded-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 text-gray-600 dark:text-white text-sm font-medium transition-transform active:scale-95">
+                    Iron
+                </button>
+<button class="flex h-8 shrink-0 items-center justify-center px-4 rounded-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 text-gray-600 dark:text-white text-sm font-medium transition-transform active:scale-95">
+                    Plastic
+                </button>
+<button class="flex h-8 shrink-0 items-center justify-center px-4 rounded-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 text-gray-600 dark:text-white text-sm font-medium transition-transform active:scale-95">
+                    Copper
+                </button>
+<button class="flex h-8 shrink-0 items-center justify-center px-4 rounded-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 text-gray-600 dark:text-white text-sm font-medium transition-transform active:scale-95">
+                    Aluminum
+                </button>
+</div>
+</div>
+<!-- Request Feed -->
+<main class="flex-1 overflow-y-auto px-4 py-2 pb-24 space-y-4 no-scrollbar">
+<!-- Date Separator -->
+<div class="flex items-center gap-4 py-2">
+<div class="h-px bg-gray-300 dark:bg-white/10 flex-1"></div>
+<span class="text-xs font-medium text-gray-500 dark:text-text-secondary uppercase tracking-wider">Today</span>
+<div class="h-px bg-gray-300 dark:bg-white/10 flex-1"></div>
+</div>
+<!-- Card 1: Iron -->
+<article class="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative group">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-500/20 flex items-center justify-center text-orange-600 dark:text-orange-400">
+<span class="material-symbols-outlined">construction</span>
+</div>
+<div>
+<h3 class="text-gray-900 dark:text-white font-bold text-base leading-tight">Iron Scrap (Grade A)</h3>
+<p class="text-gray-500 dark:text-text-secondary text-xs mt-0.5">ID: #Req-8291</p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 rounded-full bg-red-100 dark:bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-700 dark:text-red-400">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 20m ago
+                    </span>
+</div>
+<div class="grid grid-cols-2 gap-3 mb-4">
+<div class="bg-gray-50 dark:bg-black/20 p-2 rounded-lg">
+<p class="text-gray-500 dark:text-text-secondary text-xs mb-0.5">Quantity</p>
+<p class="text-gray-900 dark:text-white font-semibold text-sm">5 Tons</p>
+</div>
+<div class="bg-gray-50 dark:bg-black/20 p-2 rounded-lg">
+<p class="text-gray-500 dark:text-text-secondary text-xs mb-0.5">Est. Price</p>
+<p class="text-primary font-bold text-sm">2,500,000 SYP</p>
+</div>
+</div>
+<div class="flex items-center gap-2 mb-4 text-gray-600 dark:text-gray-300 text-sm">
+<span class="material-symbols-outlined text-gray-400 dark:text-gray-500 text-[18px]">location_on</span>
+<span class="truncate">Adra Industrial Zone, Damascus</span>
+<button class="ml-auto text-primary text-xs font-medium hover:underline">View Map</button>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 h-10 rounded-lg border border-gray-300 dark:border-white/20 text-gray-700 dark:text-white font-medium text-sm hover:bg-gray-50 dark:hover:bg-white/5 flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">close</span> Decline
+                    </button>
+<button class="flex-1 h-10 rounded-lg bg-primary text-background-dark font-bold text-sm hover:bg-[#0fd650] flex items-center justify-center gap-2 transition-colors shadow-[0_0_15px_rgba(19,236,91,0.3)]">
+<span class="material-symbols-outlined text-[18px]">check</span> Accept
+                    </button>
+</div>
+</article>
+<!-- Card 2: Plastic -->
+<article class="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative group">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400">
+<span class="material-symbols-outlined">recycling</span>
+</div>
+<div>
+<h3 class="text-gray-900 dark:text-white font-bold text-base leading-tight">Plastic Bottles (PET)</h3>
+<p class="text-gray-500 dark:text-text-secondary text-xs mt-0.5">ID: #Req-8292</p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-white/10 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 45m ago
+                    </span>
+</div>
+<div class="grid grid-cols-2 gap-3 mb-4">
+<div class="bg-gray-50 dark:bg-black/20 p-2 rounded-lg">
+<p class="text-gray-500 dark:text-text-secondary text-xs mb-0.5">Quantity</p>
+<p class="text-gray-900 dark:text-white font-semibold text-sm">200 kg</p>
+</div>
+<div class="bg-gray-50 dark:bg-black/20 p-2 rounded-lg">
+<p class="text-gray-500 dark:text-text-secondary text-xs mb-0.5">Est. Price</p>
+<p class="text-primary font-bold text-sm">800,000 SYP</p>
+</div>
+</div>
+<div class="flex items-center gap-2 mb-4 text-gray-600 dark:text-gray-300 text-sm">
+<span class="material-symbols-outlined text-gray-400 dark:text-gray-500 text-[18px]">location_on</span>
+<span class="truncate">Harasta Suburbs</span>
+<button class="ml-auto text-primary text-xs font-medium hover:underline">View Map</button>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 h-10 rounded-lg border border-gray-300 dark:border-white/20 text-gray-700 dark:text-white font-medium text-sm hover:bg-gray-50 dark:hover:bg-white/5 flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">close</span> Decline
+                    </button>
+<button class="flex-1 h-10 rounded-lg bg-primary text-background-dark font-bold text-sm hover:bg-[#0fd650] flex items-center justify-center gap-2 transition-colors shadow-[0_0_15px_rgba(19,236,91,0.3)]">
+<span class="material-symbols-outlined text-[18px]">check</span> Accept
+                    </button>
+</div>
+</article>
+<!-- Card 3: Cardboard -->
+<article class="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative group">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div>
+<h3 class="text-gray-900 dark:text-white font-bold text-base leading-tight">Cardboard Boxes</h3>
+<p class="text-gray-500 dark:text-text-secondary text-xs mt-0.5">ID: #Req-8288</p>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-white/10 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 1h ago
+                    </span>
+</div>
+<div class="grid grid-cols-2 gap-3 mb-4">
+<div class="bg-gray-50 dark:bg-black/20 p-2 rounded-lg">
+<p class="text-gray-500 dark:text-text-secondary text-xs mb-0.5">Quantity</p>
+<p class="text-gray-900 dark:text-white font-semibold text-sm">1.2 Tons</p>
+</div>
+<div class="bg-gray-50 dark:bg-black/20 p-2 rounded-lg">
+<p class="text-gray-500 dark:text-text-secondary text-xs mb-0.5">Est. Price</p>
+<p class="text-primary font-bold text-sm">1,200,000 SYP</p>
+</div>
+</div>
+<div class="flex items-center gap-2 mb-4 text-gray-600 dark:text-gray-300 text-sm">
+<span class="material-symbols-outlined text-gray-400 dark:text-gray-500 text-[18px]">location_on</span>
+<span class="truncate">Homs Industrial City</span>
+<button class="ml-auto text-primary text-xs font-medium hover:underline">View Map</button>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 h-10 rounded-lg border border-gray-300 dark:border-white/20 text-gray-700 dark:text-white font-medium text-sm hover:bg-gray-50 dark:hover:bg-white/5 flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">close</span> Decline
+                    </button>
+<button class="flex-1 h-10 rounded-lg bg-primary text-background-dark font-bold text-sm hover:bg-[#0fd650] flex items-center justify-center gap-2 transition-colors shadow-[0_0_15px_rgba(19,236,91,0.3)]">
+<span class="material-symbols-outlined text-[18px]">check</span> Accept
+                    </button>
+</div>
+</article>
+<!-- System Message -->
+<div class="py-6 text-center">
+<p class="text-gray-400 dark:text-gray-600 text-sm">You're all caught up!</p>
+<p class="text-xs text-gray-400 dark:text-gray-600 mt-1">Check back later for more requests.</p>
+</div>
+</main>
+<!-- Bottom Navigation -->
+<nav class="flex justify-around items-center bg-white dark:bg-surface-dark px-4 py-3 pb-6 border-t border-gray-200 dark:border-white/5 absolute bottom-0 w-full">
+<button class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 w-16 group">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">home</span>
+<span class="text-[10px] font-medium group-hover:text-primary transition-colors">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary w-16">
+<div class="relative">
+<span class="material-symbols-outlined fill-current">inbox</span>
+<span class="absolute -top-1 -right-1 flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+</span>
+</div>
+<span class="text-[10px] font-bold">Requests</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 w-16 group">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">history</span>
+<span class="text-[10px] font-medium group-hover:text-primary transition-colors">History</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-gray-400 dark:text-gray-500 w-16 group">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">person</span>
+<span class="text-[10px] font-medium group-hover:text-primary transition-colors">Profile</span>
+</button>
+</nav>
+</div>
+</body></html>

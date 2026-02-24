@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Warehouse Verification - Recycle24</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "primary-dark": "#0f65bd",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#192633",
+                        "text-primary-light": "#111a22",
+                        "text-primary-dark": "#ffffff",
+                        "text-secondary-light": "#64748b",
+                        "text-secondary-dark": "#92adc9",
+                        "border-light": "#e2e8f0",
+                        "border-dark": "#324d67",
+                    },
+                    fontFamily: {
+                        "display": ["Cairo", "Inter", "sans-serif"],
+                        "sans": ["Cairo", "Inter", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Cairo', sans-serif;
+        }
+        /* Custom scrollbar for better look in dark mode */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #101922; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #324d67; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #137fec; 
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen transition-colors duration-200">
+<div class="relative flex h-full w-full flex-col max-w-md mx-auto shadow-2xl overflow-hidden bg-background-light dark:bg-background-dark min-h-screen">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-10 bg-background-light dark:bg-background-dark border-b border-border-light dark:border-border-dark">
+<div class="flex items-center p-4 pb-3 justify-between">
+<button class="text-text-primary-light dark:text-text-primary-dark flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-2xl">arrow_forward</span>
+</button>
+<h1 class="text-text-primary-light dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">تأكيد موقع المستودع</h1>
+<div class="flex w-12 items-center justify-end">
+<span class="text-primary text-sm font-bold leading-normal tracking-[0.015em] shrink-0 bg-primary/10 px-2 py-1 rounded-lg">2/4</span>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="h-1 w-full bg-gray-200 dark:bg-gray-800">
+<div class="h-full bg-primary w-1/2 rounded-r-full"></div>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col p-4 space-y-6 pb-24 overflow-y-auto">
+<!-- Body Text -->
+<div class="space-y-1">
+<h2 class="text-text-primary-light dark:text-white text-lg font-bold">موقع ساحة الخردة</h2>
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-sm font-normal leading-relaxed">
+                    يرجى تحديد موقع ساحة الخردة بدقة على الخريطة أدناه لتمكين السائقين من الوصول إليك.
+                </p>
+</div>
+<!-- Map Section -->
+<div class="relative rounded-xl overflow-hidden shadow-lg border border-border-light dark:border-border-dark group">
+<div class="w-full bg-center bg-no-repeat aspect-[4/3] bg-cover object-cover relative" data-alt="Map view showing streets of Damascus with a location pin" data-location="Damascus" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBzulWfq_8Di1QRuZZywW3QGv7CDHkBh665cbp8ttWrl224W3emYRcQraOej5KksTg6c1JOs31nhrhVvvgVUSaXUxiMJfbLFvUTtdA4T2kq4j0ondCpnWlNKTA9WV_WyYC2GiB54HduMf_rXrobcUnxSrK2puBmT-ULIV0rUo04uzbGZDJCJPtXPpGSt9GfkWWsWfrHTMUXtLp4_V467ALT7hsaNz_6Z4YoEM6e8yBiT1Aa4totQaN2sITeJR4mh5bVKefsIYFtWBM");'>
+<!-- Overlay to make map look more like UI -->
+<div class="absolute inset-0 bg-black/10 dark:bg-black/40"></div>
+<!-- Central Pin -->
+<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center -mt-8">
+<span class="material-symbols-outlined text-5xl text-primary drop-shadow-lg animate-bounce">location_on</span>
+<div class="w-3 h-1.5 bg-black/30 rounded-[50%] blur-[1px]"></div>
+</div>
+</div>
+<!-- Locate Me FAB -->
+<button class="absolute bottom-4 left-4 bg-surface-light dark:bg-surface-dark text-primary p-3 rounded-full shadow-lg border border-border-light dark:border-border-dark flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-symbols-outlined">my_location</span>
+</button>
+</div>
+<!-- Address Field -->
+<div class="space-y-2">
+<label class="block text-text-primary-light dark:text-white text-sm font-medium">العنوان المكتشف</label>
+<div class="flex w-full items-stretch rounded-lg shadow-sm">
+<div class="relative w-full">
+<input class="form-input w-full rounded-lg border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-primary-light dark:text-white focus:border-primary focus:ring-primary h-12 pr-4 pl-10 text-base font-normal placeholder:text-text-secondary-light dark:placeholder:text-text-secondary-dark" type="text" value="دمشق، المنطقة الصناعية، شارع ٥"/>
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-primary">
+<span class="material-symbols-outlined">edit</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Upload Photo Section -->
+<div class="space-y-2">
+<label class="block text-text-primary-light dark:text-white text-sm font-medium">صورة مدخل المستودع</label>
+<div class="border-2 border-dashed border-border-light dark:border-border-dark hover:border-primary dark:hover:border-primary bg-surface-light/50 dark:bg-surface-dark/50 rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors group">
+<div class="size-12 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-primary text-2xl">add_a_photo</span>
+</div>
+<p class="text-text-primary-light dark:text-white font-medium text-sm">التقط صورة أو اختر من المعرض</p>
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-xs mt-1">يجب أن تكون اللوحة واسم المستودع واضحين</p>
+</div>
+</div>
+<!-- Operating Hours -->
+<div class="space-y-3">
+<h3 class="text-text-primary-light dark:text-white text-base font-bold">ساعات العمل</h3>
+<div class="grid grid-cols-2 gap-4">
+<!-- Opens At -->
+<div class="space-y-1.5">
+<label class="text-text-secondary-light dark:text-text-secondary-dark text-xs font-medium mr-1">يفتح في</label>
+<div class="relative">
+<select class="w-full appearance-none rounded-lg border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-primary-light dark:text-white h-12 pr-4 pl-10 focus:border-primary focus:ring-primary text-sm font-medium cursor-pointer">
+<option>08:00 ص</option>
+<option>09:00 ص</option>
+<option>10:00 ص</option>
+</select>
+<span class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary-light dark:text-text-secondary-dark">
+<span class="material-symbols-outlined text-xl">schedule</span>
+</span>
+</div>
+</div>
+<!-- Closes At -->
+<div class="space-y-1.5">
+<label class="text-text-secondary-light dark:text-text-secondary-dark text-xs font-medium mr-1">يغلق في</label>
+<div class="relative">
+<select class="w-full appearance-none rounded-lg border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-text-primary-light dark:text-white h-12 pr-4 pl-10 focus:border-primary focus:ring-primary text-sm font-medium cursor-pointer">
+<option>06:00 م</option>
+<option>07:00 م</option>
+<option>08:00 م</option>
+</select>
+<span class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary-light dark:text-text-secondary-dark">
+<span class="material-symbols-outlined text-xl">schedule</span>
+</span>
+</div>
+</div>
+</div>
+</div>
+<div class="h-4"></div>
+</main>
+<!-- Fixed Bottom Action Bar -->
+<div class="sticky bottom-0 bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark p-4 pb-6 w-full max-w-md z-20">
+<button class="w-full flex items-center justify-center gap-2 rounded-lg h-12 bg-primary hover:bg-primary-dark text-white text-base font-bold transition-colors shadow-lg shadow-primary/20">
+<span>تأكيد وحفظ</span>
+<span class="material-symbols-outlined text-xl">check_circle</span>
+</button>
+</div>
+</div>
+</body></html>

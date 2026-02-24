@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 - Adjust Search Radius</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1e293b",
+                        "surface-darker": "#0f172a",
+                    },
+                    fontFamily: {
+                        "display": ["IBM Plex Sans Arabic", "Inter", "sans-serif"],
+                        "sans": ["IBM Plex Sans Arabic", "Inter", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom Range Slider Styling for Industrial Look */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+        }
+
+        input[type=range]:focus {
+            outline: none; 
+        }
+
+        /* Webkit slider track */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #334155;
+            border-radius: 9999px;
+        }
+
+        /* Webkit slider thumb */
+        input[type=range]::-webkit-slider-thumb {
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #137fec;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -8px; 
+            box-shadow: 0 0 0 4px rgba(19, 127, 236, 0.2);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-hidden">
+<div class="relative flex h-screen w-full flex-col bg-background-dark overflow-hidden group/design-root">
+<!-- Map Layer -->
+<div class="absolute inset-0 w-full h-full z-0 bg-surface-darker">
+<!-- Map Image Background with Dark Overlay -->
+<div class="w-full h-full bg-cover bg-center opacity-60" data-alt="Dark abstract city map texture showing streets and blocks" data-location="Riyadh" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAT0GGyCT-ePK_40JuInU_0TR8A5EZOZBkPKWJIfTSfm3OJ3IgYF4EToK38EnCz7UQM81lNYuEy3IN649Rl05YZ4j5zwJhZiMmGn4o9tslPkHRZQqlQPvi5pV5H9gIUlRKlFzLc5ws6oQ7FkBuegxnEWXBb_kNurZLWObZtGxHQyGnOIQJl7lkd5ZnrsLOgbtV2tvoyRemnsSbGQqXvWgMBw6x8l60JZLdwv6ILQkJ1vIcv3tj-rS40FonQTIB7uQY8RDlPiQilx7I"); filter: grayscale(100%) contrast(1.2) brightness(0.6);'>
+</div>
+<!-- Radius Visualization (Simulated) -->
+<div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+<!-- Outer glow/circle representing radius -->
+<div class="w-[280px] h-[280px] rounded-full bg-primary/20 border-2 border-primary/50 flex items-center justify-center animate-pulse">
+<!-- Inner location pin -->
+<div class="relative">
+<span class="material-symbols-outlined text-primary text-4xl drop-shadow-lg" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-4 h-2 bg-black/50 blur-[2px] rounded-full"></div>
+</div>
+</div>
+<!-- Random buyer dots within radius simulation -->
+<div class="absolute top-10 left-12 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+<div class="absolute bottom-16 right-10 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+<div class="absolute top-20 right-20 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+<div class="absolute bottom-8 left-24 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+<div class="absolute top-8 right-8 w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
+</div>
+</div>
+<!-- Top Controls Layer -->
+<div class="relative z-10 flex flex-col h-full pointer-events-none">
+<!-- Header Bar -->
+<div class="flex items-center justify-between p-4 pt-12 pointer-events-auto bg-gradient-to-b from-background-dark/80 to-transparent">
+<!-- Back Button -->
+<button class="flex items-center justify-center w-10 h-10 rounded-lg bg-surface-dark/90 text-white shadow-lg backdrop-blur-sm border border-slate-700 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<!-- Search Input Trigger -->
+<div class="flex-1 mx-3">
+<button class="w-full flex items-center gap-2 bg-surface-dark/90 backdrop-blur-sm border border-slate-700 text-slate-400 h-10 rounded-lg px-3 shadow-lg text-sm text-right">
+<span class="material-symbols-outlined text-lg">search</span>
+<span>الرياض، حي العليا...</span>
+</button>
+</div>
+<!-- Settings/Menu -->
+<button class="flex items-center justify-center w-10 h-10 rounded-lg bg-surface-dark/90 text-white shadow-lg backdrop-blur-sm border border-slate-700 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">tune</span>
+</button>
+</div>
+<!-- Map Interactions (Right Side) -->
+<div class="absolute top-1/2 -translate-y-1/2 right-4 flex flex-col gap-2 pointer-events-auto">
+<button class="flex items-center justify-center w-10 h-10 rounded-lg bg-surface-dark/90 text-white shadow-lg backdrop-blur-sm border border-slate-700 hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">add</span>
+</button>
+<button class="flex items-center justify-center w-10 h-10 rounded-lg bg-surface-dark/90 text-white shadow-lg backdrop-blur-sm border border-slate-700 hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<div class="h-2"></div>
+<button class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-white shadow-lg shadow-primary/30 hover:bg-blue-600 transition-colors">
+<span class="material-symbols-outlined">my_location</span>
+</button>
+</div>
+<!-- Spacer to push bottom sheet down -->
+<div class="flex-1"></div>
+<!-- Bottom Sheet Overlay -->
+<div class="pointer-events-auto w-full bg-surface-dark border-t border-slate-700 shadow-[0_-4px_20px_rgba(0,0,0,0.4)] rounded-t-2xl pb-8 pt-2">
+<!-- Drag Handle -->
+<div class="flex justify-center w-full pb-4 pt-2">
+<div class="h-1.5 w-12 rounded-full bg-slate-600"></div>
+</div>
+<div class="px-5 space-y-6">
+<!-- Title Row -->
+<div class="flex justify-between items-center">
+<h2 class="text-xl font-bold text-white tracking-tight">تعديل نطاق البحث</h2>
+<div class="flex items-center gap-1.5 px-3 py-1.5 bg-background-dark rounded-md border border-slate-700">
+<span class="material-symbols-outlined text-primary text-sm" style="font-variation-settings: 'FILL' 1;">location_on</span>
+<span class="text-xs font-medium text-slate-300">الرياض</span>
+</div>
+</div>
+<!-- Counter Display -->
+<div class="flex items-center justify-between p-4 bg-background-dark/50 rounded-xl border border-slate-700/50">
+<div class="flex flex-col">
+<span class="text-sm text-slate-400 font-medium">تم العثور على</span>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-bold text-white">34</span>
+<span class="text-base text-white font-medium">مشتري</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20">
+<span class="material-symbols-outlined text-green-500">group</span>
+</div>
+</div>
+<!-- Slider Control -->
+<div class="space-y-4">
+<div class="flex justify-between items-center text-sm font-medium">
+<span class="text-slate-400">نطاق البحث</span>
+<span class="text-primary text-lg font-bold">25 كم</span>
+</div>
+<div class="relative h-10 flex items-center">
+<!-- Custom Range Input -->
+<input class="w-full z-20 relative bg-transparent appearance-none" max="50" min="5" type="range" value="25"/>
+<!-- Visual Track Background (Dynamic fill would require JS, statically simplified here) -->
+<div class="absolute top-1/2 left-0 right-0 h-2 bg-slate-700 rounded-full -translate-y-1/2 overflow-hidden z-10">
+<!-- Static fill for demo purposes representing 50% -->
+<div class="w-1/2 h-full bg-primary/50"></div>
+</div>
+</div>
+<div class="flex justify-between text-xs text-slate-500 font-medium px-1">
+<span>5 كم</span>
+<span>25 كم</span>
+<span>50 كم</span>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="grid grid-cols-4 gap-3 pt-2">
+<button class="col-span-1 py-3.5 rounded-xl bg-slate-700 text-white font-bold hover:bg-slate-600 transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+<button class="col-span-3 py-3.5 rounded-xl bg-primary text-white font-bold text-lg shadow-lg shadow-primary/25 hover:bg-blue-600 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+<span>عرض النتائج</span>
+<span class="material-symbols-outlined text-sm rtl:rotate-180">arrow_forward_ios</span>
+</button>
+</div>
+</div>
+<!-- iOS Home Indicator Safe Area -->
+<div class="h-4 w-full"></div>
+</div>
+</div>
+</div>
+</body></html>

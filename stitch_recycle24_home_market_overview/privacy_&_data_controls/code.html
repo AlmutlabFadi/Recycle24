@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Privacy &amp; Data Controls</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hide for cleaner mobile look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white antialiased">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto bg-background-light dark:bg-background-dark shadow-2xl">
+<!-- Top Navigation Bar -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between px-4 py-3">
+<button class="p-2 -mr-2 text-primary hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors group">
+<span class="material-symbols-outlined text-2xl rtl:rotate-180">arrow_forward_ios</span>
+</button>
+<h1 class="text-lg font-bold text-center flex-1">الخصوصية والبيانات</h1>
+<div class="w-10"></div> <!-- Spacer to balance the back button -->
+</div>
+</header>
+<main class="flex-1 p-4 pb-12 space-y-6">
+<!-- Section 1: Visibility Settings -->
+<section>
+<div class="px-2 pb-2">
+<h2 class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">إعدادات الظهور</h2>
+</div>
+<div class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700">
+<!-- Setting Item: Phone -->
+<div class="p-4 flex items-center justify-between gap-4">
+<div class="flex flex-col flex-1">
+<span class="text-base font-medium text-slate-900 dark:text-white">رقم الهاتف</span>
+<span class="text-xs text-slate-500 dark:text-slate-400 mt-1">إظهار رقم الهاتف للمشترين الموثقين فقط</span>
+</div>
+<div class="shrink-0">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary rtl:peer-checked:after:-translate-x-full"></div>
+</label>
+</div>
+</div>
+<!-- Setting Item: Warehouse -->
+<div class="p-4 flex items-center justify-between gap-4">
+<div class="flex flex-col flex-1">
+<span class="text-base font-medium text-slate-900 dark:text-white">موقع المستودع</span>
+<span class="text-xs text-slate-500 dark:text-slate-400 mt-1">إخفاء موقع المستودع من البحث العام</span>
+</div>
+<div class="shrink-0">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary rtl:peer-checked:after:-translate-x-full"></div>
+</label>
+</div>
+</div>
+<!-- Setting Item: Factory Contact -->
+<div class="p-4 flex items-center justify-between gap-4">
+<div class="flex flex-col flex-1">
+<span class="text-base font-medium text-slate-900 dark:text-white">تواصل المصانع</span>
+<span class="text-xs text-slate-500 dark:text-slate-400 mt-1">السماح للمصانع بالتواصل معي مباشرة</span>
+</div>
+<div class="shrink-0">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary rtl:peer-checked:after:-translate-x-full"></div>
+</label>
+</div>
+</div>
+</div>
+<p class="px-4 pt-2 text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
+                    يساعد ضبط إعدادات الظهور في حماية خصوصيتك مع ضمان وصول الفرص التجارية المناسبة إليك.
+                </p>
+</section>
+<!-- Section 2: Data Management -->
+<section>
+<div class="px-2 pb-2 mt-2">
+<h2 class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">إدارة البيانات</h2>
+</div>
+<div class="bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm border border-slate-100 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-700">
+<!-- Action: Export Data -->
+<button class="w-full p-4 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group text-right">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary">
+<span class="material-symbols-outlined text-lg">download</span>
+</div>
+<div class="flex flex-col">
+<span class="text-base font-medium text-slate-900 dark:text-white">تصدير بياناتي</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">احصل على نسخة من بيانات حسابك</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-400 dark:text-slate-500 rtl:rotate-180 group-hover:text-primary transition-colors">chevron_right</span>
+</button>
+<!-- Action: Privacy Policy Link -->
+<button class="w-full p-4 flex items-center justify-between gap-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group text-right">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+<span class="material-symbols-outlined text-lg">policy</span>
+</div>
+<span class="text-base font-medium text-slate-900 dark:text-white">سياسة الخصوصية</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 dark:text-slate-500 rtl:rotate-180 group-hover:text-primary transition-colors">chevron_right</span>
+</button>
+<!-- Action: Delete Account -->
+<button class="w-full p-4 flex items-center justify-between gap-3 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors group text-right">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+<span class="material-symbols-outlined text-lg">delete</span>
+</div>
+<span class="text-base font-medium text-red-600 dark:text-red-400">حذف الحساب</span>
+</div>
+<span class="material-symbols-outlined text-red-300 dark:text-red-800 rtl:rotate-180 group-hover:text-red-600 transition-colors">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Footer Compliance Note -->
+<div class="px-4 py-4 flex flex-col items-center gap-2">
+<div class="flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mb-2">
+<span class="material-symbols-outlined text-2xl">security</span>
+</div>
+<p class="text-center text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto">
+                    نحن نلتزم بحماية بياناتك وفقاً لأعلى معايير الأمان والخصوصية العالمية. جميع بياناتك مشفرة ومحمية.
+                    <br/>
+<a class="text-primary hover:underline mt-1 inline-block" href="#">اقرأ المزيد عن التزامنا</a>
+</p>
+<p class="text-[10px] text-slate-400 mt-4 uppercase tracking-widest">Recycle24 v2.4.0</p>
+</div>
+</main>
+</div>
+</body></html>

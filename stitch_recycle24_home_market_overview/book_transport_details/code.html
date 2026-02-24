@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Book Transport Details</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Inter for numbers/English and IBM Plex Sans Arabic for Arabic text -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1C252E",
+                        "border-light": "#e5e7eb",
+                        "border-dark": "#324d67",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "arabic": ["IBM Plex Sans Arabic", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', 'Inter', sans-serif;
+        }
+        /* Custom scrollbar hiding for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex flex-col antialiased selection:bg-primary/30">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 bg-background-light dark:bg-background-dark border-b border-border-light dark:border-border-dark transition-colors duration-300">
+<div class="flex items-center justify-between px-4 py-3">
+<!-- Back Button (Arrow points right in RTL context usually, but standard 'back' icon in iOS RTL often points right) -->
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-slate-900 dark:text-white">
+<span class="material-symbols-outlined text-2xl">arrow_forward</span>
+</button>
+<h1 class="text-lg font-bold text-slate-900 dark:text-white flex-1 text-center pe-10">تفاصيل الحجز</h1>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto p-4 pb-24 space-y-6">
+<!-- Deal Summary Section -->
+<section>
+<h2 class="text-slate-900 dark:text-white text-xl font-bold mb-3 px-1">ملخص الشحنة</h2>
+<div class="grid grid-cols-2 gap-4">
+<!-- Material Card -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 border border-border-light dark:border-border-dark flex flex-col items-center justify-center text-center shadow-sm">
+<div class="bg-primary/10 text-primary rounded-full p-3 mb-2">
+<span class="material-symbols-outlined text-2xl">recycling</span>
+</div>
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium">المادة</span>
+<span class="text-slate-900 dark:text-white text-lg font-bold">بلاستيك</span>
+</div>
+<!-- Weight Card -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-4 border border-border-light dark:border-border-dark flex flex-col items-center justify-center text-center shadow-sm">
+<div class="bg-primary/10 text-primary rounded-full p-3 mb-2">
+<span class="material-symbols-outlined text-2xl">weight</span>
+</div>
+<span class="text-slate-500 dark:text-slate-400 text-xs font-medium">الوزن</span>
+<span class="text-slate-900 dark:text-white text-lg font-bold font-display" dir="ltr">500 kg</span>
+</div>
+</div>
+</section>
+<!-- Pickup Location Map -->
+<section>
+<div class="flex items-center justify-between mb-3 px-1">
+<h2 class="text-slate-900 dark:text-white text-xl font-bold">موقع الاستلام</h2>
+<button class="text-primary text-sm font-medium hover:text-primary/80 transition-colors">تعديل الموقع</button>
+</div>
+<div class="relative w-full h-40 rounded-xl overflow-hidden border border-border-light dark:border-border-dark shadow-sm group cursor-pointer">
+<!-- Map Background Image -->
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105" data-alt="Map view showing streets of Riyadh with a pin location" data-location="Riyadh" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCtkyC4JfafvScZCP4_cP-a80pj_qXYc9xldFk1joylsvdH9T9YjzBjLnZHi4-PgkWh-_TZiXsO7HPVSIygyo8r3CvPCsBKjBMO8-7nU5S69298Ei1W52y5tptuIWRLjX-_884N7Zz3gFPIqZVD9b-xiCcx3lmdo703XQu36B7UoblNwJyHrBa3yndhpmcUO_Zx58h1k034FLbW6AlxzX-Tfm1ZcPLvtNTwGIAOwT7AcB4WqKRg817Jnu4KqZ6R5dGkVo9EhJ8Wr1o');">
+</div>
+<!-- Gradient Overlay -->
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<!-- Pin & Address Overlay -->
+<div class="absolute bottom-3 start-3 text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary drop-shadow-md">location_on</span>
+<span class="text-sm font-medium drop-shadow-md">الرياض، حي العليا، شارع التخصصي</span>
+</div>
+<!-- Center Pin Visual -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="relative">
+<span class="material-symbols-outlined text-4xl text-primary drop-shadow-xl animate-bounce">location_on</span>
+<div class="w-4 h-1 bg-black/50 blur-[2px] rounded-full mx-auto mt-[-4px]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Form Fields -->
+<section class="space-y-4">
+<!-- Address Details -->
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-border-light dark:border-border-dark shadow-sm">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">العنوان بالتفصيل</label>
+<div class="relative">
+<div class="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none text-slate-400">
+<span class="material-symbols-outlined text-[20px]">home_pin</span>
+</div>
+<input class="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-slate-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 ps-10 placeholder-slate-400 dark:placeholder-slate-500" placeholder="رقم المبنى، رقم الشقة، علامة مميزة" type="text"/>
+</div>
+</div>
+<!-- Date & Time Row -->
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-border-light dark:border-border-dark shadow-sm">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">تاريخ الاستلام</label>
+<div class="relative">
+<div class="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none text-slate-400">
+<span class="material-symbols-outlined text-[20px]">calendar_today</span>
+</div>
+<input class="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-slate-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 ps-10 font-display" dir="ltr" type="text" value="2023-10-25"/>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-border-light dark:border-border-dark shadow-sm">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">الوقت</label>
+<div class="relative">
+<div class="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none text-slate-400">
+<span class="material-symbols-outlined text-[20px]">schedule</span>
+</div>
+<input class="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-slate-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 ps-10 font-display" dir="ltr" type="text" value="14:00"/>
+</div>
+</div>
+</div>
+<!-- Contact Phone -->
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-border-light dark:border-border-dark shadow-sm">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">رقم التواصل</label>
+<div class="relative flex direction-ltr">
+<div class="absolute inset-y-0 end-0 pe-3 flex items-center pointer-events-none text-slate-400">
+<span class="material-symbols-outlined text-[20px]">phone_iphone</span>
+</div>
+<input class="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-slate-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 text-right font-display placeholder-slate-400 dark:placeholder-slate-500" dir="ltr" placeholder="5X XXX XXXX" type="tel"/>
+<div class="absolute inset-y-0 start-0 ps-3 flex items-center pointer-events-none">
+<span class="text-slate-500 font-display text-sm">+966</span>
+</div>
+</div>
+</div>
+<!-- Notes for Driver -->
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-border-light dark:border-border-dark shadow-sm">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">ملاحظات للسائق (اختياري)</label>
+<div class="relative">
+<div class="absolute top-3 start-0 ps-3 flex items-start pointer-events-none text-slate-400">
+<span class="material-symbols-outlined text-[20px]">edit_note</span>
+</div>
+<textarea class="w-full bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-slate-900 dark:text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 ps-10 resize-none placeholder-slate-400 dark:placeholder-slate-500" placeholder="مثال: الشارع ضيق، أحتاج مساعدة في التحميل..." rows="3"></textarea>
+</div>
+</div>
+</section>
+</main>
+<!-- Sticky Footer Action Bar -->
+<footer class="fixed bottom-0 left-0 right-0 bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark p-4 z-40 pb-8">
+<div class="flex flex-col gap-3 max-w-md mx-auto">
+<div class="flex justify-between items-center px-1">
+<span class="text-slate-500 dark:text-slate-400 text-sm">إجمالي التكلفة التقديرية</span>
+<span class="text-slate-900 dark:text-white font-bold text-lg font-display">150 SAR</span>
+</div>
+<button class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-primary/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+<span>تأكيد الحجز</span>
+<span class="material-symbols-outlined text-xl rtl:rotate-180">arrow_forward</span>
+</button>
+</div>
+</footer>
+</body></html>

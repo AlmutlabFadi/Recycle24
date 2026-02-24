@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 - My Sent Proposals</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Noto+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1c2a38", // Lighter than bg-dark for cards
+                        "surface-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans Arabic", "Inter", "sans-serif"],
+                        "body": ["Noto Sans Arabic", "Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom Scrollbar for horizontal lists */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-gray-100 antialiased selection:bg-primary selection:text-white">
+<div class="relative mx-auto flex h-screen w-full max-w-md flex-col overflow-hidden bg-background-light dark:bg-background-dark shadow-2xl">
+<!-- Header -->
+<header class="flex items-center justify-between bg-surface-light dark:bg-background-dark p-4 pb-2 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-20">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 border-2 border-primary/20" data-alt="User profile picture of a male trader" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCQplm1dAGTEFvaDDC2nKXdheBot2rt0fd2Jj7XeZ92QhJBSQTUYZQrKv2BLggbLj2yp0JLRigPdcmfnWMXYvADPclGRa_2WyRfVKnR7ZOIsatLsE3QJBgFnVsjWXjQglNuNBaxqw_Gaoafmy5CrZCP-DKYvENvuK3Uje0_VSdzyqFsfh6_6HOMGr4DlzrWSTg-e1greOLg7qtFg3FI2z16r29NQBiiLm9hviWsVYAT_7l8Ozl6vdZm6d59LdG1tQ7OcUzgxXopr7U");'></div>
+<span class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white dark:ring-[#111a22]"></span>
+</div>
+</div>
+<h1 class="text-lg font-bold text-gray-900 dark:text-white flex-1 text-center">عروضي المرسلة</h1>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined text-gray-600 dark:text-gray-300">filter_list</span>
+</button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto overflow-x-hidden pb-24">
+<!-- Quick Stats -->
+<section class="p-4">
+<div class="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+<!-- Stat Card 1 -->
+<div class="flex min-w-[140px] flex-1 flex-col justify-between gap-4 rounded-xl p-4 bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-800 shadow-sm">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-yellow-500 bg-yellow-500/10 p-1.5 rounded-lg">hourglass_top</span>
+<span class="text-2xl font-bold text-gray-900 dark:text-white" style="font-family: 'Inter', sans-serif;">5</span>
+</div>
+<p class="text-sm font-medium text-gray-500 dark:text-gray-400">قيد المراجعة</p>
+</div>
+<!-- Stat Card 2 -->
+<div class="flex min-w-[140px] flex-1 flex-col justify-between gap-4 rounded-xl p-4 bg-surface-light dark:bg-surface-dark border border-primary border-opacity-50 dark:border-opacity-30 shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-primary bg-primary/10 p-1.5 rounded-lg">check_circle</span>
+<span class="text-2xl font-bold text-gray-900 dark:text-white" style="font-family: 'Inter', sans-serif;">2</span>
+</div>
+<p class="text-sm font-medium text-gray-500 dark:text-gray-400">مقبول</p>
+</div>
+<!-- Stat Card 3 -->
+<div class="flex min-w-[140px] flex-1 flex-col justify-between gap-4 rounded-xl p-4 bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-800 shadow-sm">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-green-500 bg-green-500/10 p-1.5 rounded-lg">inventory_2</span>
+<span class="text-2xl font-bold text-gray-900 dark:text-white" style="font-family: 'Inter', sans-serif;">12</span>
+</div>
+<p class="text-sm font-medium text-gray-500 dark:text-gray-400">مكتمل</p>
+</div>
+</div>
+</section>
+<!-- Filter Tabs -->
+<section class="px-4 pb-2">
+<div class="flex gap-2 overflow-x-auto hide-scrollbar">
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-primary px-5 transition-colors">
+<span class="text-white text-sm font-medium">الكل</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 px-5 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800">
+<span class="text-gray-600 dark:text-gray-300 text-sm font-medium">قيد المراجعة</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 px-5 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800">
+<span class="text-gray-600 dark:text-gray-300 text-sm font-medium">مقبول</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 px-5 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800">
+<span class="text-gray-600 dark:text-gray-300 text-sm font-medium">قيد التفاوض</span>
+</button>
+</div>
+</section>
+<!-- Proposals List -->
+<section class="flex flex-col gap-4 p-4">
+<!-- Card 1: Negotiation -->
+<article class="group relative flex flex-col gap-3 rounded-2xl bg-surface-light dark:bg-surface-dark p-4 shadow-sm border border-orange-500/30 transition-all hover:shadow-md">
+<!-- Header Row -->
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
+<div class="h-full w-full bg-cover bg-center" data-alt="Factory building exterior with industrial design" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuARGCyZdXSSOTYTq2q03_Dt1a_0NMjzS7eYIrpUdrJMKMCFIwYDFOGpx10BBimGQU28uewRnUC_mwlI2fcmtlKRF9GJQkHEb3uytwJmUFGABLoQEmcspS6kgq_3eSujzFxKCLq5CsNCEXIF35xlJpFv3qYLPqovm-6FkJIJP0QZwMBvqDIPCmbPAlrSK8L-JFT3vpYGFpnMzSo5Drt0bXbtOwXT3QiPQoAwwSr5DHapatwi4FuZ1TLnki653HLWKYJOj6fzBuIntVY");'></div>
+</div>
+<div>
+<h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight">مصنع الرياض للبلاستيك</h3>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">منذ ساعتين</p>
+</div>
+</div>
+<span class="inline-flex items-center rounded-full bg-orange-500/10 px-2.5 py-1 text-xs font-medium text-orange-500 ring-1 ring-inset ring-orange-500/20">
+<span class="w-1.5 h-1.5 rounded-full bg-orange-500 ml-1.5 animate-pulse"></span>
+                            قيد التفاوض
+                        </span>
+</div>
+<!-- Details Row -->
+<div class="mt-1 flex flex-wrap items-center gap-2">
+<div class="flex items-center gap-1.5 rounded-lg bg-background-light dark:bg-background-dark px-3 py-1.5">
+<span class="material-symbols-outlined text-lg text-gray-400">recycling</span>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">٥ طن - بلاستيك PET</span>
+</div>
+</div>
+<!-- Price & Actions Row -->
+<div class="mt-2 flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-3">
+<div class="flex flex-col">
+<span class="text-xs text-gray-500 dark:text-gray-400">السعر المقترح</span>
+<span class="text-lg font-bold text-primary" style="font-family: 'Inter', sans-serif;">4,500 <span class="text-xs font-normal text-gray-500 dark:text-gray-400">ر.س</span></span>
+</div>
+<div class="flex gap-2">
+<button aria-label="Chat Securely" class="flex items-center justify-center rounded-lg bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-xl">lock</span>
+</button>
+<button class="flex items-center justify-center gap-1 rounded-lg bg-surface-light dark:bg-background-dark border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<span>التفاصيل</span>
+<span class="material-symbols-outlined text-base">chevron_left</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 2: Accepted -->
+<article class="group relative flex flex-col gap-3 rounded-2xl bg-surface-light dark:bg-surface-dark p-4 shadow-sm border border-primary/30 transition-all hover:shadow-md">
+<!-- Header Row -->
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
+<div class="h-full w-full bg-cover bg-center" data-alt="Industrial metal pipes texture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC10bHaUQudT4CVKKgI6Kb6418RIhhhVdOaBh8JF30Ik3-WMccjXf40dyZqYhqSD9H1Y0Osi0FBJPHbmCrlz7I2Y7q46bLBhubPGN_wZh8IaQpxTI4820PjG3DJwN7FkXJQ1BIh2ucsZoGQDPgWCOc6LTUqwtG04JENzofHh45QXLPxQfTUkrpRQOlj8t-LRlffP_CrI5ULeSuQ9yKiNpbQNgK9C7B3Kjyh__P5whySSwtU7C3GHPuENuXEYRerlnhy45MCfZT1LsE");'></div>
+</div>
+<div>
+<h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight">الشرقية للمعادن</h3>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">أمس</p>
+</div>
+</div>
+<span class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
+                            مقبول
+                        </span>
+</div>
+<!-- Details Row -->
+<div class="mt-1 flex flex-wrap items-center gap-2">
+<div class="flex items-center gap-1.5 rounded-lg bg-background-light dark:bg-background-dark px-3 py-1.5">
+<span class="material-symbols-outlined text-lg text-gray-400">category</span>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">٢ طن - ألومنيوم</span>
+</div>
+</div>
+<!-- Price & Actions Row -->
+<div class="mt-2 flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-3">
+<div class="flex flex-col">
+<span class="text-xs text-gray-500 dark:text-gray-400">السعر المقترح</span>
+<span class="text-lg font-bold text-primary" style="font-family: 'Inter', sans-serif;">8,000 <span class="text-xs font-normal text-gray-500 dark:text-gray-400">ر.س</span></span>
+</div>
+<div class="flex gap-2">
+<button aria-label="Chat Securely" class="relative flex items-center justify-center rounded-lg bg-primary p-2 text-white hover:bg-blue-600 transition-colors shadow-lg shadow-primary/20">
+<span class="absolute -top-1 -right-1 flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+</span>
+<span class="material-symbols-outlined text-xl">lock</span>
+</button>
+<button class="flex items-center justify-center gap-1 rounded-lg bg-surface-light dark:bg-background-dark border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<span>التفاصيل</span>
+<span class="material-symbols-outlined text-base">chevron_left</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 3: Pending -->
+<article class="group relative flex flex-col gap-3 rounded-2xl bg-surface-light dark:bg-surface-dark p-4 shadow-sm border border-gray-200 dark:border-gray-800 transition-all hover:shadow-md">
+<!-- Header Row -->
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
+<div class="h-full w-full bg-cover bg-center" data-alt="Recycling symbol on cardboard box" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAoy1CVIlSuOW16aoaXgkZLur5Sr2IijH6cMGH8f0ngSyU-LZ329HYh-9cqjqv7LoYhQ9ZzVo4FuqwYehyszLU8Lfpy0qLxhdWnagWrKtPGNanlnVUgTAwPifSDWPbA3h0Jozx2_wxnqZNs1TgiJ24BgiapznAD0QnhxvKoWJ0Qbfgg8PhZ7gGHSmJdOulQIJ5EFkcGsyciV1jg4FdlRQ60uK_TtDK1sOEvlWF2xckTJPq8jBy_fUaknO8SQnMcmYlN4XhTobkg7n4");'></div>
+</div>
+<div>
+<h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight">شركة جدة للتدوير</h3>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">١٤ نوفمبر</p>
+</div>
+</div>
+<span class="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-700/50 px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-400 ring-1 ring-inset ring-gray-500/10 dark:ring-gray-600/30">
+                            قيد المراجعة
+                        </span>
+</div>
+<!-- Details Row -->
+<div class="mt-1 flex flex-wrap items-center gap-2">
+<div class="flex items-center gap-1.5 rounded-lg bg-background-light dark:bg-background-dark px-3 py-1.5">
+<span class="material-symbols-outlined text-lg text-gray-400">folder_open</span>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">١٠ طن - ورق كرتون</span>
+</div>
+</div>
+<!-- Price & Actions Row -->
+<div class="mt-2 flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-3">
+<div class="flex flex-col">
+<span class="text-xs text-gray-500 dark:text-gray-400">السعر المقترح</span>
+<span class="text-lg font-bold text-primary" style="font-family: 'Inter', sans-serif;">2,100 <span class="text-xs font-normal text-gray-500 dark:text-gray-400">ر.س</span></span>
+</div>
+<div class="flex gap-2">
+<button aria-label="Chat Locked" class="flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 p-2 text-gray-400 cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined text-xl">lock_open</span>
+</button>
+<button class="flex items-center justify-center gap-1 rounded-lg bg-surface-light dark:bg-background-dark border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+<span>التفاصيل</span>
+<span class="material-symbols-outlined text-base">chevron_left</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 4: Completed -->
+<article class="group relative flex flex-col gap-3 rounded-2xl bg-surface-light dark:bg-surface-dark p-4 shadow-sm border border-gray-200 dark:border-gray-800 opacity-75">
+<!-- Header Row -->
+<div class="flex items-start justify-between gap-3">
+<div class="flex items-center gap-3">
+<div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
+<div class="h-full w-full bg-cover bg-center" data-alt="Factory chimney silhouette" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBcXgIi9W19b0XM9V8kRX12k7DJScLgahdgkL_Si4DyL0yKwxOWXow8KII9x5AHS39uafN2GEIASnVQwQxbdzqrwmBWbntrj6cxiYn-rCPsRU0PIjMfrXKSk_5OKPCycuhBTq8xrfWo0LUYCxsuUczxuLIUkSm6WXnbz2HO-w3CjYyB1FYvI7KsYPyy3NqfqezfJ9eNqOmc3PNzMKUuUP8n6Ev4cBZIwYFvqbEK3ikmHyebWb-MUTvryzyH4zylVVriH-p8KNXCnck");'></div>
+</div>
+<div>
+<h3 class="font-bold text-gray-900 dark:text-white text-base leading-tight">مصنع الأسمنت العربية</h3>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">٠١ نوفمبر</p>
+</div>
+</div>
+<span class="inline-flex items-center rounded-full bg-green-500/10 px-2.5 py-1 text-xs font-medium text-green-600 dark:text-green-400 ring-1 ring-inset ring-green-500/20">
+                            مكتمل
+                        </span>
+</div>
+<!-- Details Row -->
+<div class="mt-1 flex flex-wrap items-center gap-2">
+<div class="flex items-center gap-1.5 rounded-lg bg-background-light dark:bg-background-dark px-3 py-1.5">
+<span class="material-symbols-outlined text-lg text-gray-400">layers</span>
+<span class="text-sm font-medium text-gray-700 dark:text-gray-300">٥٠ طن - مخلفات بناء</span>
+</div>
+</div>
+<!-- Price & Actions Row -->
+<div class="mt-2 flex items-center justify-between border-t border-gray-100 dark:border-gray-800 pt-3">
+<div class="flex flex-col">
+<span class="text-xs text-gray-500 dark:text-gray-400">السعر النهائي</span>
+<span class="text-lg font-bold text-green-500" style="font-family: 'Inter', sans-serif;">15,000 <span class="text-xs font-normal text-gray-500 dark:text-gray-400">ر.س</span></span>
+</div>
+<div class="flex gap-2">
+<button class="flex items-center justify-center gap-1 rounded-lg bg-surface-light dark:bg-background-dark border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors w-full">
+<span>عرض الفاتورة</span>
+</button>
+</div>
+</div>
+</article>
+</section>
+</main>
+<!-- Floating Action Button -->
+<button class="absolute bottom-24 left-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/40 hover:bg-blue-600 transition-all z-10">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+<!-- Bottom Navigation -->
+<nav class="absolute bottom-0 w-full border-t border-gray-200 dark:border-gray-800 bg-surface-light dark:bg-surface-dark pb-safe">
+<div class="flex h-16 items-center justify-around px-2">
+<a class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl">home</span>
+<span class="text-[10px] font-medium">الرئيسية</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-primary" href="#">
+<span class="material-symbols-outlined text-2xl fill-current">description</span>
+<span class="text-[10px] font-medium">العروض</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl">storefront</span>
+<span class="text-[10px] font-medium">السوق</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-gray-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-2xl">person</span>
+<span class="text-[10px] font-medium">حسابي</span>
+</a>
+</div>
+</nav>
+<!-- Safe area padding for bottom nav on iPhone X+ -->
+<div class="h-6 bg-surface-light dark:bg-surface-dark w-full"></div>
+</div>
+</body></html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Global Economic Calendar - Recycle24</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "card-dark": "#1c2a36",
+                        "card-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans Arabic", "Inter", "sans-serif"],
+                        "numbers": ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased selection:bg-primary/30">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden pb-24">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-50 flex items-center justify-between bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md p-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-900 dark:text-white">arrow_forward</span>
+</button>
+<h2 class="text-xl font-bold leading-tight">التقويم الاقتصادي</h2>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-500 dark:text-[#92adc9]">search</span>
+</button>
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors relative">
+<span class="material-symbols-outlined text-slate-500 dark:text-[#92adc9]">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-background-light dark:border-background-dark"></span>
+</button>
+</div>
+</div>
+<!-- Date Navigator -->
+<div class="flex gap-2 p-4 overflow-x-auto no-scrollbar snap-x">
+<!-- Active Day -->
+<div class="flex min-w-[70px] snap-center flex-col items-center justify-center gap-1 rounded-2xl bg-primary p-3 shadow-lg shadow-primary/20 cursor-pointer border border-primary">
+<p class="text-white/80 text-xs font-medium">الخميس</p>
+<p class="text-white text-xl font-bold font-numbers">12</p>
+<div class="h-1 w-1 rounded-full bg-white"></div>
+</div>
+<!-- Inactive Days -->
+<div class="flex min-w-[70px] snap-center flex-col items-center justify-center gap-1 rounded-2xl bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700 p-3 cursor-pointer hover:border-primary/50 transition-colors">
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium">الجمعة</p>
+<p class="text-slate-900 dark:text-white text-xl font-bold font-numbers">13</p>
+</div>
+<div class="flex min-w-[70px] snap-center flex-col items-center justify-center gap-1 rounded-2xl bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700 p-3 cursor-pointer hover:border-primary/50 transition-colors">
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium">السبت</p>
+<p class="text-slate-900 dark:text-white text-xl font-bold font-numbers">14</p>
+</div>
+<div class="flex min-w-[70px] snap-center flex-col items-center justify-center gap-1 rounded-2xl bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700 p-3 cursor-pointer hover:border-primary/50 transition-colors">
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium">الأحد</p>
+<p class="text-slate-900 dark:text-white text-xl font-bold font-numbers">15</p>
+</div>
+<div class="flex min-w-[70px] snap-center flex-col items-center justify-center gap-1 rounded-2xl bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700 p-3 cursor-pointer hover:border-primary/50 transition-colors">
+<p class="text-slate-500 dark:text-slate-400 text-xs font-medium">الاثنين</p>
+<p class="text-slate-900 dark:text-white text-xl font-bold font-numbers">16</p>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-3 px-4 pb-2 overflow-x-auto no-scrollbar">
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-slate-200 dark:bg-card-dark px-4 border border-transparent hover:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-slate-700 dark:text-slate-300 text-[18px]">tune</span>
+<p class="text-slate-700 dark:text-white text-sm font-medium">تصفية</p>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-red-500/10 dark:bg-red-500/20 px-4 border border-red-500/20">
+<p class="text-red-600 dark:text-red-400 text-sm font-medium">تأثير عالي</p>
+<span class="material-symbols-outlined text-red-600 dark:text-red-400 text-[18px]">close</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-slate-200 dark:bg-card-dark px-4 border border-transparent dark:border-slate-700">
+<p class="text-slate-600 dark:text-slate-300 text-sm font-medium">الولايات المتحدة</p>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-slate-200 dark:bg-card-dark px-4 border border-transparent dark:border-slate-700">
+<p class="text-slate-600 dark:text-slate-300 text-sm font-medium">الصين</p>
+</button>
+</div>
+<!-- Events List -->
+<div class="flex flex-col gap-4 p-4">
+<!-- Section Header -->
+<div class="flex items-center justify-between mt-2">
+<h3 class="text-lg font-bold">أحداث اليوم</h3>
+<span class="text-xs text-slate-500 dark:text-slate-400 font-numbers">GMT+3</span>
+</div>
+<!-- Event Card 1: High Impact (Expanded) -->
+<div class="flex flex-col rounded-2xl bg-white dark:bg-card-dark shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+<!-- Card Header -->
+<div class="flex items-start gap-4 p-4 pb-2">
+<div class="flex flex-col items-center gap-1 pt-1">
+<span class="text-slate-900 dark:text-white font-bold text-sm font-numbers">14:30</span>
+<div class="text-2xl">🇺🇸</div>
+</div>
+<div class="flex flex-1 flex-col justify-center gap-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">تأثير عالي</span>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">الفيدرالي</span>
+</div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal">قرار الفائدة الفيدرالي الأمريكي</p>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">expand_less</span>
+</button>
+</div>
+<!-- Analysis/Why it matters -->
+<div class="px-4 pb-4">
+<div class="bg-primary/5 dark:bg-primary/10 rounded-lg p-3 border border-primary/10 flex items-start gap-3">
+<span class="material-symbols-outlined text-primary mt-0.5 text-[20px]">lightbulb</span>
+<div>
+<p class="text-slate-700 dark:text-slate-200 text-sm font-medium leading-relaxed">
+<span class="text-primary font-bold ml-1">لماذا يهمنا؟</span>
+                                رفع الفائدة قد يزيد من قوة الدولار، مما يضغط سلبًا على أسعار النحاس والألمنيوم عالمياً.
+                            </p>
+</div>
+</div>
+</div>
+<!-- Data Grid -->
+<div class="grid grid-cols-3 divide-x divide-x-reverse divide-slate-100 dark:divide-slate-700 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-[#15202b]">
+<div class="p-3 text-center">
+<p class="text-slate-500 dark:text-slate-400 text-xs mb-1">السابق</p>
+<p class="text-slate-900 dark:text-white font-bold font-numbers">5.25%</p>
+</div>
+<div class="p-3 text-center">
+<p class="text-slate-500 dark:text-slate-400 text-xs mb-1">المتوقع</p>
+<p class="text-slate-900 dark:text-white font-bold font-numbers">5.50%</p>
+</div>
+<div class="p-3 text-center bg-green-500/5 dark:bg-green-500/10">
+<p class="text-slate-500 dark:text-slate-400 text-xs mb-1">الحالي</p>
+<p class="text-emerald-600 dark:text-emerald-400 font-bold font-numbers">5.50%</p>
+</div>
+</div>
+<!-- Reminder Action -->
+<div class="flex justify-center border-t border-slate-100 dark:border-slate-800 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors">
+<div class="flex items-center gap-2 text-primary text-sm font-medium">
+<span class="material-symbols-outlined text-[18px]">notifications_active</span>
+<span>تم تفعيل التنبيه</span>
+</div>
+</div>
+</div>
+<!-- Event Card 2: High Impact (China) -->
+<div class="flex flex-col rounded-xl bg-white dark:bg-card-dark shadow-sm border border-slate-100 dark:border-slate-800 hover:border-primary/30 transition-colors">
+<div class="flex items-start gap-4 p-4">
+<div class="flex flex-col items-center gap-1 pt-1">
+<span class="text-slate-500 dark:text-slate-400 font-medium text-sm font-numbers">09:00</span>
+<div class="text-2xl">🇨🇳</div>
+</div>
+<div class="flex flex-1 flex-col justify-center gap-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">تأثير عالي</span>
+</div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal">مؤشر مديري المشتريات الصناعي</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm leading-normal">مؤشر إيجابي يعني زيادة الطلب على الخردة المستوردة.</p>
+<!-- Mini Data Preview -->
+<div class="flex gap-4 mt-2">
+<div class="flex items-center gap-1">
+<span class="text-xs text-slate-500">الحالي:</span>
+<span class="text-sm font-bold text-red-500 font-numbers">48.2</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="text-xs text-slate-500">المتوقع:</span>
+<span class="text-sm font-bold text-slate-400 font-numbers">49.5</span>
+</div>
+</div>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Event Card 3: Medium Impact (Europe) -->
+<div class="flex flex-col rounded-xl bg-white dark:bg-card-dark shadow-sm border border-slate-100 dark:border-slate-800 hover:border-primary/30 transition-colors opacity-80">
+<div class="flex items-start gap-4 p-4">
+<div class="flex flex-col items-center gap-1 pt-1">
+<span class="text-slate-500 dark:text-slate-400 font-medium text-sm font-numbers">11:00</span>
+<div class="text-2xl">🇪🇺</div>
+</div>
+<div class="flex flex-1 flex-col justify-center gap-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500">تأثير متوسط</span>
+</div>
+<p class="text-slate-900 dark:text-white text-base font-medium leading-normal">مؤشر أسعار المستهلكين (سنوي)</p>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Event Card 4: Low Impact -->
+<div class="flex flex-col rounded-xl bg-white dark:bg-card-dark shadow-sm border border-slate-100 dark:border-slate-800 hover:border-primary/30 transition-colors opacity-70">
+<div class="flex items-start gap-4 p-4">
+<div class="flex flex-col items-center gap-1 pt-1">
+<span class="text-slate-500 dark:text-slate-400 font-medium text-sm font-numbers">16:00</span>
+<div class="text-2xl">🇬🇧</div>
+</div>
+<div class="flex flex-1 flex-col justify-center gap-1">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">تأثير منخفض</span>
+</div>
+<p class="text-slate-900 dark:text-white text-base font-medium leading-normal">مخزونات LME - تقرير يومي</p>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Ad / Promo Banner -->
+<div class="relative w-full h-24 rounded-xl overflow-hidden mt-2 group cursor-pointer">
+<div class="absolute inset-0 bg-gradient-to-r from-primary to-blue-600 opacity-90"></div>
+<!-- Abstract pattern background -->
+<div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20" data-alt="Abstract subtle geometric pattern"></div>
+<div class="relative z-10 flex items-center justify-between px-6 h-full">
+<div class="flex flex-col gap-1">
+<p class="text-white font-bold text-lg">تحليلات VIP للمعادن</p>
+<p class="text-blue-100 text-xs">احصل على توصيات بيع وشراء حصرية</p>
+</div>
+<div class="bg-white text-primary rounded-full size-10 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+</div>
+</div>
+<div class="h-8"></div>
+</div>
+<!-- Bottom Navigation -->
+<div class="fixed bottom-0 left-0 right-0 z-50 bg-background-light dark:bg-background-dark border-t border-slate-200 dark:border-slate-800 pb-5 pt-2 px-6">
+<div class="flex justify-between items-center">
+<div class="flex flex-col items-center gap-1 cursor-pointer group">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors text-[24px]">home</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary transition-colors">الرئيسية</span>
+</div>
+<div class="flex flex-col items-center gap-1 cursor-pointer">
+<span class="material-symbols-outlined text-primary text-[24px]">calendar_month</span>
+<span class="text-[10px] font-bold text-primary">التقويم</span>
+</div>
+<!-- Floating Center Button Action (Optional for 'Trade' or 'Scan') -->
+<div class="relative -top-6">
+<div class="size-14 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/40 cursor-pointer hover:scale-105 transition-transform border-4 border-background-light dark:border-background-dark">
+<span class="material-symbols-outlined text-white text-[28px]">currency_exchange</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1 cursor-pointer group">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors text-[24px]">newspaper</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary transition-colors">أخبار</span>
+</div>
+<div class="flex flex-col items-center gap-1 cursor-pointer group">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors text-[24px]">person</span>
+<span class="text-[10px] font-medium text-slate-400 group-hover:text-primary transition-colors">حسابي</span>
+</div>
+</div>
+</div>
+</div>
+</body></html>

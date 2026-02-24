@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Notifications Center - Recycle24</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Public Sans & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "primary-dark": "#0f65bd",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e2936",
+                        "success": "#10b981",
+                        "warning": "#f59e0b",
+                        "danger": "#ef4444",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Public Sans", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Custom scrollbar hiding for clean UI */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex justify-center">
+<!-- Mobile Container -->
+<div class="w-full max-w-md bg-background-light dark:bg-background-dark min-h-screen relative shadow-2xl flex flex-col">
+<!-- Header -->
+<header class="sticky top-0 z-20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pt-6 pb-2 border-b border-slate-200 dark:border-slate-800 transition-colors">
+<div class="flex items-center justify-between mb-4">
+<h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">الإشعارات</h1>
+<div class="flex items-center gap-3">
+<button aria-label="Settings" class="p-2 rounded-full text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</div>
+<!-- Action Bar -->
+<div class="flex justify-between items-center mb-2">
+<div class="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
+<span>لديك</span>
+<span class="font-bold text-primary">3</span>
+<span>إشعارات جديدة</span>
+</div>
+<button class="text-sm font-semibold text-primary hover:text-primary-dark transition-colors">
+                    مسح الكل
+                </button>
+</div>
+</header>
+<!-- Tabs / Segmented Control -->
+<div class="px-4 py-3 bg-background-light dark:bg-background-dark z-10">
+<div class="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+<button class="flex-none px-5 py-2 rounded-full text-sm font-semibold bg-primary text-white shadow-md shadow-primary/20 transition-all">
+                    الكل
+                </button>
+<button class="flex-none px-5 py-2 rounded-full text-sm font-medium bg-white dark:bg-surface-dark text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-primary/50 transition-all">
+                    الصفقات
+                </button>
+<button class="flex-none px-5 py-2 rounded-full text-sm font-medium bg-white dark:bg-surface-dark text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-primary/50 transition-all">
+                    اللوجستيات
+                </button>
+<button class="flex-none px-5 py-2 rounded-full text-sm font-medium bg-white dark:bg-surface-dark text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-primary/50 transition-all">
+                    المالية
+                </button>
+</div>
+</div>
+<!-- Content List -->
+<main class="flex-1 px-4 pb-20 space-y-6 overflow-y-auto">
+<!-- Section: New -->
+<section>
+<h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 px-1">الجديدة</h3>
+<div class="space-y-3">
+<!-- Notification Item 1: Logistics (Unread) -->
+<div class="group relative flex gap-4 p-4 bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50 hover:shadow-md transition-shadow">
+<!-- Unread Indicator -->
+<div class="absolute top-4 left-4 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-white dark:ring-surface-dark"></div>
+<!-- Icon -->
+<div class="flex-shrink-0">
+<div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined filled">local_shipping</span>
+</div>
+</div>
+<!-- Content -->
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-base font-bold text-slate-900 dark:text-slate-100 truncate">وصول الشحنة إلى المحطة</h4>
+<span class="text-xs font-medium text-slate-400 whitespace-nowrap mr-2">منذ 2د</span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 leading-snug mb-2 line-clamp-2">
+                                الشحنة رقم #442 وصلت إلى ميناء طرطوس وهي جاهزة للتفتيش الجمركي.
+                            </p>
+<!-- Badges -->
+<div class="flex gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-primary">
+                                    تحديث
+                                </span>
+</div>
+</div>
+</div>
+<!-- Notification Item 2: Deal/Auction (Unread) -->
+<div class="group relative flex gap-4 p-4 bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50 hover:shadow-md transition-shadow">
+<!-- Unread Indicator -->
+<div class="absolute top-4 left-4 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-white dark:ring-surface-dark"></div>
+<div class="flex-shrink-0">
+<div class="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 dark:text-purple-400">
+<span class="material-symbols-outlined filled">gavel</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-base font-bold text-slate-900 dark:text-slate-100">مزايدة جديدة على نحاس</h4>
+<span class="text-xs font-medium text-slate-400 whitespace-nowrap mr-2">منذ 15د</span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 leading-snug mb-2">
+                                تم وضع مزايدة بقيمة <span class="font-bold text-slate-700 dark:text-slate-300">5,000,000 ل.س</span> من قبل شركة الاتحاد.
+                            </p>
+<div class="flex gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+                                    مزاد علني
+                                </span>
+</div>
+</div>
+</div>
+<!-- Notification Item 3: Alert (Unread) -->
+<div class="group relative flex gap-4 p-4 bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-slate-100 dark:border-slate-700/50 hover:shadow-md transition-shadow">
+<!-- Unread Indicator -->
+<div class="absolute top-4 left-4 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-white dark:ring-surface-dark"></div>
+<div class="flex-shrink-0">
+<div class="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-danger">
+<span class="material-symbols-outlined filled">warning</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-base font-bold text-slate-900 dark:text-slate-100">تنبيه مخزون منخفض</h4>
+<span class="text-xs font-medium text-slate-400 whitespace-nowrap mr-2">منذ 1س</span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 leading-snug mb-2">
+                                مخزون الحديد الصناعي في مستودع حلب وصل إلى الحد الأدنى.
+                            </p>
+<div class="flex gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-danger">
+                                    تنبيه
+                                </span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Section: Earlier -->
+<section>
+<h3 class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 px-1">في وقت سابق</h3>
+<div class="space-y-3">
+<!-- Notification Item 4: Financial (Read) -->
+<div class="group relative flex gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-transparent dark:border-slate-700/30">
+<div class="flex-shrink-0">
+<div class="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-base font-bold text-slate-700 dark:text-slate-300">تم استلام دفعة مالية</h4>
+<span class="text-xs font-medium text-slate-400 whitespace-nowrap mr-2">الأمس</span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-500 leading-snug mb-2">
+                                تم إيداع مبلغ 250,000 ل.س في محفظتك الإلكترونية بنجاح.
+                            </p>
+<div class="flex gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
+                                    تم الدفع
+                                </span>
+</div>
+</div>
+</div>
+<!-- Notification Item 5: Success (Read) -->
+<div class="group relative flex gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-transparent dark:border-slate-700/30">
+<div class="flex-shrink-0">
+<div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">verified</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-base font-bold text-slate-700 dark:text-slate-300">تم توثيق حسابك</h4>
+<span class="text-xs font-medium text-slate-400 whitespace-nowrap mr-2">منذ 2 يوم</span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-500 leading-snug mb-2">
+                                حسابك التجاري أصبح موثقاً الآن. يمكنك البدء في إنشاء صفقات غير محدودة.
+                            </p>
+</div>
+</div>
+<!-- Notification Item 6: Logistics (Read) -->
+<div class="group relative flex gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-transparent dark:border-slate-700/30">
+<div class="flex-shrink-0">
+<div class="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex justify-between items-start mb-1">
+<h4 class="text-base font-bold text-slate-700 dark:text-slate-300">تم تسليم الطلب #399</h4>
+<span class="text-xs font-medium text-slate-400 whitespace-nowrap mr-2">12/05/2024</span>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-500 leading-snug">
+                                تم تأكيد التسليم من قبل المشتري. سيتم تحرير الأموال قريباً.
+                            </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Spacer for Navigation Bar if needed -->
+<div class="h-8"></div>
+</main>
+<!-- Bottom Tab Bar Placeholder (Optional context for App) -->
+<nav class="sticky bottom-0 bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 px-6 py-3 flex justify-between items-center z-30">
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">الرئيسية</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="text-[10px] font-medium">السوق</span>
+</button>
+<div class="relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 w-14 h-14 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 text-white border-4 border-background-light dark:border-background-dark">
+<span class="material-symbols-outlined text-2xl">add</span>
+</div>
+<div class="w-10"></div> <!-- Spacer for FAB -->
+</div>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined filled">notifications</span>
+<span class="text-[10px] font-medium">الإشعارات</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">حسابي</span>
+</button>
+</nav>
+</div>
+</body></html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Factory &amp; Exporter Leads</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Noto+Sans+Arabic:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#192633",
+                        "surface-light": "#ffffff",
+                        "border-dark": "#233648",
+                        "text-secondary": "#92adc9"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "Noto Sans Arabic", "sans-serif"],
+                        "body": ["Inter", "Noto Sans Arabic", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for horizontal scrolling areas */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased selection:bg-primary selection:text-white pb-24">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-50 bg-background-light dark:bg-background-dark border-b border-gray-200 dark:border-border-dark">
+<div class="flex items-center px-4 py-3 justify-between">
+<!-- Back Button (RTL points right) -->
+<button class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-surface-dark transition-colors">
+<span class="material-symbols-outlined text-gray-900 dark:text-white">arrow_forward</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center truncate px-2">
+                فرص المصانع والتصدير
+            </h2>
+<!-- Notifications -->
+<button class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-surface-dark transition-colors relative">
+<span class="material-symbols-outlined text-gray-900 dark:text-white">notifications</span>
+<span class="absolute top-2 right-2 size-2.5 bg-red-500 rounded-full border-2 border-background-light dark:border-background-dark"></span>
+</button>
+</div>
+</div>
+<!-- Quick Stats -->
+<div class="px-4 py-4">
+<div class="flex gap-4">
+<div class="flex flex-1 flex-col gap-1 rounded-xl p-4 bg-surface-light dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-border-dark">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-[20px]">gavel</span>
+<p class="text-gray-500 dark:text-text-secondary text-xs font-medium">مناقصات نشطة</p>
+</div>
+<p class="text-2xl font-bold leading-tight">18</p>
+</div>
+<div class="flex flex-1 flex-col gap-1 rounded-xl p-4 bg-surface-light dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-border-dark">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-orange-400 text-[20px]">history_edu</span>
+<p class="text-gray-500 dark:text-text-secondary text-xs font-medium">عروضي المعلقة</p>
+</div>
+<p class="text-2xl font-bold leading-tight">3</p>
+</div>
+</div>
+</div>
+<!-- Search & Segmented Controls -->
+<div class="flex flex-col gap-4 px-4 pb-2">
+<!-- Search Bar -->
+<div class="relative">
+<input class="w-full h-12 pr-11 pl-4 rounded-xl bg-surface-light dark:bg-surface-dark border-none ring-1 ring-gray-200 dark:ring-border-dark focus:ring-2 focus:ring-primary text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-shadow" placeholder="بحث عن مادة، مصنع، أو منطقة..." type="text"/>
+<div class="absolute right-0 top-0 h-full w-11 flex items-center justify-center pointer-events-none">
+<span class="material-symbols-outlined text-gray-400 dark:text-gray-500">search</span>
+</div>
+</div>
+<!-- Segments -->
+<div class="flex h-11 w-full items-center justify-center rounded-xl bg-gray-100 dark:bg-surface-dark p-1">
+<label class="flex cursor-pointer h-full flex-1 items-center justify-center rounded-lg px-2 transition-all has-[:checked]:bg-white dark:has-[:checked]:bg-background-dark has-[:checked]:shadow-sm has-[:checked]:text-primary text-gray-500 dark:text-text-secondary text-sm font-bold">
+<span class="truncate">مصانع محلية</span>
+<input checked="" class="hidden" name="type-filter" type="radio" value="local"/>
+</label>
+<label class="flex cursor-pointer h-full flex-1 items-center justify-center rounded-lg px-2 transition-all has-[:checked]:bg-white dark:has-[:checked]:bg-background-dark has-[:checked]:shadow-sm has-[:checked]:text-primary text-gray-500 dark:text-text-secondary text-sm font-bold">
+<span class="truncate">طلبات تصدير</span>
+<input class="hidden" name="type-filter" type="radio" value="export"/>
+</label>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-2 px-4 py-2 overflow-x-auto hide-scrollbar">
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-primary px-5 shadow-sm shadow-primary/20">
+<p class="text-white text-sm font-medium leading-normal">الكل</p>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-border-dark px-5">
+<p class="text-gray-700 dark:text-white text-sm font-medium leading-normal">حديد</p>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-border-dark px-5">
+<p class="text-gray-700 dark:text-white text-sm font-medium leading-normal">بلاستيك</p>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-border-dark px-5">
+<p class="text-gray-700 dark:text-white text-sm font-medium leading-normal">نحاس</p>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-border-dark px-5">
+<p class="text-gray-700 dark:text-white text-sm font-medium leading-normal">ألمنيوم</p>
+</button>
+</div>
+<!-- List Header -->
+<div class="px-4 py-2 mt-2 flex items-center justify-between">
+<h3 class="text-base font-bold text-white">أحدث الطلبات</h3>
+<button class="text-xs text-primary font-medium flex items-center gap-1">
+            ترتيب حسب: الأحدث
+            <span class="material-symbols-outlined text-[16px]">sort</span>
+</button>
+</div>
+<!-- Tenders Feed -->
+<div class="flex flex-col gap-4 px-4 pb-4">
+<!-- Card 1: High Priority Steel Tender -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-light dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-transparent transition-all hover:shadow-md dark:hover:shadow-primary/5">
+<!-- Urgency Banner -->
+<div class="absolute top-0 right-0 bg-red-500/10 text-red-500 dark:bg-red-500/20 dark:text-red-400 px-3 py-1 rounded-bl-xl text-xs font-bold flex items-center gap-1 z-10 border-b border-l border-red-500/10">
+<span class="material-symbols-outlined text-[14px]">timer</span>
+                ينتهي خلال ٤ ساعات
+            </div>
+<div class="flex flex-col sm:flex-row">
+<!-- Image Section -->
+<div class="relative h-48 sm:h-auto sm:w-40 bg-gray-200 dark:bg-gray-800 shrink-0">
+<div class="absolute inset-0 bg-center bg-cover" data-alt="Industrial steel scraps piled in a recycling yard" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBPqu79C3Uy0dKruq142g5yieEwNIVeapx66CFTUri8XYeTX3hS6VNEIxxrZckxTPdp-kAz_fjKQaY56DTgXv3NR7FadCcyOzBlD5I5iDa9FpsYD-8NXcp34gSes1iJHXptcGtdXxDFW9cAUzxUihKzXjQ6hkbsgokRzXHKpzdcz5kzFjrEEIvmCKLHdfYw5CfsEFs-InblNFlxqYhutz7fKUUyFpuGY73uzJgTjOWD_PP33_9GpPY9I2Ox7ql8q4gw0G_97uJLh0Y");'></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent sm:hidden"></div>
+<div class="absolute bottom-3 right-3 sm:hidden">
+<span class="inline-flex items-center gap-1 rounded bg-black/60 px-2 py-1 text-xs font-medium text-white backdrop-blur-md">
+<span class="material-symbols-outlined text-[14px] text-primary">verified</span>
+                            مصنع موثوق
+                        </span>
+</div>
+</div>
+<!-- Content Section -->
+<div class="flex flex-1 flex-col justify-between p-4">
+<div class="mb-4">
+<div class="flex items-center justify-between mb-2">
+<span class="hidden sm:inline-flex items-center gap-1 rounded bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+                                مصنع موثوق
+                            </span>
+<span class="text-xs text-text-secondary">رقم المناقصة: #4829</span>
+</div>
+<h3 class="text-lg font-bold text-gray-900 dark:text-white leading-tight mb-2">
+                            مطلوب: ٥٠٠ طن حديد خردة (HMS 1)
+                        </h3>
+<div class="flex items-center gap-1 text-sm text-text-secondary mb-3">
+<span class="material-symbols-outlined text-[16px]">factory</span>
+<span>معمل درفلة حمص</span>
+<span class="mx-1">•</span>
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span>المنطقة الصناعية، حمص</span>
+</div>
+<!-- Specs Tags -->
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center rounded-md bg-gray-100 dark:bg-background-dark px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                النقاوة: ٩٥٪
+                            </span>
+<span class="inline-flex items-center rounded-md bg-gray-100 dark:bg-background-dark px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                الدفع: نقدي عند التسليم
+                            </span>
+</div>
+</div>
+<div class="flex items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-border-dark">
+<div class="flex flex-col">
+<span class="text-xs text-text-secondary">أعلى عرض حالي</span>
+<span class="font-bold text-white">٣٢٠ دولار / طن</span>
+</div>
+<button class="flex-1 max-w-[140px] h-10 bg-primary hover:bg-blue-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+<span>تقديم عرض</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 2: Export Opportunity -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-light dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-transparent transition-all hover:shadow-md dark:hover:shadow-primary/5">
+<div class="flex flex-col sm:flex-row">
+<div class="relative h-48 sm:h-auto sm:w-40 bg-gray-200 dark:bg-gray-800 shrink-0">
+<div class="absolute inset-0 bg-center bg-cover" data-alt="Recycled plastic bales ready for export" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuClGPr4p9vK2DX4hNC6FDcJTSVxo2I-DnPjwTyEt28EwwC_hRCcn_AdLNpfa1x9852mYkiSNJp06z--INvJ5QhCVK-tiD7xYQVaErdSizED--S97FgZmYuHLd5SY_ZqVZxDtJnadknMYf1xI5f4RpaC3HDTL0-RiRWGY6AVXCpSjc-jC2O8K4OpV7qQP3Pz8GdrwYIL1OF_-3Qnjrg2YtyesLcgXlL-FGGycI5JPIWViVxApeBZs93CVz8qWl15oNEoBWkj-j6JUUI");'></div>
+<div class="absolute top-3 right-3">
+<span class="inline-flex items-center gap-1 rounded bg-green-500/90 px-2 py-1 text-xs font-medium text-white backdrop-blur-md shadow-sm">
+<span class="material-symbols-outlined text-[14px]">public</span>
+                            تصدير
+                        </span>
+</div>
+</div>
+<div class="flex flex-1 flex-col justify-between p-4">
+<div class="mb-4">
+<div class="flex justify-between items-start">
+<h3 class="text-lg font-bold text-gray-900 dark:text-white leading-tight mb-2">
+                                طلب شراء: ٢٠٠ طن بلاستيك (PET)
+                            </h3>
+</div>
+<div class="flex items-center gap-1 text-sm text-text-secondary mb-3">
+<span class="material-symbols-outlined text-[16px]">local_shipping</span>
+<span>شركة النور للتجارة الدولية</span>
+<span class="mx-1">•</span>
+<span>اللاذقية، المرفأ</span>
+</div>
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center rounded-md bg-gray-100 dark:bg-background-dark px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                شفاف (Clear)
+                            </span>
+<span class="inline-flex items-center rounded-md bg-gray-100 dark:bg-background-dark px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300">
+                                مكبوس (Bales)
+                            </span>
+</div>
+</div>
+<div class="flex items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-border-dark">
+<div class="flex items-center gap-1 text-orange-400 text-xs font-medium">
+<span class="material-symbols-outlined text-[16px]">calendar_clock</span>
+                            يغلق: ١٤ أكتوبر
+                        </div>
+<button class="h-9 px-4 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg text-sm font-bold transition-colors">
+                            التفاصيل
+                        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: Copper -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-light dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-transparent transition-all hover:shadow-md dark:hover:shadow-primary/5">
+<div class="flex flex-col sm:flex-row">
+<div class="relative h-48 sm:h-auto sm:w-40 bg-gray-200 dark:bg-gray-800 shrink-0">
+<div class="absolute inset-0 bg-center bg-cover" data-alt="Coils of copper wire industrial scrap" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBktGf6s4KsR72nfd1QSfRLM_dyk7fFnfY5sacTus8Me_7XnT45nWk6I64XQqHDUO2OlMmIN6DeXpjVKqaxU03vupMTIJdbn-ejIBVD0KlMc3TOeG6SedRcLEq98rqIAvwpB7wei7HM993C33F6XZJtx2vrDLpe9tFRa2NCSHAY-cbtOLZo8xYrOOUk6sju3xVzxM0JhrlabIZzxstiOapzySGMDRqawb4yvJ3ZEbdWJOhIkz3FTtraPEtKB176l_aC1NbA8CdbO60");'></div>
+</div>
+<div class="flex flex-1 flex-col justify-between p-4">
+<div class="mb-4">
+<div class="flex items-center gap-2 mb-2">
+<span class="inline-flex items-center gap-1 rounded bg-orange-500/10 px-2 py-1 text-xs font-medium text-orange-500">
+                                نحاس
+                            </span>
+<span class="text-xs text-text-secondary">• ينتهي قريباً</span>
+</div>
+<h3 class="text-lg font-bold text-gray-900 dark:text-white leading-tight mb-2">
+                            مطلوب: ٥٠ طن كابلات نحاس مقشور
+                        </h3>
+<div class="flex items-center gap-1 text-sm text-text-secondary mb-3">
+<span class="material-symbols-outlined text-[16px]">factory</span>
+<span>مصانع الكابلات السورية</span>
+<span class="mx-1">•</span>
+<span>دمشق</span>
+</div>
+</div>
+<div class="flex items-center justify-between gap-3 pt-3 border-t border-gray-100 dark:border-border-dark">
+<div class="flex flex-col">
+<span class="text-xs text-text-secondary">السعر التقديري</span>
+<span class="font-bold text-white">٧٥٠٠ دولار / طن</span>
+</div>
+<button class="flex-1 max-w-[140px] h-10 bg-primary hover:bg-blue-600 text-white rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-colors">
+<span>تقديم عرض</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<div class="fixed bottom-0 left-0 right-0 z-50 bg-surface-light dark:bg-surface-dark border-t border-gray-200 dark:border-border-dark pb-safe">
+<div class="flex justify-around items-center h-16">
+<a class="flex flex-col items-center justify-center w-full h-full text-gray-400 dark:text-text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="text-[10px] font-medium">الرئيسية</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-primary" href="#">
+<span class="material-symbols-outlined mb-1 fill-current">handshake</span>
+<span class="text-[10px] font-bold">الفرص</span>
+</a>
+<div class="relative flex flex-col items-center justify-center w-full h-full">
+<button class="absolute -top-6 bg-primary text-white rounded-full size-12 shadow-lg shadow-primary/40 flex items-center justify-center border-4 border-background-light dark:border-background-dark">
+<span class="material-symbols-outlined text-2xl">add</span>
+</button>
+</div>
+<a class="flex flex-col items-center justify-center w-full h-full text-gray-400 dark:text-text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">inventory_2</span>
+<span class="text-[10px] font-medium">صفقاتي</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-gray-400 dark:text-text-secondary hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="text-[10px] font-medium">حسابي</span>
+</a>
+</div>
+<!-- Safe Area Spacer for iOS Home Bar -->
+<div class="h-1 w-full"></div>
+</div>
+</body></html>

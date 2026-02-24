@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sell Scrap - Recycle24</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Noto+Sans+Arabic:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "primary-dark": "#0f66bd",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111a22",
+                        "surface-dark": "#1c2936",
+                        "surface-light": "#ffffff",
+                        "text-secondary-dark": "#92adc9",
+                        "text-secondary-light": "#64748b",
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans Arabic", "Inter", "sans-serif"],
+                        "body": ["Noto Sans Arabic", "Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Noto Sans Arabic', 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar hide for clean mobile look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="relative flex h-full min-h-screen w-full flex-col bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-200 overflow-x-hidden">
+<!-- Header -->
+<header class="sticky top-0 z-50 flex items-center bg-surface-light dark:bg-[#111a22] p-4 pb-2 justify-between border-b border-gray-200 dark:border-gray-800">
+<div class="text-slate-900 dark:text-white flex size-12 shrink-0 items-center justify-start cursor-pointer hover:opacity-70 transition-opacity">
+<span class="material-symbols-outlined text-[28px]">arrow_forward</span>
+</div>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">بيع الخردة</h2>
+<div class="flex size-12 items-center justify-end cursor-pointer hover:opacity-70 transition-opacity">
+<span class="material-symbols-outlined text-[28px]">close</span>
+</div>
+</header>
+<!-- Content Wrapper -->
+<main class="flex-1 flex flex-col w-full max-w-md mx-auto pb-24">
+<!-- Progress Steps -->
+<div class="flex w-full flex-row items-center justify-center gap-2 py-6 px-4">
+<div class="h-1.5 flex-1 rounded-full bg-primary"></div>
+<div class="h-1.5 flex-1 rounded-full bg-gray-300 dark:bg-[#324d67]"></div>
+<div class="h-1.5 flex-1 rounded-full bg-gray-300 dark:bg-[#324d67]"></div>
+</div>
+<!-- Section 1: Select Material -->
+<section>
+<h2 class="text-slate-900 dark:text-white text-xl font-bold leading-tight px-4 text-right pb-4 pt-2">اختر نوع المادة</h2>
+<div class="grid grid-cols-2 gap-3 px-4">
+<!-- Selected Item: Iron -->
+<div class="group cursor-pointer relative flex flex-col items-center justify-center gap-3 p-4 rounded-xl border-2 border-primary bg-primary/10 transition-all duration-200">
+<div class="absolute top-2 right-2 text-primary">
+<span class="material-symbols-outlined filled text-[20px]">check_circle</span>
+</div>
+<div class="size-16 rounded-full bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[32px]">hardware</span>
+</div>
+<div class="text-center">
+<p class="text-slate-900 dark:text-white text-base font-bold">حديد</p>
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-xs">Iron</p>
+</div>
+</div>
+<!-- Item: Plastic -->
+<div class="group cursor-pointer relative flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-surface-light dark:bg-surface-dark hover:border-primary/50 transition-all duration-200">
+<div class="size-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[32px]">recycling</span>
+</div>
+<div class="text-center">
+<p class="text-slate-900 dark:text-white text-base font-medium">بلاستيك</p>
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-xs">Plastic</p>
+</div>
+</div>
+<!-- Item: Copper -->
+<div class="group cursor-pointer relative flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-surface-light dark:bg-surface-dark hover:border-primary/50 transition-all duration-200">
+<div class="size-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[32px]">cable</span>
+</div>
+<div class="text-center">
+<p class="text-slate-900 dark:text-white text-base font-medium">نحاس</p>
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-xs">Copper</p>
+</div>
+</div>
+<!-- Item: Cardboard -->
+<div class="group cursor-pointer relative flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-surface-light dark:bg-surface-dark hover:border-primary/50 transition-all duration-200">
+<div class="size-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[32px]">package_2</span>
+</div>
+<div class="text-center">
+<p class="text-slate-900 dark:text-white text-base font-medium">كرتون</p>
+<p class="text-text-secondary-light dark:text-text-secondary-dark text-xs">Cardboard</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Divider -->
+<div class="h-px bg-gray-200 dark:bg-gray-800 mx-4 my-6"></div>
+<!-- Section 2: Quantity -->
+<section>
+<h2 class="text-slate-900 dark:text-white text-xl font-bold leading-tight px-4 text-right pb-4">الكمية المقدرة</h2>
+<div class="px-4 flex gap-3">
+<div class="relative flex-1">
+<input class="w-full h-14 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-slate-900 dark:text-white text-lg font-bold px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600" placeholder="0.00" type="number"/>
+</div>
+<!-- Toggle -->
+<div class="flex bg-surface-light dark:bg-surface-dark p-1 rounded-xl border border-gray-200 dark:border-gray-700 h-14 items-center">
+<button class="h-full px-4 rounded-lg bg-primary text-white text-sm font-bold shadow-sm transition-all">
+                        كغ
+                    </button>
+<button class="h-full px-4 rounded-lg text-text-secondary-light dark:text-text-secondary-dark text-sm font-medium hover:text-primary transition-colors">
+                        طن
+                    </button>
+</div>
+</div>
+</section>
+<!-- Divider -->
+<div class="h-px bg-gray-200 dark:bg-gray-800 mx-4 my-6"></div>
+<!-- Section 3: Location -->
+<section>
+<h2 class="text-slate-900 dark:text-white text-xl font-bold leading-tight px-4 text-right pb-4">موقع الاستلام</h2>
+<div class="px-4 space-y-4">
+<!-- Dropdown -->
+<div class="relative">
+<select class="w-full h-14 appearance-none rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-slate-900 dark:text-white text-base font-medium px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none cursor-pointer">
+<option disabled="" value="">اختر المحافظة</option>
+<option selected="" value="damascus">دمشق</option>
+<option value="aleppo">حلب</option>
+<option value="homs">حمص</option>
+<option value="latakia">اللاذقية</option>
+</select>
+<div class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">
+<span class="material-symbols-outlined">expand_more</span>
+</div>
+</div>
+<!-- Map Preview -->
+<div class="relative w-full h-32 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 group cursor-pointer">
+<div class="absolute inset-0 bg-cover bg-center opacity-60 dark:opacity-40 group-hover:scale-105 transition-transform duration-500" data-alt="Map showing streets of Damascus city with grey tones" data-location="Damascus" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuABtI-0oXP4BCG_P8hCaUwbMZJrsPMKPhrereCFe_2Xd2Hu6J62krwND67W_v_LiO1Oo1bkjI1qPN-bXnIMTS4AB-bq5sRpY9nbxqL666nx1jNyA2Fiiiz6wcas5lELNGp60U5Riz-GQtC6aILUDFGznkvGRvKDF_BTrsj3ARRmj90wpPK0k8-sy4F8j-5RRES42P_DZEYeUv9sZTgdFhmVDllrOT1b0D3YjuYLJRTblqDl1OU8LJj8PxAA5jy1nYZYlG5FRfxgUI4');">
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-background-dark/80 to-transparent"></div>
+<button class="absolute bottom-3 right-3 flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-3 py-2 rounded-lg text-sm font-bold shadow-lg transition-colors">
+<span class="material-symbols-outlined text-[18px]">my_location</span>
+<span>تحديد موقعي الحالي</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Sticky Footer Action -->
+<div class="fixed bottom-0 left-0 right-0 p-4 bg-background-light dark:bg-[#111a22] border-t border-gray-200 dark:border-gray-800 z-40 max-w-md mx-auto">
+<button class="flex w-full cursor-pointer items-center justify-center rounded-xl h-14 bg-primary text-white gap-2 text-lg font-bold leading-normal tracking-[0.015em] hover:bg-primary-dark active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
+<span>ابحث عن المشترين</span>
+<span class="material-symbols-outlined" style="transform: scaleX(-1);">search</span>
+</button>
+</div>
+</body></html>

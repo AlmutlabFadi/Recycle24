@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 - تقييم المخزون</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "system-ui", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white transition-colors duration-300">
+<div class="relative flex h-auto min-h-screen w-full flex-col max-w-[430px] mx-auto shadow-2xl bg-background-light dark:bg-background-dark overflow-x-hidden">
+<!-- Header -->
+<div class="sticky top-0 z-50 flex items-center bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md p-4 pb-4 justify-between border-b border-slate-200 dark:border-slate-800">
+<div class="flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer">
+<span class="material-symbols-outlined text-slate-700 dark:text-white">menu</span>
+</div>
+<h1 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center font-display">تقييم المخزون</h1>
+<div class="flex w-10 items-center justify-end">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer">
+<span class="material-symbols-outlined text-slate-700 dark:text-white">sync</span>
+</button>
+</div>
+</div>
+<!-- Summary Cards -->
+<div class="flex flex-wrap gap-3 p-4">
+<div class="flex min-w-[140px] flex-1 flex-col gap-1 rounded-xl p-5 bg-white dark:bg-[#1a2632] shadow-sm border border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-sm">account_balance_wallet</span>
+<p class="text-slate-500 dark:text-[#92adc9] text-xs font-medium">إجمالي قيمة المخزون</p>
+</div>
+<p class="text-slate-900 dark:text-white tracking-tight text-2xl font-bold">$142,500</p>
+<div class="flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[#0bda5b] text-sm">trending_up</span>
+<p class="text-[#0bda5b] text-xs font-bold">+5.2%</p>
+</div>
+</div>
+<div class="flex min-w-[140px] flex-1 flex-col gap-1 rounded-xl p-5 bg-white dark:bg-[#1a2632] shadow-sm border border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-2 mb-1">
+<span class="material-symbols-outlined text-primary text-sm">payments</span>
+<p class="text-slate-500 dark:text-[#92adc9] text-xs font-medium">الربح المحتمل</p>
+</div>
+<p class="text-slate-900 dark:text-white tracking-tight text-2xl font-bold">+$12,450</p>
+<div class="flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[#0bda5b] text-sm">trending_up</span>
+<p class="text-[#0bda5b] text-xs font-bold">+2.1%</p>
+</div>
+</div>
+</div>
+<!-- Live Price Ticker -->
+<div class="px-4 py-2 bg-primary/10 mx-4 rounded-lg flex items-center justify-between overflow-hidden">
+<div class="flex items-center gap-2 whitespace-nowrap animate-pulse">
+<span class="flex h-2 w-2 rounded-full bg-[#0bda5b]"></span>
+<p class="text-primary text-[10px] font-bold uppercase tracking-widest">مباشر - الأسعار العالمية</p>
+</div>
+<p class="text-primary text-[11px] font-medium">آخر تحديث: منذ دقيقتين</p>
+</div>
+<!-- Capacity Section -->
+<div class="px-4 pt-6 pb-2">
+<h3 class="text-slate-900 dark:text-white text-md font-bold leading-tight flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400">warehouse</span>
+                سعة المستودع الرئيسي
+            </h3>
+</div>
+<div class="flex flex-col gap-3 p-4 mx-4 mb-4 rounded-xl bg-white dark:bg-[#1a2632] border border-slate-100 dark:border-slate-800">
+<div class="flex gap-6 justify-between items-end">
+<p class="text-slate-400 dark:text-[#92adc9] text-xs font-medium">إجمالي الإشغال</p>
+<p class="text-slate-900 dark:text-white text-sm font-bold">75 / 100 طن</p>
+</div>
+<div class="h-2.5 w-full rounded-full bg-slate-100 dark:bg-[#324d67] overflow-hidden">
+<div class="h-full rounded-full bg-primary" style="width: 75%;"></div>
+</div>
+<div class="flex justify-between items-center">
+<p class="text-slate-500 dark:text-[#92adc9] text-[11px] font-normal">المساحة المتبقية: 25 طن</p>
+<p class="text-primary text-[11px] font-bold">75% ممتلئ</p>
+</div>
+</div>
+<!-- Detailed Inventory List -->
+<div class="px-4 pt-4 pb-2">
+<h3 class="text-slate-900 dark:text-white text-md font-bold leading-tight">تفاصيل المواد</h3>
+</div>
+<div class="flex flex-col gap-3 px-4 pb-10">
+<!-- Item 1: Iron -->
+<div class="group flex flex-col gap-3 p-4 rounded-xl bg-white dark:bg-[#1a2632] border border-slate-100 dark:border-slate-800">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="size-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-[#233648] text-slate-600 dark:text-primary">
+<span class="material-symbols-outlined">precision_manufacturing</span>
+</div>
+<div>
+<h4 class="text-slate-900 dark:text-white font-bold text-sm">حديد سكراب (خردة)</h4>
+<p class="text-slate-500 dark:text-[#92adc9] text-xs">درجة أولى - ثقيل</p>
+</div>
+</div>
+<div class="text-left">
+<p class="text-slate-900 dark:text-white font-bold text-md">50 طن</p>
+<p class="text-[#0bda5b] text-[10px] font-bold">+$1,200 ربح</p>
+</div>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-800 w-full"></div>
+<div class="flex justify-between items-center">
+<div>
+<p class="text-slate-400 dark:text-[#92adc9] text-[10px] uppercase font-bold tracking-tighter">القيمة المقدرة</p>
+<p class="text-primary font-bold text-lg">$85,000</p>
+</div>
+<div class="text-left">
+<p class="text-slate-400 dark:text-[#92adc9] text-[10px] uppercase font-bold tracking-tighter text-right">السعر العالمي</p>
+<p class="text-slate-900 dark:text-white font-medium text-sm text-right">$1,700/طن</p>
+</div>
+</div>
+</div>
+<!-- Item 2: Plastic -->
+<div class="group flex flex-col gap-3 p-4 rounded-xl bg-white dark:bg-[#1a2632] border border-slate-100 dark:border-slate-800">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="size-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-[#233648] text-slate-600 dark:text-primary">
+<span class="material-symbols-outlined">recycling</span>
+</div>
+<div>
+<h4 class="text-slate-900 dark:text-white font-bold text-sm">بلاستيك PET</h4>
+<p class="text-slate-500 dark:text-[#92adc9] text-xs">عبوات شفافة مضغوطة</p>
+</div>
+</div>
+<div class="text-left">
+<p class="text-slate-900 dark:text-white font-bold text-md">15 طن</p>
+<p class="text-[#0bda5b] text-[10px] font-bold">+$450 ربح</p>
+</div>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-800 w-full"></div>
+<div class="flex justify-between items-center">
+<div>
+<p class="text-slate-400 dark:text-[#92adc9] text-[10px] uppercase font-bold tracking-tighter">القيمة المقدرة</p>
+<p class="text-primary font-bold text-lg">$22,500</p>
+</div>
+<div class="text-left">
+<p class="text-slate-400 dark:text-[#92adc9] text-[10px] uppercase font-bold tracking-tighter text-right">السعر العالمي</p>
+<p class="text-slate-900 dark:text-white font-medium text-sm text-right">$1,500/طن</p>
+</div>
+</div>
+</div>
+<!-- Item 3: Aluminum -->
+<div class="group flex flex-col gap-3 p-4 rounded-xl bg-white dark:bg-[#1a2632] border border-slate-100 dark:border-slate-800">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-3">
+<div class="size-10 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-[#233648] text-slate-600 dark:text-primary">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div>
+<h4 class="text-slate-900 dark:text-white font-bold text-sm">ألمنيوم (بروفيل)</h4>
+<p class="text-slate-500 dark:text-[#92adc9] text-xs">نظيف - خالي من الشوائب</p>
+</div>
+</div>
+<div class="text-left">
+<p class="text-slate-900 dark:text-white font-bold text-md">10 طن</p>
+<p class="text-[#0bda5b] text-[10px] font-bold">+$3,100 ربح</p>
+</div>
+</div>
+<div class="h-px bg-slate-100 dark:bg-slate-800 w-full"></div>
+<div class="flex justify-between items-center">
+<div>
+<p class="text-slate-400 dark:text-[#92adc9] text-[10px] uppercase font-bold tracking-tighter">القيمة المقدرة</p>
+<p class="text-primary font-bold text-lg">$35,000</p>
+</div>
+<div class="text-left">
+<p class="text-slate-400 dark:text-[#92adc9] text-[10px] uppercase font-bold tracking-tighter text-right">السعر العالمي</p>
+<p class="text-slate-900 dark:text-white font-medium text-sm text-right">$3,500/طن</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Tab Bar (iOS Style) -->
+<div class="fixed bottom-0 w-full max-w-[430px] bg-white/90 dark:bg-[#101922]/90 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 px-6 py-3 flex justify-between items-center pb-8">
+<div class="flex flex-col items-center gap-1 cursor-pointer">
+<span class="material-symbols-outlined text-slate-400">dashboard</span>
+<span class="text-[10px] font-medium text-slate-400">الرئيسية</span>
+</div>
+<div class="flex flex-col items-center gap-1 cursor-pointer">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1">analytics</span>
+<span class="text-[10px] font-bold text-primary">المخزون</span>
+</div>
+<div class="relative -top-6">
+<div class="size-14 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/40 border-4 border-background-light dark:border-background-dark">
+<span class="material-symbols-outlined text-white text-3xl">add</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-1 cursor-pointer">
+<span class="material-symbols-outlined text-slate-400">storefront</span>
+<span class="text-[10px] font-medium text-slate-400">السوق</span>
+</div>
+<div class="flex flex-col items-center gap-1 cursor-pointer">
+<span class="material-symbols-outlined text-slate-400">person</span>
+<span class="text-[10px] font-medium text-slate-400">حسابي</span>
+</div>
+</div>
+</div>
+</body></html>

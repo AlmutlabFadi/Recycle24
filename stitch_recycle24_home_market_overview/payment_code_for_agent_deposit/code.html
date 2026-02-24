@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Payment Code</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;family=Public+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["IBM Plex Sans Arabic", "Public Sans", "sans-serif"],
+                        "numeric": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hiding */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased selection:bg-primary/30">
+<div class="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto shadow-2xl overflow-hidden bg-background-light dark:bg-background-dark">
+<!-- Header -->
+<header class="flex items-center justify-between px-4 py-3 bg-background-light dark:bg-background-dark sticky top-0 z-10">
+<button class="flex size-10 items-center justify-center rounded-full bg-slate-200/50 dark:bg-slate-800 text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h2 class="text-lg font-bold">رمز الإيداع</h2>
+<button class="flex size-10 items-center justify-center rounded-full bg-slate-200/50 dark:bg-slate-800 text-primary hover:bg-primary/10 transition-colors">
+<span class="material-symbols-outlined">share</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto no-scrollbar px-4 pb-24">
+<!-- Amount Section -->
+<div class="mt-4 flex flex-col items-center justify-center text-center">
+<span class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">المبلغ الإجمالي المستحق</span>
+<h1 class="text-4xl font-bold text-slate-900 dark:text-white font-numeric tracking-tight flex items-baseline gap-2 dir-ltr">
+<span class="text-lg text-slate-400 font-normal">$5.00</span>
+<span>٢٥,٠٠٠ ل.س</span>
+</h1>
+<div class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 px-3 py-1 text-xs font-medium text-yellow-700 dark:text-yellow-400">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span>بانتظار الدفع</span>
+</div>
+</div>
+<!-- The Pass Card -->
+<div class="mt-8 relative w-full bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+<!-- Top Decoration -->
+<div class="h-2 w-full bg-primary/20">
+<div class="h-full w-1/3 bg-primary rounded-r-full"></div>
+</div>
+<div class="p-6 flex flex-col items-center">
+<!-- Transaction ID -->
+<div class="w-full mb-6">
+<div class="flex justify-between items-center mb-3 px-1">
+<span class="text-xs font-bold text-slate-400 uppercase tracking-wider">رقم المعاملة</span>
+<button class="text-primary hover:text-blue-600 text-xs font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+                                نسخ
+                            </button>
+</div>
+<!-- 6 Digit Code Display -->
+<div class="flex gap-2 justify-center dir-ltr" dir="ltr">
+<div class="flex gap-1">
+<div class="w-10 h-14 flex items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-lg text-2xl font-bold font-numeric text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">8</div>
+<div class="w-10 h-14 flex items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-lg text-2xl font-bold font-numeric text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">9</div>
+<div class="w-10 h-14 flex items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-lg text-2xl font-bold font-numeric text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">2</div>
+</div>
+<div class="w-4 flex items-center justify-center text-slate-300 dark:text-slate-600">-</div>
+<div class="flex gap-1">
+<div class="w-10 h-14 flex items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-lg text-2xl font-bold font-numeric text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">1</div>
+<div class="w-10 h-14 flex items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-lg text-2xl font-bold font-numeric text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">0</div>
+<div class="w-10 h-14 flex items-center justify-center bg-slate-50 dark:bg-slate-900 rounded-lg text-2xl font-bold font-numeric text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700">3</div>
+</div>
+</div>
+</div>
+<!-- Divider with circular notches -->
+<div class="relative w-full flex items-center justify-center py-4">
+<div class="absolute left-[-32px] w-6 h-6 bg-background-light dark:bg-background-dark rounded-full"></div>
+<div class="w-full border-t-2 border-dashed border-slate-200 dark:border-slate-700"></div>
+<div class="absolute right-[-32px] w-6 h-6 bg-background-light dark:bg-background-dark rounded-full"></div>
+</div>
+<!-- QR Code Section -->
+<div class="p-2 bg-white rounded-xl border border-slate-100 shadow-inner">
+<img alt="Scan this QR code at the agent" class="size-48 object-contain mix-blend-multiply opacity-90" data-alt="Black and white QR code pattern for payment transaction" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdS8GVhrLOF6DBRQBVaZZ4Clb4GF-7lpEwRAM2GcIFxO49pNZPmXbKU6HwlvXe9cgf2TdvWAP3YCTrG8YzU50scFOmVRCWf2vsqHLldPfNu2yZ-mz-H7WzEgiCyCvoQMMrFwxGq6gSuCvvi8If7k8X_r8PzRMqtbZfxrxzXYZNO6wBzA7ZQ9l-ULB8BjgcplpsDXjdqiuwmaKuZhcsficALgoNSNpXHhpnH_LkEQdmQpuVijLSm_dToDlpr36yTDas6cKUDmtIvGQ"/>
+</div>
+<p class="mt-4 text-xs font-medium text-slate-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">timer</span>
+                         صالح لمدة ٢٣ ساعة و ٥٩ دقيقة
+                    </p>
+</div>
+</div>
+<!-- Subscription Details -->
+<div class="mt-4 bg-white dark:bg-slate-800 rounded-xl p-4 flex items-center justify-between border border-slate-100 dark:border-slate-700 shadow-sm">
+<div class="flex items-center gap-3">
+<div class="size-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">diamond</span>
+</div>
+<div>
+<h3 class="text-sm font-bold text-slate-900 dark:text-white">باقة بريميوم</h3>
+<p class="text-xs text-slate-500 dark:text-slate-400">اشتراك لمدة شهر واحد</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-400 rtl:rotate-180">chevron_right</span>
+</div>
+<!-- Instructions -->
+<div class="mt-6">
+<h3 class="text-base font-bold text-slate-900 dark:text-white mb-4 px-1">طريقة الدفع</h3>
+<div class="space-y-6 relative pl-4 pr-1">
+<!-- Vertical Line -->
+<div class="absolute right-[19px] top-2 bottom-4 w-0.5 bg-slate-200 dark:bg-slate-700 z-0"></div>
+<!-- Step 1 -->
+<div class="relative z-10 flex gap-4">
+<div class="flex-none size-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm shadow-sm border-4 border-background-light dark:border-background-dark">
+                            ١
+                        </div>
+<div>
+<h4 class="text-sm font-bold text-slate-900 dark:text-white">توجه إلى أقرب وكيل</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">ابحث عن أقرب نقطة إيداع Recycle24 في منطقتك.</p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="relative z-10 flex gap-4">
+<div class="flex-none size-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-sm shadow-sm border-4 border-background-light dark:border-background-dark">
+                            ٢
+                        </div>
+<div>
+<h4 class="text-sm font-bold text-slate-900 dark:text-white">أظهر الرمز للموظف</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">دع الوكيل يمسح رمز الـ QR أو أعطه رقم المعاملة المكون من ٦ أرقام.</p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="relative z-10 flex gap-4">
+<div class="flex-none size-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-sm shadow-sm border-4 border-background-light dark:border-background-dark">
+                            ٣
+                        </div>
+<div>
+<h4 class="text-sm font-bold text-slate-900 dark:text-white">أكمل الدفع نقداً</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">ادفع ٢٥,٠٠٠ ل.س وسيقوم الوكيل بتفعيل اشتراكك فوراً.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Actions -->
+<div class="absolute bottom-0 left-0 right-0 p-4 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-20 flex flex-col gap-3">
+<button class="w-full h-12 bg-primary hover:bg-blue-600 active:bg-blue-700 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined">map</span>
+                العثور على وكيل قريب
+            </button>
+<button class="w-full h-12 bg-transparent border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all">
+<span class="material-symbols-outlined">download</span>
+                حفظ الإيصال كصورة
+            </button>
+</div>
+</div>
+<!-- Script to ensure RTL rendering is smooth -->
+<script>
+        // Simple helper to toggle dark mode for preview purposes if needed, 
+        // though the prompt implies static generation.
+        // Keeping it strictly static as requested.
+    </script>
+</body></html>

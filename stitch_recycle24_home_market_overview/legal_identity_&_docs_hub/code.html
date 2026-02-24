@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Legal Identity &amp; Docs Hub</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100..900&amp;family=Public+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "primary-dark": "#0b5cb5",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e2936",
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans Arabic", "Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Noto Sans Arabic", "Public Sans", sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar hide for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 flex justify-center min-h-screen">
+<!-- Mobile Container -->
+<div class="w-full max-w-md bg-surface-light dark:bg-background-dark shadow-2xl overflow-hidden flex flex-col h-screen">
+<!-- Header -->
+<header class="flex items-center justify-between p-4 bg-surface-light dark:bg-background-dark sticky top-0 z-10">
+<button class="flex items-center justify-center size-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-900 dark:text-white">
+<span class="material-symbols-outlined text-[24px]">arrow_forward</span>
+</button>
+<h1 class="text-lg font-bold text-slate-900 dark:text-white">الوثائق القانونية</h1>
+<button class="text-primary font-bold text-sm px-2 py-1 rounded hover:bg-primary/10 transition-colors">
+                مساعدة
+            </button>
+</header>
+<!-- Progress Steps -->
+<div class="flex w-full flex-row items-center justify-center gap-3 py-2 px-4">
+<div class="h-2 w-2 rounded-full bg-primary/30 dark:bg-primary/20"></div>
+<div class="h-2 w-2 rounded-full bg-primary/30 dark:bg-primary/20"></div>
+<div class="h-2 w-8 rounded-full bg-primary"></div> <!-- Active Step Extended -->
+<div class="h-2 w-2 rounded-full bg-primary/30 dark:bg-primary/20"></div>
+</div>
+<!-- Scrollable Content -->
+<main class="flex-1 overflow-y-auto no-scrollbar pb-24">
+<!-- Hero Section -->
+<div class="px-6 py-6 text-center">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">تحقق من هويتك</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                    يرجى تحميل المستندات التالية لتفعيل العقود الرقمية. بياناتك مشفرة وآمنة وفقاً لأعلى المعايير.
+                </p>
+</div>
+<!-- Status Overview Card -->
+<div class="px-4 mb-6">
+<div class="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-surface-dark dark:to-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 flex items-center justify-between shadow-sm">
+<div class="flex flex-col gap-1">
+<span class="text-slate-500 dark:text-slate-400 text-sm font-medium">مستوى التوثيق</span>
+<div class="flex items-baseline gap-1">
+<span class="text-3xl font-bold text-slate-900 dark:text-white">٧٥٪</span>
+<span class="text-xs text-orange-500 font-medium bg-orange-100 dark:bg-orange-900/20 px-2 py-0.5 rounded-full">يتطلب إجراء</span>
+</div>
+</div>
+<!-- Circular Progress Visualization (Simplified) -->
+<div class="relative size-14 flex items-center justify-center">
+<svg class="size-full -rotate-90" viewbox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+<circle class="stroke-current text-slate-200 dark:text-slate-700" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-current text-primary" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="25" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<span class="material-symbols-outlined absolute text-primary text-xl">security</span>
+</div>
+</div>
+</div>
+<!-- Documents List -->
+<div class="px-4 flex flex-col gap-4">
+<h3 class="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-1">المستندات المطلوبة</h3>
+<!-- Card 1: National ID (Verified) -->
+<div class="group bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-4 flex items-center gap-4 transition-all hover:shadow-md hover:border-primary/30">
+<div class="size-12 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center shrink-0 text-green-600 dark:text-green-400">
+<span class="material-symbols-outlined">badge</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<h4 class="text-base font-bold text-slate-900 dark:text-white truncate">الهوية الوطنية</h4>
+<span class="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] font-bold px-2 py-1 rounded-full">
+<span class="material-symbols-outlined text-[12px]">check_circle</span>
+                                موثق
+                            </span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 truncate">تنتهي في ١٢ رجب ١٤٤٧</p>
+</div>
+<button class="text-slate-400 hover:text-primary dark:hover:text-primary transition-colors">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</div>
+<!-- Card 2: Commercial Registry (Pending) -->
+<div class="group bg-white dark:bg-surface-dark rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm p-4 flex items-center gap-4 transition-all hover:shadow-md">
+<div class="size-12 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center shrink-0 text-orange-500 dark:text-orange-400">
+<span class="material-symbols-outlined">store</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<h4 class="text-base font-bold text-slate-900 dark:text-white truncate">السجل التجاري</h4>
+<span class="inline-flex items-center gap-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] font-bold px-2 py-1 rounded-full">
+<span class="material-symbols-outlined text-[12px] animate-pulse">hourglass_top</span>
+                                قيد المراجعة
+                            </span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 truncate">تم الرفع: منذ ٢ ساعة</p>
+</div>
+<!-- No action needed while pending -->
+</div>
+<!-- Card 3: Tax ID (Missing/Action Required) -->
+<div class="group relative bg-white dark:bg-surface-dark rounded-xl border border-red-100 dark:border-red-900/30 shadow-sm p-4 flex items-center gap-4 transition-all hover:shadow-md hover:border-red-200 dark:hover:border-red-800">
+<div class="size-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center shrink-0 text-red-500 dark:text-red-400">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<h4 class="text-base font-bold text-slate-900 dark:text-white truncate">الرقم الضريبي</h4>
+<span class="inline-flex items-center gap-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-[10px] font-bold px-2 py-1 rounded-full">
+<span class="material-symbols-outlined text-[12px]">error</span>
+                                مطلوب
+                            </span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 truncate">يرجى رفع شهادة القيمة المضافة</p>
+</div>
+<button class="bg-primary text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-primary-dark transition-colors shadow-sm shadow-primary/30">
+                        رفع
+                    </button>
+</div>
+</div>
+<!-- Security Notice -->
+<div class="mt-8 px-8 flex items-center justify-center gap-2 text-slate-400 dark:text-slate-500">
+<span class="material-symbols-outlined text-lg">lock</span>
+<p class="text-xs font-medium">جميع الوثائق مشفرة ومحمية بالكامل.</p>
+</div>
+<!-- Spacer for bottom fixed area -->
+<div class="h-8"></div>
+</main>
+<!-- Bottom Actions -->
+<div class="bg-white dark:bg-surface-dark border-t border-slate-100 dark:border-slate-800 p-4 pb-8 z-20">
+<button class="w-full flex items-center justify-center gap-2 bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500 font-bold py-3.5 px-4 rounded-xl cursor-not-allowed transition-all" disabled="">
+<span>إنشاء العقود الرقمية</span>
+<span class="material-symbols-outlined text-lg">description</span>
+</button>
+<p class="text-center text-xs text-slate-400 mt-3">يرجى إكمال جميع المتطلبات للمتابعة</p>
+</div>
+</div>
+<!-- Upload Overlay Simulator (Optional visual indicator of interactivity) -->
+<!-- This div is hidden by default but structurally ready if needed for interaction demo -->
+<div class="hidden absolute inset-0 bg-black/50 z-50 items-end justify-center backdrop-blur-sm">
+<div class="bg-white dark:bg-surface-dark w-full rounded-t-2xl p-6 animate-slide-up">
+<div class="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-6"></div>
+<h3 class="text-lg font-bold text-center mb-4 text-slate-900 dark:text-white">رفع الرقم الضريبي</h3>
+<div class="grid grid-cols-2 gap-4 mb-4">
+<button class="flex flex-col items-center justify-center gap-2 p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-3xl text-primary">photo_camera</span>
+<span class="text-sm font-medium">التقاط صورة</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-3xl text-primary">upload_file</span>
+<span class="text-sm font-medium">رفع ملف</span>
+</button>
+</div>
+<button class="w-full py-3 text-slate-500 font-bold">إلغاء</button>
+</div>
+</div>
+</body></html>

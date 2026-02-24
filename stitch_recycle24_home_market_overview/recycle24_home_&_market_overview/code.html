@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 Home &amp; Market Overview</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Arabic:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "secondary": "#f97316", // Safety Orange
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1c2630",
+                        "surface-highlight": "#233648"
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans Arabic", "Inter", "sans-serif"],
+                        "english": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hiding for horizontal carousel */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-x-hidden transition-colors duration-200">
+<div class="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto bg-white dark:bg-background-dark shadow-xl border-x border-slate-200 dark:border-slate-800">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-50 bg-white/80 dark:bg-[#111a22]/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-3">
+<div class="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary">
+<span class="material-symbols-outlined !text-[28px]">recycling</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-english">Recycle24</h1>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-surface-dark border border-slate-200 dark:border-slate-700 transition active:scale-95">
+<span class="material-symbols-outlined text-secondary !text-[18px]">location_on</span>
+<span class="text-sm font-semibold text-slate-700 dark:text-slate-200">دمشق</span>
+<span class="material-symbols-outlined text-slate-400 !text-[18px]">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Market Prices Section -->
+<div class="flex flex-col pt-6 pb-2">
+<div class="flex items-center justify-between px-4 mb-3">
+<h2 class="text-lg font-bold text-slate-900 dark:text-white">أسعار السوق العالمية</h2>
+<span class="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    مباشر
+                </span>
+</div>
+<div class="flex overflow-x-auto gap-3 px-4 pb-4 no-scrollbar snap-x snap-mandatory">
+<!-- Card 1: Steel -->
+<div class="snap-center flex min-w-[200px] flex-col justify-between rounded-xl p-4 bg-white dark:bg-surface-highlight border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<div class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700/50">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300">construction</span>
+</div>
+<span class="text-xs font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-full flex items-center dir-ltr">
+                            +1.2% <span class="material-symbols-outlined !text-[14px] ml-0.5">trending_up</span>
+</span>
+</div>
+<div>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">حديد (LME)</p>
+<p class="text-xl font-bold text-slate-900 dark:text-white font-english mt-1">$480<span class="text-sm font-normal text-slate-500 ml-1">/ton</span></p>
+</div>
+</div>
+<!-- Card 2: Gold -->
+<div class="snap-center flex min-w-[200px] flex-col justify-between rounded-xl p-4 bg-white dark:bg-surface-highlight border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<div class="p-2 rounded-lg bg-yellow-500/10 dark:bg-yellow-500/20">
+<span class="material-symbols-outlined text-yellow-600 dark:text-yellow-500">monetization_on</span>
+</div>
+<span class="text-xs font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-full flex items-center dir-ltr">
+                            +0.5% <span class="material-symbols-outlined !text-[14px] ml-0.5">trending_up</span>
+</span>
+</div>
+<div>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">ذهب (COMEX)</p>
+<p class="text-xl font-bold text-slate-900 dark:text-white font-english mt-1">$2,350<span class="text-sm font-normal text-slate-500 ml-1">/oz</span></p>
+</div>
+</div>
+<!-- Card 3: Exchange Rate -->
+<div class="snap-center flex min-w-[200px] flex-col justify-between rounded-xl p-4 bg-white dark:bg-surface-highlight border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="flex justify-between items-start mb-2">
+<div class="p-2 rounded-lg bg-blue-500/10 dark:bg-blue-500/20">
+<span class="material-symbols-outlined text-primary">currency_exchange</span>
+</div>
+<span class="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700/50 px-2 py-1 rounded-full flex items-center dir-ltr">
+                            0.0% <span class="material-symbols-outlined !text-[14px] ml-0.5">remove</span>
+</span>
+</div>
+<div>
+<p class="text-sm font-medium text-slate-500 dark:text-slate-400">USD / SYP</p>
+<p class="text-xl font-bold text-slate-900 dark:text-white font-english mt-1">14,500<span class="text-sm font-normal text-slate-500 ml-1">ل.س</span></p>
+</div>
+</div>
+</div>
+</div>
+<!-- Start Selling Section -->
+<div class="px-4 py-4">
+<h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4">ماذا تبيع اليوم؟</h2>
+<div class="grid grid-cols-3 gap-3">
+<!-- Steel Button -->
+<button class="group flex flex-col items-center gap-3 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-200 dark:border-slate-700 hover:border-primary dark:hover:border-primary transition shadow-sm">
+<div class="size-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center group-hover:bg-primary/10 transition">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300 group-hover:text-primary !text-[28px]">hardware</span>
+</div>
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200">حديد</span>
+</button>
+<!-- Cardboard Button -->
+<button class="group flex flex-col items-center gap-3 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-200 dark:border-slate-700 hover:border-secondary dark:hover:border-secondary transition shadow-sm">
+<div class="size-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center group-hover:bg-secondary/10 transition">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300 group-hover:text-secondary !text-[28px]">inventory_2</span>
+</div>
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200">كرتون</span>
+</button>
+<!-- Plastic Button -->
+<button class="group flex flex-col items-center gap-3 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-200 dark:border-slate-700 hover:border-teal-500 dark:hover:border-teal-500 transition shadow-sm">
+<div class="size-12 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center group-hover:bg-teal-500/10 transition">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-300 group-hover:text-teal-500 !text-[28px]">local_drink</span>
+</div>
+<span class="text-sm font-bold text-slate-700 dark:text-slate-200">بلاستيك</span>
+</button>
+</div>
+<div class="mt-4 p-4 rounded-xl bg-gradient-to-r from-surface-highlight to-slate-800 relative overflow-hidden">
+<div class="absolute inset-0 bg-primary/10"></div>
+<div class="relative z-10 flex items-center justify-between">
+<div>
+<h3 class="font-bold text-white text-base">لديك خردة مختلطة؟</h3>
+<p class="text-xs text-slate-300 mt-1">احصل على عرض مجمع</p>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white text-sm font-bold py-2 px-4 rounded-lg shadow-lg shadow-blue-500/20 transition">
+                        بيع الآن
+                    </button>
+</div>
+</div>
+</div>
+<!-- Nearby Buyers List -->
+<div class="flex-1 px-4 py-4 pb-24">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-lg font-bold text-slate-900 dark:text-white">مشترين بالقرب منك</h2>
+<a class="text-sm font-bold text-primary" href="#">عرض الكل</a>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Buyer Item 1 -->
+<div class="flex items-center p-3 rounded-xl bg-white dark:bg-surface-highlight border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="w-14 h-14 rounded-lg bg-cover bg-center shrink-0" data-alt="Industrial metal scrapyard with piled materials" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDyK3XOUQFXD6Ts46peTGOwOC_N1ehp-jkq4c2q1d-VyPRNggoMMx2Oq4wNyVVG55DJ_hNlkUq2MrlG6pAeyuHOlKjFwWOfaecB-HbgoMeRXY4rmXPDg_v8YqOxSHAVsDTWjEJYkNIHvIyx3lYFsmHs-aeRh4AynE7W6RymNQF3P0_c705K3_KiilzoGxQBsZ88WavWFruE8H1TqoBNGGaTWmLbOUK1gmPWXGQBY00tHDwll0eEMZ5cyaKMk8YyM3WC0893kRD5_AM");'></div>
+<div class="flex-1 mr-3 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-slate-900 dark:text-white truncate">خردة الحميد</h3>
+<span class="text-xs font-semibold text-secondary bg-secondary/10 px-2 py-0.5 rounded ml-1 whitespace-nowrap">أعلى سعر</span>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">يشتري: نحاس، حديد</p>
+<div class="flex items-center gap-2 mt-1.5">
+<span class="text-xs font-medium text-slate-400 flex items-center gap-0.5">
+<span class="material-symbols-outlined !text-[12px]">near_me</span> 2.5 كم
+                            </span>
+<span class="text-xs font-bold text-primary font-english dir-ltr">80,000 SYP/kg</span>
+</div>
+</div>
+<button class="size-10 rounded-full bg-slate-100 dark:bg-slate-700 text-primary flex items-center justify-center shrink-0 hover:bg-primary hover:text-white transition">
+<span class="material-symbols-outlined !text-[20px]">call</span>
+</button>
+</div>
+<!-- Buyer Item 2 -->
+<div class="flex items-center p-3 rounded-xl bg-white dark:bg-surface-highlight border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="w-14 h-14 rounded-lg bg-cover bg-center shrink-0" data-alt="Recycling plant processing plastic" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuClUJM2Rb09FmGMbVivB-8n_9ajrtgtT1GmhMyxeuXATMupcCvwuuUcPyX4ep7_3TpXzA6s1JFupmDJQs138Oaf_l_h8zg4mO21MFv91gsir5G74SOfUA1jC2vsgjrJSHZstc3Vvm92VZNNTg7YMMRr-LNjjcnayajiCKbYXQWQU7l-s7ywWnospXLtwGDd3X6gyHyBEO_y3MnWLDe9NxTRgzd8as1DvcWt5XZwSdqHMvrZgN2ycPRE2MOHgd4sBzuWGzfUfwpSktw");'></div>
+<div class="flex-1 mr-3 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-slate-900 dark:text-white truncate">شركة التدوير السورية</h3>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">يشتري: بلاستيك، كرتون</p>
+<div class="flex items-center gap-2 mt-1.5">
+<span class="text-xs font-medium text-slate-400 flex items-center gap-0.5">
+<span class="material-symbols-outlined !text-[12px]">near_me</span> 4.1 كم
+                            </span>
+<span class="text-xs font-bold text-primary font-english dir-ltr">12,500 SYP/kg</span>
+</div>
+</div>
+<button class="size-10 rounded-full bg-slate-100 dark:bg-slate-700 text-primary flex items-center justify-center shrink-0 hover:bg-primary hover:text-white transition">
+<span class="material-symbols-outlined !text-[20px]">chat</span>
+</button>
+</div>
+<!-- Buyer Item 3 -->
+<div class="flex items-center p-3 rounded-xl bg-white dark:bg-surface-highlight border border-slate-200 dark:border-slate-700 shadow-sm">
+<div class="w-14 h-14 rounded-lg bg-cover bg-center shrink-0" data-alt="Stack of cardboard boxes for recycling" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD7etHPd2oiGQKcHaqCjnLET6UCGfTtHESNjsw28Ep9sDPwROKwDagAzHH859nUqm2FXpcwTs7EF-CqhM6jM2dwaG_PBFSfNpuR6NEuF1Nu3BPFi0IrHn9N-hA0oV6E2Gb_UFB6PYHoiFqH0l4ebmrwN7PBip_N-TP61FmM0TQ4egUyPL64cBldiqwmuu-j9-ttNV3t-KMMbdaZrYvZ4XzWfF2796u7RCzSDMu4dwdbmPJY7EZdgvKFAsONDZki5WfkDClh87PMQtI");'></div>
+<div class="flex-1 mr-3 min-w-0">
+<div class="flex justify-between items-start">
+<h3 class="font-bold text-slate-900 dark:text-white truncate">أبو محمد للمعادن</h3>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">يشتري: حديد ثقيل</p>
+<div class="flex items-center gap-2 mt-1.5">
+<span class="text-xs font-medium text-slate-400 flex items-center gap-0.5">
+<span class="material-symbols-outlined !text-[12px]">near_me</span> 1.2 كم
+                            </span>
+<span class="text-xs font-bold text-primary font-english dir-ltr">42,000 SYP/kg</span>
+</div>
+</div>
+<button class="size-10 rounded-full bg-slate-100 dark:bg-slate-700 text-primary flex items-center justify-center shrink-0 hover:bg-primary hover:text-white transition">
+<span class="material-symbols-outlined !text-[20px]">call</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#111a22] border-t border-slate-200 dark:border-slate-800 pb-safe">
+<div class="max-w-md mx-auto flex items-center justify-around h-16">
+<button class="flex flex-col items-center justify-center w-full h-full text-primary">
+<span class="material-symbols-outlined !text-[24px]">home</span>
+<span class="text-[10px] font-bold mt-1">الرئيسية</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full h-full text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
+<span class="material-symbols-outlined !text-[24px]">analytics</span>
+<span class="text-[10px] font-medium mt-1">السوق</span>
+</button>
+<div class="relative -top-5">
+<button class="flex items-center justify-center size-14 rounded-full bg-secondary text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition hover:scale-105 active:scale-95">
+<span class="material-symbols-outlined !text-[28px]">add</span>
+</button>
+</div>
+<button class="flex flex-col items-center justify-center w-full h-full text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
+<span class="material-symbols-outlined !text-[24px]">list_alt</span>
+<span class="text-[10px] font-medium mt-1">عروضي</span>
+</button>
+<button class="flex flex-col items-center justify-center w-full h-full text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
+<span class="material-symbols-outlined !text-[24px]">person</span>
+<span class="text-[10px] font-medium mt-1">حسابي</span>
+</button>
+</div>
+</div>
+</div>
+</body></html>

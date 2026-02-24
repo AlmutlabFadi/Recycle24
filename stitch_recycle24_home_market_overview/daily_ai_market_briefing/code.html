@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Daily AI Market Briefing - Recycle24</title>
+<!-- Fonts: Inter for numbers/latin, and Almarai for Arabic to match the clean aesthetic -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#192633",
+                        "surface-light": "#ffffff",
+                        "success": "#0bda5b",
+                        "danger": "#ef4444",
+                    },
+                    fontFamily: {
+                        "display": ["Almarai", "Inter", "sans-serif"],
+                        "sans": ["Almarai", "Inter", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display min-h-screen flex flex-col antialiased">
+<!-- Sticky Header -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+<div class="flex items-center justify-between p-4 h-16">
+<div class="flex items-center gap-3">
+<div class="bg-primary/20 p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary">recycling</span>
+</div>
+<h1 class="text-xl font-bold tracking-tight">Recycle24</h1>
+</div>
+<div class="flex items-center gap-3">
+<button class="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-danger rounded-full border-2 border-background-light dark:border-background-dark"></span>
+</button>
+<div class="w-9 h-9 rounded-full bg-cover bg-center border-2 border-gray-200 dark:border-gray-700" data-alt="User profile avatar showing a young professional male" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBcK5tE7fp_hipWZxSF9p9arMuZkRdnOub3hc8Jttu2YsudrbHUpteKgwtDDR72nJKytD2Yenk8Y5HrWipZ3ScRnre3Ext2djUQa3ORLAza1MzDXlwl2xeGdnhZ6_DxaNXUjjfOvu6r1Q5_S9Wbq1qeoiZ0BuSVtvP8mi97fgkl7CD_r0aQINs6xq73Q4F0kSDnZVRcoN8mp7K6EKJ4MtdqQ7NAa2P1d8SXVbWnlwea2JTJRmmo5eJH3PrxQgWydDh9_DWqQPCyZ7c");'></div>
+</div>
+</div>
+</header>
+<main class="flex-1 w-full max-w-md mx-auto p-4 space-y-6 pb-24">
+<!-- Page Title -->
+<div>
+<h2 class="text-2xl font-bold leading-tight">ملخص السوق اليومي</h2>
+<p class="text-gray-500 dark:text-gray-400 text-sm mt-1">تحديث: 24 أكتوبر 2023</p>
+</div>
+<!-- AI Hero Card -->
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 relative overflow-hidden group">
+<!-- decorative background gradient -->
+<div class="absolute -top-10 -left-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-700"></div>
+<div class="relative z-10">
+<div class="flex items-start justify-between mb-4">
+<div class="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full w-fit">
+<span class="material-symbols-outlined text-primary text-sm">auto_awesome</span>
+<span class="text-primary text-xs font-bold">نظرة عامة بالذكاء الاصطناعي</span>
+</div>
+</div>
+<h3 class="text-xl font-bold mb-3 leading-snug">تحليل سريع لاتجاهات السوق العالمية وتأثيرها المحلي</h3>
+<div class="mt-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg p-3 flex items-center justify-between gap-3 border border-gray-100 dark:border-gray-700">
+<div class="flex items-center gap-3 flex-1">
+<button class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white shrink-0 hover:bg-blue-600 transition-colors shadow-lg shadow-blue-500/30">
+<span class="material-symbols-outlined">play_arrow</span>
+</button>
+<div class="flex flex-col">
+<span class="text-sm font-bold">استمع للملخص</span>
+<span class="text-xs text-gray-500">00:30 دقيقة</span>
+</div>
+</div>
+<!-- Fake waveform -->
+<div class="flex items-end gap-[2px] h-8 flex-1 justify-end opacity-60">
+<div class="w-1 bg-primary rounded-t h-3"></div>
+<div class="w-1 bg-primary rounded-t h-5"></div>
+<div class="w-1 bg-primary rounded-t h-2"></div>
+<div class="w-1 bg-primary rounded-t h-6"></div>
+<div class="w-1 bg-primary rounded-t h-4"></div>
+<div class="w-1 bg-primary rounded-t h-7"></div>
+<div class="w-1 bg-primary rounded-t h-3"></div>
+<div class="w-1 bg-primary rounded-t h-5"></div>
+<div class="w-1 bg-primary rounded-t h-2"></div>
+<div class="w-1 bg-primary rounded-t h-4"></div>
+<div class="w-1 bg-gray-400 rounded-t h-2"></div>
+<div class="w-1 bg-gray-400 rounded-t h-2"></div>
+<div class="w-1 bg-gray-400 rounded-t h-2"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Key Market Shifts -->
+<div class="space-y-4">
+<h3 class="text-lg font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">trending_up</span>
+                تحركات السوق الرئيسية
+            </h3>
+<div class="grid gap-3">
+<!-- Gold Item -->
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-yellow-500/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-yellow-500 text-2xl">grid_goldenratio</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<h4 class="font-bold text-base truncate">الذهب</h4>
+<div class="flex items-center gap-1 text-success bg-success/10 px-2 py-0.5 rounded text-sm font-bold">
+<span class="material-symbols-outlined text-sm">arrow_upward</span>
+                                2.0%
+                            </div>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-lg font-bold font-sans tracking-tight">$1,950</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[140px] text-left" dir="ltr">USD weakness support</p>
+</div>
+<p class="text-xs text-gray-500 mt-1 dark:text-gray-400 truncate">ضعف الدولار يدعم الأسعار عالمياً</p>
+</div>
+</div>
+<!-- Steel Item -->
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-slate-500/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-slate-500 text-2xl">construction</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<h4 class="font-bold text-base truncate">الصلب</h4>
+<div class="flex items-center gap-1 text-gray-500 bg-gray-500/10 px-2 py-0.5 rounded text-sm font-bold">
+<span class="material-symbols-outlined text-sm">remove</span>
+                                0.0%
+                            </div>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-lg font-bold font-sans tracking-tight">¥4,200</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[140px] text-left" dir="ltr">Supply stabilizing</p>
+</div>
+<p class="text-xs text-gray-500 mt-1 dark:text-gray-400 truncate">استقرار الإمدادات في الأسواق الآسيوية</p>
+</div>
+</div>
+<!-- Oil Item -->
+<div class="bg-surface-light dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-4">
+<div class="w-12 h-12 rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-rose-500 text-2xl">water_drop</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-1">
+<h4 class="font-bold text-base truncate">النفط الخام</h4>
+<div class="flex items-center gap-1 text-danger bg-danger/10 px-2 py-0.5 rounded text-sm font-bold">
+<span class="material-symbols-outlined text-sm">arrow_downward</span>
+                                1.5%
+                            </div>
+</div>
+<div class="flex items-center justify-between">
+<p class="text-lg font-bold font-sans tracking-tight">$88.40</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[140px] text-left" dir="ltr">Inventory surplus</p>
+</div>
+<p class="text-xs text-gray-500 mt-1 dark:text-gray-400 truncate">فائض في المخزون الأمريكي غير المتوقع</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Daily Forecast -->
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="text-lg font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">insights</span>
+                    توقعات الأسعار لـ 24 ساعة
+                </h3>
+<button class="text-primary text-sm font-medium hover:underline">عرض الكل</button>
+</div>
+<div class="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 snap-x hide-scrollbar">
+<!-- Forecast Card 1 -->
+<div class="snap-center shrink-0 w-40 bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex flex-col">
+<span class="text-sm font-medium text-gray-500 mb-1">الذهب</span>
+<span class="text-xl font-bold font-sans mb-3 text-success">$1,965</span>
+<!-- Simple CSS Bar Chart -->
+<div class="flex items-end justify-between h-16 gap-1 mt-auto">
+<div class="w-full bg-primary/20 rounded-t-sm h-[40%]"></div>
+<div class="w-full bg-primary/30 rounded-t-sm h-[60%]"></div>
+<div class="w-full bg-primary/50 rounded-t-sm h-[50%]"></div>
+<div class="w-full bg-primary/80 rounded-t-sm h-[75%]"></div>
+<div class="w-full bg-primary rounded-t-sm h-[90%]"></div>
+</div>
+<p class="text-[10px] text-center text-gray-400 mt-2">الساعات القادمة</p>
+</div>
+<!-- Forecast Card 2 -->
+<div class="snap-center shrink-0 w-40 bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex flex-col">
+<span class="text-sm font-medium text-gray-500 mb-1">الصلب</span>
+<span class="text-xl font-bold font-sans mb-3 text-gray-400">¥4,210</span>
+<!-- Simple CSS Bar Chart -->
+<div class="flex items-end justify-between h-16 gap-1 mt-auto">
+<div class="w-full bg-gray-500/20 rounded-t-sm h-[50%]"></div>
+<div class="w-full bg-gray-500/20 rounded-t-sm h-[45%]"></div>
+<div class="w-full bg-gray-500/20 rounded-t-sm h-[50%]"></div>
+<div class="w-full bg-gray-500/20 rounded-t-sm h-[48%]"></div>
+<div class="w-full bg-gray-500/40 rounded-t-sm h-[52%]"></div>
+</div>
+<p class="text-[10px] text-center text-gray-400 mt-2">الساعات القادمة</p>
+</div>
+<!-- Forecast Card 3 -->
+<div class="snap-center shrink-0 w-40 bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-gray-100 dark:border-gray-800 flex flex-col">
+<span class="text-sm font-medium text-gray-500 mb-1">النحاس</span>
+<span class="text-xl font-bold font-sans mb-3 text-danger">$3.62</span>
+<!-- Simple CSS Bar Chart -->
+<div class="flex items-end justify-between h-16 gap-1 mt-auto">
+<div class="w-full bg-danger/20 rounded-t-sm h-[80%]"></div>
+<div class="w-full bg-danger/30 rounded-t-sm h-[70%]"></div>
+<div class="w-full bg-danger/40 rounded-t-sm h-[60%]"></div>
+<div class="w-full bg-danger/60 rounded-t-sm h-[40%]"></div>
+<div class="w-full bg-danger rounded-t-sm h-[30%]"></div>
+</div>
+<p class="text-[10px] text-center text-gray-400 mt-2">الساعات القادمة</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation (iOS Style) -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur-lg border-t border-gray-200 dark:border-gray-800 pb-safe">
+<div class="flex items-center justify-around h-16 max-w-md mx-auto">
+<a class="flex flex-col items-center justify-center w-full h-full text-primary group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">home</span>
+<span class="text-[10px] font-medium mt-1">الرئيسية</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-gray-500 dark:text-gray-400 hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">bar_chart</span>
+<span class="text-[10px] font-medium mt-1">تحليلات</span>
+</a>
+<div class="relative -top-6">
+<button class="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-lg shadow-blue-500/40 hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-2xl">add</span>
+</button>
+</div>
+<a class="flex flex-col items-center justify-center w-full h-full text-gray-500 dark:text-gray-400 hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">newspaper</span>
+<span class="text-[10px] font-medium mt-1">أخبار</span>
+</a>
+<a class="flex flex-col items-center justify-center w-full h-full text-gray-500 dark:text-gray-400 hover:text-primary transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:scale-110 transition-transform">settings</span>
+<span class="text-[10px] font-medium mt-1">إعدادات</span>
+</a>
+</div>
+<!-- Safe area spacing for iOS home indicator -->
+<div class="h-6 w-full"></div>
+</nav>
+<!-- Custom Style to hide scrollbar but keep functionality -->
+<style>
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    </style>
+</body></html>

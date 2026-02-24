@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 - Mutual Rating</title>
+<!-- Fonts and Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1c2936", 
+                        "surface-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans Arabic", "Inter", "sans-serif"],
+                        "sans": ["Noto Sans Arabic", "Inter", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for clean look */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2d3e50;
+            border-radius: 4px;
+        }
+        
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased selection:bg-primary selection:text-white">
+<div class="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto bg-background-light dark:bg-background-dark overflow-x-hidden shadow-2xl">
+<!-- Header -->
+<div class="sticky top-0 z-10 flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-gray-200 dark:border-gray-800">
+<div class="text-slate-900 dark:text-white flex size-12 shrink-0 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</div>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight flex-1 text-center">تقييم الصفقة</h2>
+<div class="size-12 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">help</span>
+</div>
+</div>
+<!-- Transaction Card -->
+<div class="px-4 py-4">
+<div class="flex gap-4 bg-surface-light dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-800">
+<div class="bg-center bg-no-repeat bg-cover rounded-xl h-[70px] w-[70px] shrink-0 border border-gray-200 dark:border-gray-700 relative overflow-hidden" data-alt="Close up of stacked aluminum ingots and scrap metal" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDMUaQbb0Uit3lCQ0nx8dmvGjooWYTVhn9JKbwRmHMG-6TqIIqnrIqyWLafu1pSbpXs_teEWQ2oTXUuCv4-Yek7126MbwU3jXipn4zlXuy4m9-i1UaJj4jbcOpuOGqMK-LRYzsHONjMO57COeLfZ9UXgCZErbp3s1LqO5P2aGZNLKGEG4JzdJ5W3ciX0gvTS6o6tCiAWpZEO9-uXMe9ZWFxCrQ3g2x9GGhFI4G_Vk5zLwhDuHbeOCD5Tug_7vIxJdg0_-DNRDUKsI0");'>
+<div class="absolute inset-0 bg-black/10"></div>
+</div>
+<div class="flex flex-1 flex-col justify-center">
+<div class="flex justify-between items-start">
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal mb-1">سكراب ألمنيوم ٥٠ كغ</p>
+<span class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-[10px] px-2 py-0.5 rounded-full font-bold border border-green-200 dark:border-green-800">مكتملة</span>
+</div>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">person</span>
+                        البائع: أحمد السوري
+                    </p>
+<p class="text-slate-400 dark:text-slate-500 text-xs font-normal leading-normal mt-1 dir-ltr text-right">#Deal-82910</p>
+</div>
+</div>
+</div>
+<!-- Role Toggle (Tabs) -->
+<div class="px-4 pb-2">
+<div class="flex h-12 w-full items-center justify-center rounded-xl bg-gray-200 dark:bg-surface-dark p-1 border border-gray-200 dark:border-gray-800">
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 transition-all duration-200 has-[:checked]:bg-white dark:has-[:checked]:bg-[#2c3e50] has-[:checked]:shadow-sm has-[:checked]:text-primary text-slate-500 dark:text-slate-400 text-sm font-bold leading-normal relative group">
+<span class="truncate z-10">قيّم البائع</span>
+<input checked="" class="invisible w-0 absolute" name="role-toggle" type="radio" value="seller"/>
+</label>
+<label class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 transition-all duration-200 has-[:checked]:bg-white dark:has-[:checked]:bg-[#2c3e50] has-[:checked]:shadow-sm has-[:checked]:text-primary text-slate-500 dark:text-slate-400 text-sm font-bold leading-normal relative group">
+<span class="truncate z-10">قيّم المشتري</span>
+<input class="invisible w-0 absolute" name="role-toggle" type="radio" value="buyer"/>
+</label>
+</div>
+</div>
+<!-- Main Rating Area -->
+<div class="flex-1 flex flex-col px-4 pt-2 pb-24">
+<!-- Question -->
+<div class="text-center py-6">
+<h2 class="text-slate-900 dark:text-white text-2xl font-bold leading-tight mb-2">كيف كانت تجربتك؟</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm">ساعدنا في تحسين مجتمع ريسايكل٢٤</p>
+</div>
+<!-- Stars -->
+<div class="flex justify-center gap-2 mb-8" dir="ltr">
+<button class="group p-1 focus:outline-none transition-transform hover:scale-110">
+<span class="material-symbols-outlined filled text-yellow-400 text-[40px] drop-shadow-lg">star</span>
+</button>
+<button class="group p-1 focus:outline-none transition-transform hover:scale-110">
+<span class="material-symbols-outlined filled text-yellow-400 text-[40px] drop-shadow-lg">star</span>
+</button>
+<button class="group p-1 focus:outline-none transition-transform hover:scale-110">
+<span class="material-symbols-outlined filled text-yellow-400 text-[40px] drop-shadow-lg">star</span>
+</button>
+<button class="group p-1 focus:outline-none transition-transform hover:scale-110">
+<span class="material-symbols-outlined filled text-yellow-400 text-[40px] drop-shadow-lg">star</span>
+</button>
+<button class="group p-1 focus:outline-none transition-transform hover:scale-110">
+<span class="material-symbols-outlined text-gray-300 dark:text-gray-600 text-[40px]">star</span>
+</button>
+</div>
+<!-- Feedback Tags -->
+<div class="mb-6">
+<h3 class="text-slate-900 dark:text-white text-sm font-bold mb-3 px-1">ما الذي أعجبك؟</h3>
+<div class="flex flex-wrap gap-2">
+<!-- Selected Tag -->
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" type="checkbox"/>
+<div class="px-4 py-2 rounded-lg bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-slate-500 dark:text-slate-400 text-sm font-medium transition-all peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary hover:border-primary/50 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">schedule</span>
+                            دقيق في الموعد
+                        </div>
+</label>
+<!-- Unselected Tag -->
+<label class="cursor-pointer">
+<input class="peer sr-only" type="checkbox"/>
+<div class="px-4 py-2 rounded-lg bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-slate-500 dark:text-slate-400 text-sm font-medium transition-all peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary hover:border-primary/50 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">scale</span>
+                            وزن دقيق
+                        </div>
+</label>
+<!-- Unselected Tag -->
+<label class="cursor-pointer">
+<input class="peer sr-only" type="checkbox"/>
+<div class="px-4 py-2 rounded-lg bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-slate-500 dark:text-slate-400 text-sm font-medium transition-all peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary hover:border-primary/50 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">attach_money</span>
+                            سعر عادل
+                        </div>
+</label>
+<!-- Selected Tag -->
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" type="checkbox"/>
+<div class="px-4 py-2 rounded-lg bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-slate-500 dark:text-slate-400 text-sm font-medium transition-all peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary hover:border-primary/50 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">handshake</span>
+                            تعامل محترم
+                        </div>
+</label>
+<!-- Unselected Tag -->
+<label class="cursor-pointer">
+<input class="peer sr-only" type="checkbox"/>
+<div class="px-4 py-2 rounded-lg bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-slate-500 dark:text-slate-400 text-sm font-medium transition-all peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary hover:border-primary/50 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">clean_hands</span>
+                            بضاعة نظيفة
+                        </div>
+</label>
+</div>
+</div>
+<!-- Comment Area -->
+<div class="mb-4">
+<label class="text-slate-900 dark:text-white text-sm font-bold mb-2 block px-1" for="comment">ملاحظات إضافية</label>
+<div class="relative">
+<textarea class="w-full bg-surface-light dark:bg-surface-dark text-slate-900 dark:text-white rounded-xl p-4 border border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-1 focus:ring-primary placeholder-gray-400 dark:placeholder-gray-600 text-sm resize-none" id="comment" placeholder="اكتب تفاصيل تجربتك هنا..." rows="4"></textarea>
+<div class="absolute bottom-3 left-3 text-xs text-gray-400 dark:text-gray-600">0/300</div>
+</div>
+</div>
+<!-- Trust Badge -->
+<div class="flex items-center justify-center gap-2 py-4 opacity-60">
+<span class="material-symbols-outlined text-primary text-[16px]">verified_user</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">تقييمك يساعد في بناء الثقة</span>
+</div>
+</div>
+<!-- Sticky Bottom Bar -->
+<div class="fixed bottom-0 left-0 right-0 p-4 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 max-w-md mx-auto z-20">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold h-12 rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-2 transition-all active:scale-[0.98]">
+<span>إرسال التقييم</span>
+<span class="material-symbols-outlined text-[20px] rtl:rotate-180">send</span>
+</button>
+</div>
+</div>
+</body></html>

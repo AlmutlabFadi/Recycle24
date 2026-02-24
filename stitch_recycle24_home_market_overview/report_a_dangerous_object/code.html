@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Report Dangerous Object - Recycle24</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Public Sans and Tajawal for Arabic fallback -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&amp;family=Tajawal:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f20d0d",
+                        "background-light": "#f8f5f5",
+                        "background-dark": "#221010",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2f1a1a",
+                    },
+                    fontFamily: {
+                        "display": ["Tajawal", "Public Sans", "Noto Sans", "sans-serif"],
+                        "sans": ["Tajawal", "Public Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                    boxShadow: {
+                        'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+                        'glow': '0 0 15px rgba(242, 13, 13, 0.3)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom styles for toggle functionality */
+        #success-toggle:checked ~ .success-modal {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        
+        .success-modal {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Hide scrollbar for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-gray-100 dark:bg-gray-900 flex justify-center items-center min-h-screen font-display antialiased p-0 sm:p-4 selection:bg-primary/20">
+<!-- Mobile Device Container -->
+<div class="relative w-full max-w-[400px] bg-background-light dark:bg-background-dark h-screen sm:h-[850px] sm:rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col sm:border-[8px] sm:border-gray-900 ring-1 ring-gray-900/5">
+<!-- Toggle Input (Hidden) -->
+<input class="hidden" id="success-toggle" type="checkbox"/>
+<!-- Top Status Bar Mockup (Safe Area) -->
+<div class="h-12 w-full bg-background-light dark:bg-background-dark shrink-0 flex items-end px-6 pb-2 justify-between text-xs font-medium text-gray-900 dark:text-white z-20">
+<span>9:41</span>
+<div class="flex gap-1.5 items-center">
+<span class="material-symbols-outlined text-[16px]">signal_cellular_alt</span>
+<span class="material-symbols-outlined text-[16px]">wifi</span>
+<span class="material-symbols-outlined text-[16px] rotate-180">battery_full</span>
+</div>
+</div>
+<!-- Header -->
+<header class="flex items-center justify-between px-4 py-3 bg-background-light dark:bg-background-dark z-10 shrink-0">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-gray-900 dark:text-white transition-colors">
+<span class="material-symbols-outlined">arrow_forward</span>
+</button>
+<h1 class="text-lg font-bold text-gray-900 dark:text-white">إبلاغ عن جسم خطير</h1>
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-gray-900 dark:text-white transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</header>
+<!-- Main Content (Scrollable) -->
+<main class="flex-1 overflow-y-auto no-scrollbar pb-24 relative">
+<!-- Warning Banner -->
+<div class="px-4 py-2">
+<div class="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-xl p-4 flex gap-3 items-start shadow-sm">
+<div class="bg-primary/10 dark:bg-primary/20 p-2 rounded-full shrink-0 text-primary">
+<span class="material-symbols-outlined fill-1">warning</span>
+</div>
+<div>
+<h3 class="font-bold text-primary text-sm mb-1">تحذير للسلامة</h3>
+<p class="text-gray-700 dark:text-red-100 text-xs leading-relaxed">
+                            هذه المواد قد تكون خطرة. حافظ على مسافة آمنة (٥ أمتار على الأقل) ولا تلمس الجسم أبداً.
+                        </p>
+</div>
+</div>
+</div>
+<!-- Photo Section -->
+<div class="px-4 py-3">
+<label class="block mb-2 text-sm font-bold text-gray-900 dark:text-white">صورة الجسم</label>
+<div class="relative group cursor-pointer">
+<div class="aspect-video w-full rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-surface-dark flex flex-col items-center justify-center gap-3 hover:border-primary hover:bg-primary/5 transition-all">
+<div class="w-12 h-12 rounded-full bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-2xl">photo_camera</span>
+</div>
+<span class="text-sm font-medium text-gray-500 dark:text-gray-400 group-hover:text-primary transition-colors">التقاط صورة (فقط إذا كان آمناً)</span>
+</div>
+</div>
+</div>
+<!-- Location Section -->
+<div class="px-4 py-3">
+<div class="flex justify-between items-center mb-2">
+<label class="block text-sm font-bold text-gray-900 dark:text-white">الموقع الحالي</label>
+<span class="text-xs font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        دقة عالية GPS
+                    </span>
+</div>
+<div class="relative w-full aspect-[2.5/1] rounded-xl overflow-hidden shadow-sm ring-1 ring-gray-200 dark:ring-gray-700">
+<!-- Map Background -->
+<div class="absolute inset-0 bg-cover bg-center opacity-80 dark:opacity-60" data-alt="Map view showing streets and location marker" data-location="Riyadh, Saudi Arabia" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAaCgKH3st27xSaPoonDDtjxkswzyK6bZznDUfUCRInz920QkhtvrGxY2j9hhEkAXGBS941QVYnvVEqG1KAMCLbBLlMEsZPA7SBcXY6oP3BJTA_9zeSYPugbG-qN20SRII6pwgbbpLMjgiLbXA-4Sfu3TGLN6Zole2QDaViX8BK8S0mnRu49XDNK-PuhIYE4-SC2UEYceHdS5VvOVtr_dIAiktfj72rckxVTw46HKRVig8KQK_qnelNli13eYbFV3daXEE3qjarFRE');">
+</div>
+<!-- Center Pin -->
+<div class="absolute inset-0 flex items-center justify-center pb-4">
+<span class="material-symbols-outlined text-4xl text-primary drop-shadow-md">location_on</span>
+</div>
+<!-- Refine Button -->
+<button class="absolute bottom-2 left-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1 hover:bg-gray-50">
+<span class="material-symbols-outlined text-sm">my_location</span>
+                        تحديث الموقع
+                    </button>
+</div>
+<p class="mt-2 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">near_me</span>
+                    حي العليا، شارع الأمير سلطان، الرياض
+                </p>
+</div>
+<!-- Description Section -->
+<div class="px-4 py-3">
+<label class="block mb-2 text-sm font-bold text-gray-900 dark:text-white">وصف الجسم <span class="text-gray-400 font-normal text-xs">(اختياري)</span></label>
+<div class="relative">
+<textarea class="w-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-xl p-4 min-h-[120px] text-gray-900 dark:text-white placeholder:text-gray-400 focus:ring-2 focus:ring-primary focus:border-transparent text-sm resize-none" placeholder="مثال: اسطوانة غاز صدئة، رائحة غريبة، سائل متسرب..."></textarea>
+<button class="absolute bottom-3 left-3 p-2 text-gray-400 hover:text-primary hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
+<span class="material-symbols-outlined">mic</span>
+</button>
+</div>
+</div>
+<!-- Extra Spacer for sticky button -->
+<div class="h-8"></div>
+</main>
+<!-- Sticky Bottom Action -->
+<div class="absolute bottom-0 left-0 right-0 p-4 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-md border-t border-gray-100 dark:border-gray-800 z-30">
+<label class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-red-500/30 active:scale-[0.98] transition-all cursor-pointer select-none" for="success-toggle">
+<span class="material-symbols-outlined">send</span>
+<span>إرسال البلاغ فوراً</span>
+</label>
+<p class="text-center text-[10px] text-gray-400 mt-2">
+                بالضغط على إرسال، أنت توافق على مشاركة موقعك مع الجهات المختصة.
+            </p>
+</div>
+<!-- Success Modal Overlay -->
+<div class="success-modal absolute inset-0 z-50 bg-background-light dark:bg-background-dark flex flex-col items-center justify-center p-6 text-center">
+<div class="w-full max-w-sm flex flex-col items-center gap-6 animate-fadeIn">
+<!-- Success Icon Animation -->
+<div class="relative">
+<div class="absolute inset-0 bg-green-500/20 rounded-full blur-xl animate-pulse"></div>
+<div class="w-24 h-24 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center relative z-10">
+<span class="material-symbols-outlined text-6xl text-green-600 dark:text-green-400">check_circle</span>
+</div>
+</div>
+<div class="space-y-2">
+<h2 class="text-2xl font-bold text-gray-900 dark:text-white">تم استلام البلاغ</h2>
+<p class="text-gray-600 dark:text-gray-300">
+                        شكراً لك. تم إخطار فريق السلامة والسلطات المحلية بموقعك.
+                    </p>
+</div>
+<!-- Next Steps Card -->
+<div class="w-full bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-800 rounded-xl p-5 text-right shadow-soft">
+<h3 class="font-bold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">gpp_maybe</span>
+                        تعليمات السلامة:
+                    </h3>
+<ul class="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2 shrink-0"></span>
+                            ابتعد عن المنطقة فوراً لمسافة 50 متر.
+                        </li>
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2 shrink-0"></span>
+                            امنع الآخرين من الاقتراب إذا أمكن.
+                        </li>
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-gray-400 mt-2 shrink-0"></span>
+                            ابق هاتفك متاحاً لاتصال فريق الطوارئ.
+                        </li>
+</ul>
+</div>
+<!-- Actions -->
+<div class="w-full space-y-3 mt-4">
+<button class="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">home</span>
+                        العودة للرئيسية
+                    </button>
+<button class="w-full bg-transparent border-2 border-red-100 dark:border-red-900/50 text-red-600 dark:text-red-400 font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">call</span>
+                        اتصال بالطوارئ (911)
+                    </button>
+</div>
+<!-- Close Demo Toggle -->
+<label class="mt-4 text-xs text-gray-400 underline cursor-pointer" for="success-toggle">
+                    إغلاق شاشة العرض (للعودة)
+                </label>
+</div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Metalix24 Market Intelligence</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Noto+Sans+Arabic:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "card-dark": "#1c2936",
+                        "card-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans Arabic", "Inter", "sans-serif"],
+                        "numbers": ["Inter", "sans-serif"], // For prices to keep them LTR looking/tabular
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar hiding for cleaner mobile look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Ensure charts flow LTR even in RTL mode */
+        .chart-ltr {
+            direction: ltr;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased pb-20">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center p-4 justify-between">
+<div class="flex items-center gap-3">
+<div class="bg-primary/20 p-2 rounded-lg text-primary flex items-center justify-center">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div>
+<h2 class="text-lg font-bold leading-tight tracking-tight">تحليلات السوق</h2>
+<p class="text-xs text-slate-500 dark:text-slate-400 font-medium">Metalix24 Engine</p>
+</div>
+</div>
+<button class="relative flex size-10 items-center justify-center rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-slate-700 dark:text-white">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-background-light dark:border-background-dark"></span>
+</button>
+</div>
+</div>
+<!-- Meta Text -->
+<div class="px-4 py-2">
+<p class="text-slate-500 dark:text-[#92adc9] text-xs font-medium text-center bg-slate-200 dark:bg-slate-800/50 py-1.5 rounded-full mx-auto w-fit px-4">
+            آخر تحديث: 10:35 ص (بتوقيت دمشق)
+        </p>
+</div>
+<!-- Currency Stats (Pinned) -->
+<div class="px-4 py-2">
+<div class="flex gap-3">
+<!-- Buy Card -->
+<div class="flex flex-1 flex-col gap-1 rounded-xl p-4 bg-white dark:bg-card-dark shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">شراء (ل.س)</p>
+<span class="material-symbols-outlined text-emerald-500 text-[20px]">trending_up</span>
+</div>
+<p class="font-numbers text-2xl font-bold tracking-tight mt-1">14,600</p>
+<p class="text-emerald-500 text-xs font-bold dir-ltr text-right font-numbers">+1.2%</p>
+</div>
+<!-- Sell Card -->
+<div class="flex flex-1 flex-col gap-1 rounded-xl p-4 bg-white dark:bg-card-dark shadow-sm border border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">مبيع (ل.س)</p>
+<span class="material-symbols-outlined text-emerald-500 text-[20px]">trending_up</span>
+</div>
+<p class="font-numbers text-2xl font-bold tracking-tight mt-1">14,850</p>
+<p class="text-emerald-500 text-xs font-bold dir-ltr text-right font-numbers">+1.5%</p>
+</div>
+</div>
+</div>
+<!-- Segmented Buttons (Timeframe) -->
+<div class="px-4 py-2">
+<div class="flex h-10 w-full items-center justify-center rounded-lg bg-slate-200 dark:bg-slate-800 p-1">
+<label class="flex cursor-pointer h-full flex-1 items-center justify-center rounded-md transition-all has-[:checked]:bg-white dark:has-[:checked]:bg-card-dark has-[:checked]:shadow-sm has-[:checked]:text-primary text-slate-500 dark:text-slate-400 text-sm font-bold">
+<span class="truncate">24 ساعة</span>
+<input checked="" class="invisible w-0 h-0 absolute" name="timeframe" type="radio" value="24h"/>
+</label>
+<label class="flex cursor-pointer h-full flex-1 items-center justify-center rounded-md transition-all has-[:checked]:bg-white dark:has-[:checked]:bg-card-dark has-[:checked]:shadow-sm has-[:checked]:text-primary text-slate-500 dark:text-slate-400 text-sm font-bold">
+<span class="truncate">7 أيام</span>
+<input class="invisible w-0 h-0 absolute" name="timeframe" type="radio" value="7d"/>
+</label>
+<label class="flex cursor-pointer h-full flex-1 items-center justify-center rounded-md transition-all has-[:checked]:bg-white dark:has-[:checked]:bg-card-dark has-[:checked]:shadow-sm has-[:checked]:text-primary text-slate-500 dark:text-slate-400 text-sm font-bold">
+<span class="truncate">1 شهر</span>
+<input class="invisible w-0 h-0 absolute" name="timeframe" type="radio" value="1M"/>
+</label>
+</div>
+</div>
+<!-- Commodities Charts -->
+<div class="flex flex-col gap-4 px-4 py-2 pb-6">
+<!-- Steel Card -->
+<div class="flex flex-col rounded-xl bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="p-5 pb-0">
+<div class="flex justify-between items-start mb-2">
+<div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal">حديد بيليت LME</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">السعر العالمي للطن</p>
+</div>
+<div class="bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-1 rounded text-emerald-600 dark:text-emerald-400 text-xs font-bold font-numbers dir-ltr">
+                        +2.5%
+                    </div>
+</div>
+<p class="font-numbers tracking-tight text-[28px] font-bold leading-tight truncate text-slate-900 dark:text-white">$530.00</p>
+</div>
+<div class="h-[120px] w-full pt-4 chart-ltr">
+<svg fill="none" height="100%" preserveaspectratio="none" viewbox="0 0 478 150" width="100%" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<lineargradient gradientunits="userSpaceOnUse" id="gradient_steel" x1="239" x2="239" y1="0" y2="150">
+<stop stop-color="#137fec" stop-opacity="0.3"></stop>
+<stop offset="1" stop-color="#137fec" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0 109C18.1538 109 18.1538 21 36.3077 21C54.4615 21 54.4615 41 72.6154 41C90.7692 41 90.7692 93 108.923 93C127.077 93 127.077 33 145.231 33C163.385 33 163.385 101 181.538 101C199.692 101 199.692 61 217.846 61C236 61 236 45 254.154 45C272.308 45 272.308 121 290.462 121C308.615 121 308.615 149 326.769 149C344.923 149 344.923 1 363.077 1C381.231 1 381.231 81 399.385 81C417.538 81 417.538 129 435.692 129C453.846 129 453.846 25 472 25V150H0V109Z" fill="url(#gradient_steel)"></path>
+<path d="M0 109C18.1538 109 18.1538 21 36.3077 21C54.4615 21 54.4615 41 72.6154 41C90.7692 41 90.7692 93 108.923 93C127.077 93 127.077 33 145.231 33C163.385 33 163.385 101 181.538 101C199.692 101 199.692 61 217.846 61C236 61 236 45 254.154 45C272.308 45 272.308 121 290.462 121C308.615 121 308.615 149 326.769 149C344.923 149 344.923 1 363.077 1C381.231 1 381.231 81 399.385 81C417.538 81 417.538 129 435.692 129C453.846 129 453.846 25 472 25" stroke="#137fec" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+</div>
+</div>
+<!-- Gold Card -->
+<div class="flex flex-col rounded-xl bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="p-5 pb-0">
+<div class="flex justify-between items-start mb-2">
+<div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal">الذهب الفوري</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">أونصة تروي</p>
+</div>
+<div class="bg-red-500/10 dark:bg-red-500/20 px-2 py-1 rounded text-red-600 dark:text-red-400 text-xs font-bold font-numbers dir-ltr">
+                        -0.4%
+                    </div>
+</div>
+<p class="font-numbers tracking-tight text-[28px] font-bold leading-tight truncate text-slate-900 dark:text-white">$2,045.50</p>
+</div>
+<div class="h-[120px] w-full pt-4 chart-ltr">
+<svg fill="none" height="100%" preserveaspectratio="none" viewbox="0 0 478 150" width="100%" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<lineargradient gradientunits="userSpaceOnUse" id="gradient_gold" x1="239" x2="239" y1="0" y2="150">
+<stop stop-color="#fa6238" stop-opacity="0.3"></stop>
+<stop offset="1" stop-color="#fa6238" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0 40C20 40 40 80 60 80C80 80 100 60 120 60C140 60 160 100 180 100C200 100 220 50 240 50C260 50 280 120 300 120C320 120 340 90 360 90C380 90 400 130 420 130C440 130 460 70 478 70V150H0V40Z" fill="url(#gradient_gold)"></path>
+<path d="M0 40C20 40 40 80 60 80C80 80 100 60 120 60C140 60 160 100 180 100C200 100 220 50 240 50C260 50 280 120 300 120C320 120 340 90 360 90C380 90 400 130 420 130C440 130 460 70 478 70" stroke="#fa6238" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+</div>
+</div>
+<!-- Silver Card -->
+<div class="flex flex-col rounded-xl bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="p-5 pb-0">
+<div class="flex justify-between items-start mb-2">
+<div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal">الفضة الفورية</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">أونصة تروي</p>
+</div>
+<div class="bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-1 rounded text-emerald-600 dark:text-emerald-400 text-xs font-bold font-numbers dir-ltr">
+                        +0.8%
+                    </div>
+</div>
+<p class="font-numbers tracking-tight text-[28px] font-bold leading-tight truncate text-slate-900 dark:text-white">$23.10</p>
+</div>
+<div class="h-[120px] w-full pt-4 chart-ltr">
+<svg fill="none" height="100%" preserveaspectratio="none" viewbox="0 0 478 150" width="100%" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<lineargradient gradientunits="userSpaceOnUse" id="gradient_silver" x1="239" x2="239" y1="0" y2="150">
+<stop stop-color="#137fec" stop-opacity="0.3"></stop>
+<stop offset="1" stop-color="#137fec" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0 120C20 120 40 100 60 100C80 100 100 110 120 110C140 110 160 80 180 80C200 80 220 90 240 90C260 90 280 60 300 60C320 60 340 70 360 70C380 70 400 40 420 40C440 40 460 30 478 30V150H0V120Z" fill="url(#gradient_silver)"></path>
+<path d="M0 120C20 120 40 100 60 100C80 100 100 110 120 110C140 110 160 80 180 80C200 80 220 90 240 90C260 90 280 60 300 60C320 60 340 70 360 70C380 70 400 40 420 40C440 40 460 30 478 30" stroke="#137fec" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+</div>
+</div>
+<!-- Local Scrap Card -->
+<div class="flex flex-col rounded-xl bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="p-5 flex items-center justify-between">
+<div>
+<p class="text-slate-900 dark:text-white text-base font-bold leading-normal">نحاس محلي (خردة)</p>
+<p class="text-slate-500 dark:text-slate-400 text-xs">السعر التقديري (دمشق)</p>
+</div>
+<p class="font-numbers tracking-tight text-xl font-bold leading-tight truncate text-slate-900 dark:text-white dir-ltr">~ $7,200</p>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation -->
+<div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-card-dark border-t border-slate-200 dark:border-slate-800 pb-5 pt-2 px-6">
+<div class="flex justify-between items-center">
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[26px]">storefront</span>
+<span class="text-[10px] font-medium">المتجر</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[26px] fill-current">insights</span>
+<span class="text-[10px] font-bold">السوق</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[26px]">person</span>
+<span class="text-[10px] font-medium">حسابي</span>
+</button>
+</div>
+</div>
+</body></html>

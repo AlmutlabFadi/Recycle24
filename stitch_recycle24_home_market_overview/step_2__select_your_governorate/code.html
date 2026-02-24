@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 - Select Governorate</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1c2936",
+                        "surface-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Noto Sans Arabic", "Inter", "sans-serif"],
+                        "sans": ["Noto Sans Arabic", "Inter", "sans-serif"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom Scrollbar for cleaner look */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #233648;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #324d67;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-sans overflow-x-hidden antialiased selection:bg-primary/30">
+<div class="relative flex min-h-screen w-full flex-col mx-auto max-w-md bg-background-light dark:bg-background-dark shadow-2xl">
+<!-- Top App Bar -->
+<div class="sticky top-0 z-50 flex items-center bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm p-4 pb-2 justify-between border-b border-gray-200 dark:border-gray-800">
+<button class="text-slate-900 dark:text-white flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+<span class="material-symbols-outlined rtl:rotate-180">arrow_back</span>
+</button>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight flex-1 text-center">اختر المحافظة</h2>
+<button class="flex w-12 items-center justify-end text-sm font-bold text-gray-500 dark:text-[#92adc9] hover:text-primary transition-colors">
+                إلغاء
+            </button>
+</div>
+<!-- Progress Indicator -->
+<div class="flex w-full flex-row items-center justify-center gap-2 py-4 px-6 bg-background-light dark:bg-background-dark">
+<div class="h-1.5 flex-1 rounded-full bg-primary"></div>
+<div class="h-1.5 flex-1 rounded-full bg-primary"></div>
+<div class="h-1.5 flex-1 rounded-full bg-gray-300 dark:bg-[#324d67]"></div>
+<div class="h-1.5 flex-1 rounded-full bg-gray-300 dark:bg-[#324d67]"></div>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 flex flex-col px-4 pb-24">
+<!-- Header Text -->
+<div class="text-center mb-6">
+<h1 class="text-2xl font-bold tracking-tight mb-2">أين يقع موقعك؟</h1>
+<p class="text-gray-500 dark:text-gray-400 text-sm">نحتاج إلى موقعك لربطك بأقرب نقاط التدوير في سوريا.</p>
+</div>
+<!-- GPS Button -->
+<button class="group w-full flex items-center justify-center gap-3 bg-surface-light dark:bg-[#1e2936] text-primary hover:bg-primary hover:text-white border border-primary/20 hover:border-primary p-4 rounded-xl transition-all duration-300 shadow-sm mb-6">
+<span class="material-symbols-outlined group-hover:animate-bounce">my_location</span>
+<span class="font-bold text-base">استخدم موقعي الحالي</span>
+</button>
+<!-- Search Bar -->
+<div class="relative mb-6">
+<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="block w-full p-3 pr-10 pl-4 text-sm text-slate-900 dark:text-white bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary placeholder-gray-400 dark:placeholder-gray-500 transition-all shadow-sm" placeholder="بحث عن محافظة..." required="" type="text"/>
+</div>
+<!-- Governorates Grid -->
+<div class="grid grid-cols-2 gap-3">
+<!-- Damascus (Active State) -->
+<div class="relative flex flex-col items-center justify-center p-4 gap-3 bg-primary/10 dark:bg-primary/20 border-2 border-primary rounded-xl cursor-pointer transition-all shadow-sm">
+<div class="absolute top-2 left-2 text-primary">
+<span class="material-symbols-outlined filled text-[20px]">check_circle</span>
+</div>
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-primary/20 text-primary mb-1">
+<span class="material-symbols-outlined text-3xl">mosque</span>
+</div>
+<span class="font-bold text-sm text-center text-primary">دمشق</span>
+</div>
+<!-- Rif Dimashq -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">domain</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">ريف دمشق</span>
+</div>
+<!-- Aleppo -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">castle</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">حلب</span>
+</div>
+<!-- Homs -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">location_city</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">حمص</span>
+</div>
+<!-- Hama -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">water_drop</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">حماة</span>
+</div>
+<!-- Latakia -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">sailing</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">اللاذقية</span>
+</div>
+<!-- Tartus -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">anchor</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">طرطوس</span>
+</div>
+<!-- Idlib -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">nature_people</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">إدلب</span>
+</div>
+<!-- Raqqa -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">water</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">الرقة</span>
+</div>
+<!-- Deir ez-Zor -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">link</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">دير الزور</span>
+</div>
+<!-- Al-Hasakah -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">grain</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">الحسكة</span>
+</div>
+<!-- Daraa -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">theater_comedy</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">درعا</span>
+</div>
+<!-- As-Suwayda -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">volcano</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">السويداء</span>
+</div>
+<!-- Quneitra -->
+<div class="flex flex-col items-center justify-center p-4 gap-3 bg-surface-light dark:bg-[#1e2936] border border-gray-200 dark:border-transparent hover:border-primary/50 dark:hover:border-primary/50 rounded-xl cursor-pointer transition-all shadow-sm group">
+<div class="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 group-hover:text-primary group-hover:bg-primary/10 transition-colors mb-1">
+<span class="material-symbols-outlined text-3xl">landscape</span>
+</div>
+<span class="font-medium text-sm text-center text-gray-700 dark:text-gray-300 group-hover:text-primary">القنيطرة</span>
+</div>
+</div>
+<!-- Extra space for bottom button -->
+<div class="h-4"></div>
+</div>
+<!-- Sticky Bottom Action Bar -->
+<div class="fixed bottom-0 left-0 right-0 z-40 p-4 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 flex justify-center max-w-md mx-auto">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+<span>تأكيد</span>
+<span class="material-symbols-outlined rtl:rotate-180">arrow_forward</span>
+</button>
+</div>
+</div>
+</body></html>

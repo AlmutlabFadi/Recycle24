@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Safety Hub - Recycle24</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;700&amp;family=Public+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f48c25",
+                        "background-light": "#f8f7f5",
+                        "background-dark": "#221910",
+                        "surface-dark": "#2f241a",
+                        "surface-light": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Cairo", "Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Cairo', 'Public Sans', sans-serif;
+        }
+        /* Custom scrollbar hiding for clean UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display transition-colors duration-200">
+<div class="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden pb-20">
+<!-- Header -->
+<header class="sticky top-0 z-50 flex items-center justify-between bg-background-light/95 dark:bg-background-dark/95 px-4 py-3 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-white/5">
+<div class="flex items-center gap-3">
+<button class="flex items-center justify-center text-gray-900 dark:text-white rounded-full p-1 hover:bg-black/5 dark:hover:bg-white/10 transition">
+<span class="material-symbols-outlined text-2xl">account_circle</span>
+</button>
+</div>
+<h1 class="text-xl font-bold tracking-tight text-center flex-1">مركز السلامة</h1>
+<div class="flex items-center gap-3">
+<button class="flex items-center justify-center text-primary rounded-full p-1 hover:bg-primary/10 transition relative">
+<span class="material-symbols-outlined text-2xl">notifications</span>
+<span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col gap-6 p-4">
+<!-- Hero Warning Banner -->
+<div class="relative w-full overflow-hidden rounded-xl bg-gradient-to-br from-gray-900 to-black shadow-lg">
+<!-- Background Image with Overlay -->
+<div class="absolute inset-0 z-0 opacity-50 bg-cover bg-center" data-alt="Abstract warning hazard pattern stripes" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAOvrfvGeAdLs60Y1WHOQWZcoUBbsqcB8lYauk_IunUhDkVwPQPyTL9kjyNhmyDQPNC6ZY7ASceRQaN9_77OfxGQ-DRN4rWIqES4NWn-BjAIQVjy9qpInEVeY7G8Hs87FG9IFoSXEMgG_-iiftC6Q482JSNnthqNlz2f2UlMA_L0jXkADS4OJsWLzcPIZLe2oa1ywtf1W4-ZrUKzU7e3Yq9CaJdJC0fdWbE071VYUFZP4GyBlo4c87xwvxE3DrlZ_saMIY69oIuMEo');">
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-0"></div>
+<div class="relative z-10 flex flex-col items-start justify-end p-5 pt-24 h-full">
+<div class="flex items-center gap-2 mb-2 bg-primary/90 text-white px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-sm">
+<span class="material-symbols-outlined text-sm">warning</span>
+<span>تنبيه هام</span>
+</div>
+<h2 class="text-2xl font-bold text-white leading-tight mb-1">السلامة أولاً</h2>
+<p class="text-gray-200 text-sm font-medium opacity-90">تجنب الأجسام المعدنية المجهولة ولا تقم بلمسها</p>
+</div>
+</div>
+<!-- Search Bar -->
+<div class="relative group">
+<div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-gray-500 dark:text-gray-400">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="block w-full rounded-xl border-none bg-white dark:bg-surface-dark py-4 pr-11 pl-4 text-sm text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-200 dark:ring-white/10 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-primary dark:focus:ring-primary sm:text-sm sm:leading-6 transition-shadow" placeholder="ابحث عن مواد خطرة (مثال: أسطوانة صفراء)..." type="text"/>
+</div>
+<!-- News Ticker / Recent Alert -->
+<div class="bg-red-500/10 dark:bg-red-900/20 border border-red-500/20 rounded-lg p-3 flex items-start gap-3">
+<span class="material-symbols-outlined text-red-600 dark:text-red-400 shrink-0 mt-0.5">campaign</span>
+<div class="flex-1">
+<h3 class="text-sm font-bold text-red-700 dark:text-red-400">تحذير محلي</h3>
+<p class="text-xs text-red-600/80 dark:text-red-400/80 mt-1">تم الإبلاغ عن مخلفات غير منفجرة بالقرب من المنطقة الصناعية في ريف دمشق. يرجى الحذر.</p>
+</div>
+</div>
+<!-- Categories Grid -->
+<div>
+<h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+<span class="w-1 h-6 rounded-full bg-primary block"></span>
+                    فئات المخاطر
+                </h3>
+<div class="grid grid-cols-2 gap-4">
+<!-- Card 1: War Remnants -->
+<div class="group relative flex flex-col justify-between overflow-hidden rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-gray-200 dark:ring-white/5 hover:ring-primary/50 transition-all cursor-pointer">
+<div class="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400">
+<span class="material-symbols-outlined">explosion</span>
+</div>
+<div>
+<h4 class="font-bold text-gray-900 dark:text-white">مخلفات الحرب</h4>
+<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">ذخائر وقذائف غير منفجرة</p>
+</div>
+<div class="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-orange-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<!-- Card 2: Radioactive -->
+<div class="group relative flex flex-col justify-between overflow-hidden rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-gray-200 dark:ring-white/5 hover:ring-primary/50 transition-all cursor-pointer">
+<div class="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+<span class="material-symbols-outlined">blur_on</span>
+</div>
+<div>
+<h4 class="font-bold text-gray-900 dark:text-white">مواد مشعة</h4>
+<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">رموز التحذير الإشعاعي</p>
+</div>
+<div class="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-purple-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<!-- Card 3: Chemical -->
+<div class="group relative flex flex-col justify-between overflow-hidden rounded-xl bg-white dark:bg-surface-dark p-4 shadow-sm ring-1 ring-gray-200 dark:ring-white/5 hover:ring-primary/50 transition-all cursor-pointer">
+<div class="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400">
+<span class="material-symbols-outlined">science</span>
+</div>
+<div>
+<h4 class="font-bold text-gray-900 dark:text-white">مخاطر كيميائية</h4>
+<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">مواد سامة وسوائل خطرة</p>
+</div>
+<div class="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-teal-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<!-- Card 4: Report Emergency (Big Button Style) -->
+<div class="group relative flex flex-col justify-between overflow-hidden rounded-xl bg-primary text-white p-4 shadow-md shadow-primary/20 hover:bg-primary/90 transition-all cursor-pointer">
+<div class="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-white/20">
+<span class="material-symbols-outlined">emergency_share</span>
+</div>
+<div>
+<h4 class="font-bold text-white">إبلاغ عن طوارئ</h4>
+<p class="mt-1 text-xs text-white/80">اتصل بفرق الهندسة فوراً</p>
+</div>
+<!-- Ripple effect decoration -->
+<div class="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
+</div>
+</div>
+</div>
+<!-- Visual Guide Section -->
+<div class="pb-4">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+<span class="w-1 h-6 rounded-full bg-primary block"></span>
+                        دليل التعرف السريع
+                    </h3>
+<a class="text-xs text-primary font-bold hover:underline" href="#">عرض الكل</a>
+</div>
+<div class="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4">
+<!-- Item 1 -->
+<div class="min-w-[140px] flex flex-col gap-2">
+<div class="aspect-square rounded-lg overflow-hidden relative bg-gray-800">
+<img alt="Rusty metal object in dirt" class="w-full h-full object-cover opacity-80" data-alt="Old rusty unexploded ordnance half buried" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKTi62GaGxAh_52s0XYXTCeF0vHA-xsJs19utnVnWP8bxUPgF_VFvRFPLmTGtvLpoSK1y-sV7-GQpBn4JgEjRZH12pGDzstt6x6hegiLCbu-lnnsqMOOq7vmsyI6UKxOmH6V2nWUNhPAz-v4BX202qxh2NxaPQwRYrZ9M9TtfZESkQfWxItqiRNE4TzzF6jkrrKOAOeZnHYkGGhQ5eacBvhnTF4f6Hpe07GSR-f8shfox0ikUFdupUsnQr-UwI05Kx8quxQnF13LU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
+<span class="text-xs font-bold text-white">مقذوفات صدئة</span>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="min-w-[140px] flex flex-col gap-2">
+<div class="aspect-square rounded-lg overflow-hidden relative bg-gray-800">
+<img alt="Yellow barrel with warning sign" class="w-full h-full object-cover opacity-80" data-alt="Yellow industrial barrel with chemical warning label" src="https://lh3.googleusercontent.com/aida-public/AB6AXuADmgxqsmVF6zLadAN30wWwJdLdnfT_hapruCqZo7UmDHapVpVhCAi3srsxRW93BfZxNBBVKobbntsGjS3UT4MGftaWzzpbTR2bh6apRXU2e3j0Cd7eYEJrcuRVMQzOucnONq68sGFTKE0flfzpnLRHXJvv8Sr1ubcFaAr5hvH7puy7E_DYOIPbPOLQIdf4RKCKMYqBwvOKFDrXNTOiW_qKrDwzxQVI_mLdYrSLsVe64hm6_Po6veySHV39cGgyh_g5LybjU868ID0"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
+<span class="text-xs font-bold text-white">براميل كيميائية</span>
+</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="min-w-[140px] flex flex-col gap-2">
+<div class="aspect-square rounded-lg overflow-hidden relative bg-gray-800">
+<img alt="Abstract warning symbol" class="w-full h-full object-cover opacity-80" data-alt="Generic hazard warning symbol on metal plate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7-me1scexWHxmonTeexz4Hlime6ML9x4a0gFJdMqO_HWUlHq3e7rNRb4rV76FbSFVuyWaU6nMRZvBbu4jOg0Zk24mqKe9jOxX4vTy3bcvGdo5GzaK7fGbrJED2WORxSrz2Vrid3LRPefhcJMsYMlDo4YIzbeBM8nWMCHtuRptCkpy9rqw8rFydgeD-wQLMUwVobRNCnOX1xbtSkBieO-LHSc-zLhxhdTEzZZrvfAQUE2rDjrCANVMRygp3OmjYTBrbWXAcDpHTn8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-2">
+<span class="text-xs font-bold text-white">علامات خطر</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#1a120b] border-t border-gray-200 dark:border-white/5 pb-safe pt-2 px-6">
+<div class="flex items-center justify-around pb-4">
+<!-- Nav Item: Marketplace -->
+<a class="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">storefront</span>
+<span class="text-[10px] font-medium">المتجر</span>
+</a>
+<!-- Nav Item: Safety (Active) -->
+<a class="flex flex-col items-center gap-1 text-primary relative" href="#">
+<div class="absolute -top-10 bg-primary rounded-full p-3 shadow-lg shadow-primary/30 border-4 border-white dark:border-[#221910] transform transition-transform active:scale-95">
+<span class="material-symbols-outlined text-white text-2xl">shield</span>
+</div>
+<span class="text-[10px] font-bold mt-6">السلامة</span>
+</a>
+<!-- Nav Item: Profile -->
+<a class="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition group" href="#">
+<span class="material-symbols-outlined text-2xl group-hover:scale-110 transition-transform">person</span>
+<span class="text-[10px] font-medium">حسابي</span>
+</a>
+</div>
+</nav>
+</div>
+</body></html>

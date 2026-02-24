@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Support Assistant - Recycle24</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4299f0",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "arabic": ["IBM Plex Sans Arabic", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'IBM Plex Sans Arabic', 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for better UX */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white h-screen flex flex-col overflow-hidden">
+<!-- Top App Bar -->
+<header class="flex items-center justify-between px-4 py-3 bg-white dark:bg-[#111a22] border-b border-gray-200 dark:border-gray-800 shadow-sm shrink-0 z-10">
+<div class="flex items-center gap-3">
+<button class="flex items-center justify-center p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400">
+<span class="material-symbols-outlined text-2xl">arrow_forward_ios</span>
+</button>
+<div class="relative">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-10 ring-2 ring-primary/20" data-alt="AI robot assistant avatar profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCNVajZNufWI6xpz_m_WhscRy-4QQycKYzFwDTYkhiECwtxbWFTosYEKa5dkdwuaRLbNnEQ2leqK5lyggZcssDopnYTXmWAQA_EitvT6zIcRwYzP55Dt-14OY-y6hu4oX8XvaYrnVnJdfjJ1GzBmEslLBqMSyVHrHla4fa7sxw9w0hUJnD1MX6ofUg7pbNFiyEsbXKIVyATwYUolOvnLhYw79YbcFf6YYv5wfN_eOOwqr-DIi2PcBpZumWZ-QsZ-8GiWULbWtHamGI");'></div>
+<div class="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-white dark:border-[#111a22]"></div>
+</div>
+<div class="flex flex-col">
+<h1 class="text-base font-bold leading-tight">المساعد الذكي</h1>
+<p class="text-primary text-xs font-medium">متصل الآن</p>
+</div>
+</div>
+<button class="flex items-center justify-center p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-sm font-bold transition-colors">
+            إنهاء
+        </button>
+</header>
+<!-- Chat Area -->
+<main class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 bg-background-light dark:bg-background-dark scroll-smooth">
+<!-- Timestamp -->
+<div class="flex justify-center my-2">
+<span class="text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-200 dark:bg-gray-800 px-3 py-1 rounded-full">اليوم ٩:٤١ ص</span>
+</div>
+<!-- Bot Message 1 (Intro) -->
+<div class="flex items-end gap-2 self-start max-w-[85%] group">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 mb-1" data-alt="AI robot assistant avatar small" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDYzd3TP6a_5GIYhc85geaT78dV_acYhwesxgSRQTm93oN6eoTRBRKldJQfc-hLQVK_ka-_CIMCwhMlU_IrAPt-oBmVpgZtsUofjNc0fa2dp1tGheyoC5ObDXoo8ZMfJxLc7G0LHb31RyUHjLvKUgpaSArj8Cwo4NAUo2hmzDVtlDCp2Wwz0GeXF02LPmfNu3U6vVMD1W3pL-loxcPGQu9BnpijxAz8yz4u0CdRXpOCg7k3-9ONFB5X4bk0D7NbpJjoS8u3z2bDVzs");'></div>
+<div class="flex flex-col gap-1">
+<div class="px-4 py-3 bg-white dark:bg-[#233648] rounded-2xl rounded-tr-sm shadow-sm border border-gray-100 dark:border-gray-700">
+<p class="text-sm leading-relaxed text-gray-800 dark:text-gray-100">
+                        مرحباً بك في دعم Recycle24 👋. أنا مساعدك الذكي. كيف يمكنني مساعدتك في تجارة الخردة اليوم؟
+                    </p>
+</div>
+<span class="text-[10px] text-gray-400 mr-1 opacity-0 group-hover:opacity-100 transition-opacity">٠٩:٤١ ص</span>
+</div>
+</div>
+<!-- User Message 1 -->
+<div class="flex items-end gap-2 self-end max-w-[85%] flex-row-reverse group">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 mb-1" data-alt="User profile avatar of a man" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA2M9CWeT1iyefPUcShBHc9wBW2Z_A_FjD6JUWfeY0BPAJTLfGZma_0rnCv0mJJ-bsT59OJpipdiv4kB4-_CV5hBURobTAJ0aBHKB6uIiLYcQ5h_DURWUWi589sBG0QwEZCeWdBjqIrnZUy6hIFMeOlaj0IueYwQ8lRCIXxhJ44RAi0B5RZmUY8CmkvgQmv3fj3btJjwWxn9Y4sh63f6-01IandD_EW2ebSwiFH9s_ilku4rLVr_K8I4kwS8lKpyxooNTIhxpRRybQ");'></div>
+<div class="flex flex-col gap-1 items-end">
+<div class="px-4 py-3 bg-primary text-white rounded-2xl rounded-tl-sm shadow-sm">
+<p class="text-sm leading-relaxed">أريد معرفة أسعار النحاس اليوم.</p>
+</div>
+<span class="text-[10px] text-gray-400 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">٠٩:٤٢ ص</span>
+</div>
+</div>
+<!-- Bot Message 2 (Typing Indicator) -->
+<!-- Hidden for the static state but useful structure -->
+<!-- 
+        <div class="flex items-end gap-2 self-start max-w-[85%]">
+             <div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 mb-1" style='background-image: url(...);'></div>
+             <div class="px-4 py-3 bg-white dark:bg-[#233648] rounded-2xl rounded-tr-sm shadow-sm border border-gray-100 dark:border-gray-700 flex gap-1">
+                <div class="size-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div class="size-2 bg-gray-400 rounded-full animate-bounce delay-75"></div>
+                <div class="size-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
+             </div>
+        </div> 
+        -->
+<!-- Bot Message 2 (Price Card Widget) -->
+<div class="flex items-end gap-2 self-start max-w-[90%] md:max-w-[70%] group">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 mb-1" data-alt="AI robot assistant avatar small" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAhaBPNHg9I0Mb9cet6fw82D5bBBNKawf4LiED05wirjZBpQqrAb_GBMcCWF_YDxeSjpdlltGvKtVy_86Ft2hG-W5YGCQw3eAnTMpDl20NZHKifneq1j729Sp3JUorRVjVEqI4nK2bB7vfKKmUoJAr9-6WaA-poY0TwS-JDrm3HQNj0GCiXezaxdA2rNcjStnE9CshQbhTBD8lVnKHnU1XxdTPNiDWy2jKJ2UPnsQarLt0bX480wHQQGPaCGV3HNHrItl8ksFOznj4");'></div>
+<div class="flex flex-col gap-1 w-full">
+<div class="p-0 overflow-hidden bg-white dark:bg-[#233648] rounded-2xl rounded-tr-sm shadow-sm border border-gray-100 dark:border-gray-700">
+<div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+<p class="text-sm font-medium text-gray-800 dark:text-gray-100">إليك أحدث أسعار LME للمعادن (مباشر):</p>
+</div>
+<!-- Metal Price Table -->
+<div class="p-2">
+<!-- Header Row -->
+<div class="grid grid-cols-4 gap-2 px-2 py-2 text-xs font-bold text-gray-500 dark:text-gray-400">
+<div class="col-span-1">المعدن</div>
+<div class="col-span-1 text-center">السعر (طن)</div>
+<div class="col-span-1 text-center">التغيير</div>
+<div class="col-span-1 text-left">الحالة</div>
+</div>
+<!-- Copper Row -->
+<div class="grid grid-cols-4 gap-2 items-center px-2 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors">
+<div class="flex items-center gap-2 col-span-1">
+<div class="size-2 rounded-full bg-orange-500"></div>
+<span class="text-sm font-bold text-gray-800 dark:text-white">نحاس</span>
+</div>
+<div class="text-sm font-mono text-center col-span-1 text-gray-700 dark:text-gray-300">$8,450</div>
+<div class="text-xs font-bold text-green-500 text-center col-span-1 flex items-center justify-center gap-0.5">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+                                +1.2%
+                            </div>
+<div class="col-span-1 flex justify-end">
+<button class="text-xs bg-primary/10 text-primary px-2 py-1 rounded hover:bg-primary/20">تفاصيل</button>
+</div>
+</div>
+<!-- Aluminum Row -->
+<div class="grid grid-cols-4 gap-2 items-center px-2 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors border-t border-gray-100 dark:border-gray-700/50">
+<div class="flex items-center gap-2 col-span-1">
+<div class="size-2 rounded-full bg-gray-400"></div>
+<span class="text-sm font-bold text-gray-800 dark:text-white">ألمنيوم</span>
+</div>
+<div class="text-sm font-mono text-center col-span-1 text-gray-700 dark:text-gray-300">$2,210</div>
+<div class="text-xs font-bold text-red-500 text-center col-span-1 flex items-center justify-center gap-0.5">
+<span class="material-symbols-outlined text-sm">trending_down</span>
+                                -0.5%
+                            </div>
+<div class="col-span-1 flex justify-end">
+<button class="text-xs bg-primary/10 text-primary px-2 py-1 rounded hover:bg-primary/20">تفاصيل</button>
+</div>
+</div>
+</div>
+<div class="px-4 py-2 bg-gray-50 dark:bg-black/20 text-[10px] text-gray-500 text-center">
+                        آخر تحديث: منذ ٥ دقائق
+                    </div>
+</div>
+<span class="text-[10px] text-gray-400 mr-1 opacity-0 group-hover:opacity-100 transition-opacity">٠٩:٤٢ ص</span>
+</div>
+</div>
+<!-- Bot Follow-up -->
+<div class="flex items-end gap-2 self-start max-w-[85%] group">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 mb-1" data-alt="AI robot assistant avatar small" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCUc0dcVMlnWIHT-ckHRNqq3h1pOAqy89wJy7LzcCtoRUHgnlKDOQoWIySJsi0Q1Mm8XxQyoibbLqrDrlafyPjd2YvY72oeuHuA1Zk4MDKMmMOFTMgkblP397pHVQ0SFN23iPdWbxH6apCPw_xJSxWcf3Kxz7ouMmjjGWABBs4z-ht-ke626b2Pr7PBQx1WKvJoHygkZ-ckfrjbGVqFUs6J6DdBkiV4iu4621ysCPNidptG8OIrM2NZDSZRnE2Pjc3Ja3W_mMRuDDg");'></div>
+<div class="flex flex-col gap-1">
+<div class="px-4 py-3 bg-white dark:bg-[#233648] rounded-2xl rounded-tr-sm shadow-sm border border-gray-100 dark:border-gray-700">
+<p class="text-sm leading-relaxed text-gray-800 dark:text-gray-100">
+                        هل ترغب في معرفة أقرب ساحة خردة تشتري بالسعر الحالي؟
+                    </p>
+</div>
+<span class="text-[10px] text-gray-400 mr-1 opacity-0 group-hover:opacity-100 transition-opacity">٠٩:٤٣ ص</span>
+</div>
+</div>
+<div class="h-4"></div> <!-- Spacer for scroll -->
+</main>
+<!-- Bottom Action Area -->
+<div class="bg-white dark:bg-[#111a22] border-t border-gray-200 dark:border-gray-800 z-20 pb-safe">
+<!-- Quick Action Chips -->
+<div class="py-3 overflow-x-auto no-scrollbar">
+<div class="flex gap-2 px-4 whitespace-nowrap">
+<button class="flex items-center gap-1.5 px-4 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded-full transition-colors group">
+<span class="material-symbols-outlined text-primary text-sm group-hover:scale-110 transition-transform">sell</span>
+<span class="text-xs font-semibold text-primary">كيف أبيع؟</span>
+</button>
+<button class="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-transparent rounded-full transition-colors text-gray-600 dark:text-gray-300">
+<span class="material-symbols-outlined text-sm">location_on</span>
+<span class="text-xs font-medium">أقرب ساحة</span>
+</button>
+<button class="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-transparent rounded-full transition-colors text-gray-600 dark:text-gray-300">
+<span class="material-symbols-outlined text-sm">support_agent</span>
+<span class="text-xs font-medium">تحدث مع وكيل</span>
+</button>
+<button class="flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-transparent rounded-full transition-colors text-gray-600 dark:text-gray-300">
+<span class="material-symbols-outlined text-sm">workspace_premium</span>
+<span class="text-xs font-medium">خطط الاشتراك</span>
+</button>
+</div>
+</div>
+<!-- Input Field -->
+<div class="px-4 pb-4 pt-1">
+<div class="flex items-end gap-2 bg-gray-100 dark:bg-[#1c2936] p-2 rounded-3xl border border-transparent focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all">
+<button class="flex items-center justify-center size-10 rounded-full text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-primary transition-colors shrink-0">
+<span class="material-symbols-outlined">add_circle</span>
+</button>
+<textarea class="flex-1 bg-transparent border-0 focus:ring-0 text-sm text-gray-800 dark:text-white placeholder-gray-500 py-3 px-0 resize-none max-h-24 overflow-y-auto" placeholder="اكتب رسالتك هنا..." rows="1"></textarea>
+<div class="flex items-center gap-1 shrink-0 pb-1">
+<button class="flex items-center justify-center size-9 rounded-full text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+<span class="material-symbols-outlined text-xl">mic</span>
+</button>
+<button class="flex items-center justify-center size-9 bg-primary hover:bg-blue-600 text-white rounded-full shadow-md hover:shadow-lg transition-all transform active:scale-95">
+<span class="material-symbols-outlined text-lg">send</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Safe area padding for iPhone home indicator -->
+<div class="h-1 w-full"></div>
+</div>
+</body></html>

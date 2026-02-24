@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 Help Center</title>
+<!-- Google Fonts: Cairo for Arabic, Public Sans for English/Numbers -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "primary-dark": "#0f65bd",
+                        "background-light": "#F8F9FA",
+                        "background-dark": "#101922",
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1A2633",
+                        "border-light": "#e2e8f0",
+                        "border-dark": "#2d3748",
+                        "text-main-light": "#0d141b",
+                        "text-main-dark": "#e2e8f0",
+                        "text-sub-light": "#4c739a",
+                        "text-sub-dark": "#94a3b8",
+                        "success": "#22c55e",
+                        "warning": "#f59e0b",
+                        "danger": "#ef4444",
+                    },
+                    fontFamily: {
+                        "display": ["Cairo", "Public Sans", "sans-serif"],
+                        "sans": ["Cairo", "Public Sans", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "md": "0.375rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "3xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Hide scrollbar for clean mobile look */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-main-light dark:text-text-main-dark overflow-x-hidden">
+<div class="relative flex min-h-screen w-full flex-col max-w-md mx-auto bg-background-light dark:bg-background-dark shadow-xl overflow-hidden">
+<!-- Header -->
+<header class="flex items-center bg-surface-light dark:bg-surface-dark p-4 sticky top-0 z-50 border-b border-border-light dark:border-border-dark">
+<button class="p-2 -mr-2 text-text-main-light dark:text-text-main-dark rounded-full hover:bg-background-light dark:hover:bg-background-dark transition-colors">
+<span class="material-symbols-outlined">arrow_forward_ios</span>
+</button>
+<h1 class="flex-1 text-center text-lg font-bold">مركز المساعدة</h1>
+<div class="w-10"></div> <!-- Spacer for centering -->
+</header>
+<!-- Main Content Scroll Area -->
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- Hero Section -->
+<div class="px-5 pt-6 pb-2">
+<h2 class="text-2xl font-bold leading-tight mb-4 text-text-main-light dark:text-text-main-dark">كيف يمكننا مساعدتك اليوم؟</h2>
+<!-- Search Bar -->
+<div class="relative w-full">
+<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-text-sub-light dark:text-text-sub-dark">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="block w-full rounded-xl border-none bg-white dark:bg-surface-dark py-3.5 pr-10 pl-4 text-sm shadow-sm ring-1 ring-inset ring-border-light dark:ring-border-dark placeholder:text-text-sub-light dark:placeholder:text-text-sub-dark focus:ring-2 focus:ring-inset focus:ring-primary sm:leading-6 transition-all" placeholder="ابحث عن إجابات..." type="text"/>
+</div>
+</div>
+<!-- Categories Grid -->
+<div class="px-5 py-4">
+<h3 class="text-sm font-semibold text-text-sub-light dark:text-text-sub-dark mb-3">اختر فئة</h3>
+<div class="grid grid-cols-2 gap-3">
+<!-- Common Questions -->
+<button class="flex flex-col items-center justify-center p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-sm hover:border-primary/50 transition-all group">
+<div class="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary mb-3 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[28px]">help</span>
+</div>
+<span class="text-sm font-bold text-center">أسئلة شائعة</span>
+</button>
+<!-- Technical Issues -->
+<button class="flex flex-col items-center justify-center p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-sm hover:border-primary/50 transition-all group">
+<div class="w-12 h-12 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-500 mb-3 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[28px]">phonelink_setup</span>
+</div>
+<span class="text-sm font-bold text-center">مشاكل تقنية</span>
+</button>
+<!-- Deal Disputes -->
+<button class="flex flex-col items-center justify-center p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-sm hover:border-primary/50 transition-all group">
+<div class="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-500 mb-3 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[28px]">gavel</span>
+</div>
+<span class="text-sm font-bold text-center">نزاعات الصفقات</span>
+</button>
+<!-- Safety Reporting -->
+<button class="flex flex-col items-center justify-center p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-sm hover:border-primary/50 transition-all group">
+<div class="w-12 h-12 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 mb-3 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-[28px]">shield</span>
+</div>
+<span class="text-sm font-bold text-center">بلاغات السلامة</span>
+</button>
+</div>
+</div>
+<!-- Live Chat CTA -->
+<div class="px-5 py-2">
+<button class="w-full flex items-center justify-center gap-3 bg-primary hover:bg-primary-dark text-white rounded-xl py-3.5 px-4 shadow-lg shadow-blue-200 dark:shadow-none transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined">chat</span>
+<span class="text-base font-bold">ابدأ المحادثة المباشرة</span>
+</button>
+</div>
+<!-- Recent Tickets -->
+<div class="px-5 py-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-bold">تذاكر الدعم الخاصة بي</h3>
+<a class="text-sm text-primary font-medium hover:underline" href="#">عرض الكل</a>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Ticket 1 -->
+<div class="flex items-center justify-between p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark">
+<div class="flex items-start gap-3">
+<div class="mt-1 text-warning">
+<span class="material-symbols-outlined text-[20px]">pending</span>
+</div>
+<div>
+<h4 class="text-sm font-bold mb-0.5">تأخير في الدفع - شحنة نحاس</h4>
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark font-sans">#1024 • منذ 2 ساعة</p>
+</div>
+</div>
+<span class="inline-flex items-center rounded-full bg-yellow-50 dark:bg-yellow-900/30 px-2 py-1 text-xs font-medium text-yellow-700 dark:text-yellow-400 ring-1 ring-inset ring-yellow-600/20">مفتوحة</span>
+</div>
+<!-- Ticket 2 -->
+<div class="flex items-center justify-between p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark opacity-75">
+<div class="flex items-start gap-3">
+<div class="mt-1 text-success">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</div>
+<div>
+<h4 class="text-sm font-bold mb-0.5">توثيق الحساب</h4>
+<p class="text-xs text-text-sub-light dark:text-text-sub-dark font-sans">#1001 • البارحة</p>
+</div>
+</div>
+<span class="inline-flex items-center rounded-full bg-green-50 dark:bg-green-900/30 px-2 py-1 text-xs font-medium text-green-700 dark:text-green-400 ring-1 ring-inset ring-green-600/20">محلولة</span>
+</div>
+</div>
+</div>
+<!-- Emergency & Safety Section -->
+<div class="px-5 mt-2 mb-6">
+<div class="rounded-2xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 p-5">
+<div class="flex items-center gap-3 mb-4">
+<div class="p-2 bg-red-100 dark:bg-red-800/30 rounded-lg text-danger">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<h3 class="font-bold text-danger text-base">منطقة الطوارئ</h3>
+</div>
+<p class="text-sm text-text-main-light dark:text-text-main-dark mb-4 leading-relaxed opacity-80">
+                        هل تواجه مشكلة تتعلق بالسلامة الشخصية أو حادث في الموقع؟ لا تتردد في طلب المساعدة فوراً.
+                    </p>
+<div class="flex gap-3">
+<button class="flex-1 flex items-center justify-center gap-2 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-main-light dark:text-text-main-dark rounded-lg py-2.5 px-3 text-sm font-semibold shadow-sm">
+<span class="material-symbols-outlined text-[18px]">health_and_safety</span>
+<span>مركز السلامة</span>
+</button>
+<button class="flex-1 flex items-center justify-center gap-2 bg-danger hover:bg-red-600 text-white rounded-lg py-2.5 px-3 text-sm font-semibold shadow-sm shadow-red-200 dark:shadow-none">
+<span class="material-symbols-outlined text-[18px] filled">call</span>
+<span>خط الطوارئ</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Tab Bar (Simulated for iOS) -->
+<nav class="fixed bottom-0 w-full max-w-md bg-surface-light dark:bg-surface-dark border-t border-border-light dark:border-border-dark pb-safe pt-2 px-6">
+<div class="flex justify-between items-center h-16">
+<a class="flex flex-col items-center gap-1 text-text-sub-light dark:text-text-sub-dark" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">الرئيسية</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-text-sub-light dark:text-text-sub-dark" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span class="text-[10px] font-medium">السوق</span>
+</a>
+<div class="relative -top-5">
+<button class="flex items-center justify-center w-12 h-12 bg-text-main-light dark:bg-white text-white dark:text-black rounded-full shadow-lg">
+<span class="material-symbols-outlined">add</span>
+</button>
+</div>
+<a class="flex flex-col items-center gap-1 text-text-sub-light dark:text-text-sub-dark" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="text-[10px] font-medium">تنبيهات</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined filled" style="font-variation-settings: 'FILL' 1;">support_agent</span>
+<span class="text-[10px] font-medium">الدعم</span>
+</a>
+</div>
+<!-- Safe area spacing for iPhone home indicator -->
+<div class="h-5 w-full"></div>
+</nav>
+</div>
+<script>
+        // Simple dark mode toggle logic for preview purposes (optional)
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+</body></html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Factory Negotiation Chat</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+            extend: {
+                colors: {
+                "primary": "#137fec",
+                "background-light": "#f6f7f8",
+                "background-dark": "#101922",
+                "surface-dark": "#1e2832",
+                "bubble-sender": "#137fec",
+                "bubble-receiver": "#233648",
+                },
+                fontFamily: {
+                "display": ["Noto Sans Arabic", "Inter", "sans-serif"],
+                "body": ["Noto Sans Arabic", "Inter", "sans-serif"]
+                },
+                borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+            },
+            },
+        }
+    </script>
+<style>
+        /* Custom Scrollbar for hidden scroll effect but functional */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-body h-screen flex flex-col overflow-hidden">
+<!-- Header -->
+<header class="flex-none bg-white dark:bg-[#111a22] border-b border-gray-200 dark:border-[#233648] shadow-sm z-10 pt-safe-top">
+<div class="flex items-center justify-between p-4 h-16">
+<!-- Back & Profile -->
+<div class="flex items-center gap-3 flex-1 overflow-hidden">
+<button class="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors p-1 rounded-full active:bg-gray-100 dark:active:bg-[#233648]">
+<span class="material-symbols-outlined text-[28px]">arrow_forward</span>
+</button>
+<div class="flex items-center gap-3">
+<div class="relative shrink-0">
+<div class="h-10 w-10 rounded-full bg-cover bg-center ring-2 ring-gray-100 dark:ring-[#233648]" data-alt="Recycling factory logo or representative avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuASLkEWhPTY2Fe5Pcxfg29-ptpWVdDOrZmaYLu9nH8rudlfKYetXQ6h1AIfSI3EKr5wOficrR-nIxHCOLrsxA2JqX5QWyMHPf15qbshcKCrLudrjw6FV5vCjIBJq8FLUmsw6hKgbzt2ZHzQf_yzQZpKHymD35GUNUDZo4NdAUUb6AIRhzTZS1K6c8zns1rany1L2uHL263h7bxMyN3iWkbQSWhDwFwqJ3pbiOqdFZ18Azb3gCeCs1GeDJ02JINRjMxNZo9tSVYQiOM");'></div>
+<div class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white dark:border-[#111a22]"></div>
+</div>
+<div class="flex flex-col truncate">
+<h1 class="text-gray-900 dark:text-white text-base font-bold leading-tight truncate">مصنع الأمل للتدوير</h1>
+<span class="text-primary text-xs font-medium">متصل الآن</span>
+</div>
+</div>
+</div>
+<!-- Action Button -->
+<button class="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 active:bg-primary/30 text-primary px-3 py-1.5 rounded-lg transition-colors shrink-0 mr-2">
+<span class="material-symbols-outlined text-[20px]">assignment_turned_in</span>
+<span class="text-sm font-bold">إتمام العقد</span>
+</button>
+</div>
+</header>
+<!-- Chat Area -->
+<main class="flex-1 overflow-y-auto p-4 flex flex-col gap-4 no-scrollbar bg-background-light dark:bg-background-dark" id="chat-container">
+<!-- Encryption Notice -->
+<div class="flex justify-center my-2">
+<div class="bg-gray-200 dark:bg-[#1e2832] px-3 py-1.5 rounded-full flex items-center gap-1.5">
+<span class="material-symbols-outlined text-gray-500 dark:text-gray-400 text-[14px]">lock</span>
+<p class="text-xs text-gray-500 dark:text-gray-400">الرسائل والمكالمات مشفرة تماماً بين الطرفين</p>
+</div>
+</div>
+<!-- Date Separator -->
+<div class="flex justify-center my-2">
+<span class="text-xs font-medium text-gray-400 bg-gray-100 dark:bg-[#1e2832] px-3 py-1 rounded-lg">اليوم</span>
+</div>
+<!-- Message: Sender (Me) -->
+<div class="flex items-end gap-2 justify-start flex-row-reverse group">
+<div class="flex flex-col items-end max-w-[80%] gap-1">
+<div class="bg-primary text-white px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm">
+<p class="text-sm leading-relaxed">السلام عليكم، هل يمكن إرسال شهادة الوزن الأخيرة؟</p>
+</div>
+<span class="text-[11px] text-gray-400 px-1">10:42 ص</span>
+</div>
+</div>
+<!-- Message: Receiver (Factory) -->
+<div class="flex items-end gap-2 justify-start group">
+<div class="h-8 w-8 rounded-full bg-cover bg-center shrink-0 ring-1 ring-gray-200 dark:ring-gray-700" data-alt="Recycling factory logo or representative avatar small" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCf86km4iRBR4_GbgeGNCCJTcbJLpnJc8pry3GGhwLA7Oc2x07sjx_lzWmnb9sPVcQU3s4Phm9tARkiFjHER0AUe6-VHsfqMvyYv8c9gSlRoJB3nynhLKdLGaXChSAFjwih0E9ionm11cEGNlHdZFUlPinnLnEtA6QdqU4Fu7bChsxpU6Hcwz9PGN98Mv70Fh8241O6iPqtC9pPJzyru7lzuxRqLT_NOpbRAmLgSlliE1npdlpBzY0tGn6zETvrBTWw1UPsDHaCrpc");'></div>
+<div class="flex flex-col items-start max-w-[80%] gap-1">
+<div class="bg-white dark:bg-bubble-receiver text-gray-800 dark:text-white px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm border border-gray-100 dark:border-transparent">
+<p class="text-sm leading-relaxed">وعليكم السلام، بالتأكيد. تفضل الملف المرفق.</p>
+</div>
+<span class="text-[11px] text-gray-400 px-1">10:44 ص</span>
+</div>
+</div>
+<!-- Message: Receiver (Factory - Attachment) -->
+<div class="flex items-end gap-2 justify-start group">
+<div class="h-8 w-8 rounded-full shrink-0 invisible"><!-- Placeholder for alignment --></div>
+<div class="flex flex-col items-start max-w-[80%] md:max-w-[60%] gap-1">
+<div class="bg-white dark:bg-bubble-receiver text-gray-800 dark:text-white p-3 rounded-2xl rounded-tl-sm shadow-sm border border-gray-100 dark:border-transparent w-full">
+<div class="flex items-center gap-3">
+<div class="bg-red-100 dark:bg-red-900/30 p-2.5 rounded-lg shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-red-500 dark:text-red-400 text-[24px]">picture_as_pdf</span>
+</div>
+<div class="flex-1 overflow-hidden min-w-0">
+<p class="text-sm font-semibold truncate dark:text-white text-gray-900">شهادة_وزن_طن_حديد.pdf</p>
+<p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">2.4 ميجابايت • PDF</p>
+</div>
+<button class="h-8 w-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors shrink-0">
+<span class="material-symbols-outlined text-[20px]">download</span>
+</button>
+</div>
+</div>
+<span class="text-[11px] text-gray-400 px-1">10:45 ص</span>
+</div>
+</div>
+<!-- Message: Receiver (Factory) -->
+<div class="flex items-end gap-2 justify-start group">
+<div class="h-8 w-8 rounded-full bg-cover bg-center shrink-0 ring-1 ring-gray-200 dark:ring-gray-700" data-alt="Recycling factory logo or representative avatar small" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCLlafmLaAnyxAIC9A-8Pm_bW6eUYRT-jZJ9JEuF41WulTkJBVMa7EVWBHzO2G_noj5TDkUvcmhM0zIIiMikNgooWOVENEX5DyeTlkK9tV360qVVWfvIED2iMdb96kLSBHPG5WhY4yO0Q6zkkTaytTn8i_1JdqywE_VJ2OuL8O71mEdt06ASDFKk_nw2CZhxeA6xMs8Q6YIF1IJsIPPLfMGfCctdimlM43X0BVZN7sX89zirVVrYLrm3crEa7x0WkSxtKaLcLhvQQ0");'></div>
+<div class="flex flex-col items-start max-w-[80%] gap-1">
+<div class="bg-white dark:bg-bubble-receiver text-gray-800 dark:text-white px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm border border-gray-100 dark:border-transparent">
+<p class="text-sm leading-relaxed">السعر النهائي كما اتفقنا 1200 ريال للطن. هل نعتمد؟</p>
+</div>
+<span class="text-[11px] text-gray-400 px-1">10:46 ص</span>
+</div>
+</div>
+<!-- System Message: Negotiation Status -->
+<div class="flex justify-center my-4">
+<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/30 p-3 rounded-lg max-w-[85%] text-center">
+<p class="text-xs text-blue-700 dark:text-blue-300 font-medium flex flex-col gap-1 items-center">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">info</span>
+                         تم تحديث حالة التفاوض
+                    </span>
+<span class="opacity-80 font-normal">ينتظر المصنع تأكيدك النهائي لإصدار الفاتورة الرسمية</span>
+</p>
+</div>
+</div>
+<!-- Message: Sender (Me) - Latest -->
+<div class="flex items-end gap-2 justify-start flex-row-reverse group">
+<div class="flex flex-col items-end max-w-[80%] gap-1">
+<div class="bg-primary text-white px-4 py-3 rounded-2xl rounded-tr-sm shadow-sm">
+<p class="text-sm leading-relaxed">ممتاز. سأقوم بإتمام العقد الآن.</p>
+</div>
+<div class="flex items-center gap-1 px-1">
+<span class="text-[11px] text-gray-400">10:48 ص</span>
+<span class="material-symbols-outlined text-[14px] text-primary">done_all</span>
+</div>
+</div>
+</div>
+<!-- Spacer for bottom input area -->
+<div class="h-2"></div>
+</main>
+<!-- Footer Input Area -->
+<footer class="flex-none bg-white dark:bg-[#111a22] border-t border-gray-200 dark:border-[#233648] p-3 pb-6 md:pb-3 z-10">
+<!-- Quick Actions Row -->
+<div class="flex gap-2 mb-3 overflow-x-auto no-scrollbar pb-1">
+<button class="bg-gray-100 dark:bg-[#1e2832] hover:bg-gray-200 dark:hover:bg-[#2c3b4a] text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border border-gray-200 dark:border-transparent">
+                طلب تعديل السعر
+            </button>
+<button class="bg-gray-100 dark:bg-[#1e2832] hover:bg-gray-200 dark:hover:bg-[#2c3b4a] text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border border-gray-200 dark:border-transparent">
+                جدولة استلام
+            </button>
+<button class="bg-gray-100 dark:bg-[#1e2832] hover:bg-gray-200 dark:hover:bg-[#2c3b4a] text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border border-gray-200 dark:border-transparent">
+                تفاصيل الدفع
+            </button>
+</div>
+<!-- Input Row -->
+<div class="flex items-end gap-2">
+<!-- Add Attachment Button -->
+<button class="h-11 w-11 flex items-center justify-center rounded-full bg-gray-100 dark:bg-[#1e2832] text-gray-500 dark:text-gray-400 hover:text-primary dark:hover:text-primary hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all shrink-0">
+<span class="material-symbols-outlined rotate-45">attach_file</span>
+</button>
+<!-- Text Input -->
+<div class="flex-1 bg-gray-100 dark:bg-[#1e2832] rounded-[24px] flex items-center px-4 py-1 min-h-[44px] border border-transparent focus-within:border-primary/50 focus-within:bg-white dark:focus-within:bg-[#101922] transition-colors">
+<input class="w-full bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-500 text-sm h-9 font-normal focus:ring-0 px-0" placeholder="أكتب رسالتك..." type="text"/>
+<button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 mr-2">
+<span class="material-symbols-outlined text-[20px]">sentiment_satisfied</span>
+</button>
+</div>
+<!-- Send/Mic Button (Dynamic state based on input, visually represented as Send here) -->
+<button class="h-11 w-11 flex items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-blue-500/20 hover:bg-blue-600 active:scale-95 transition-all shrink-0">
+<span class="material-symbols-outlined rtl:rotate-180">send</span>
+</button>
+</div>
+</footer>
+</body></html>

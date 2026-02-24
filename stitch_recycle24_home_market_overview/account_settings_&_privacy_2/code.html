@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+
+<html class="light" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recycle24 - Account Settings</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Public Sans and Cairo for Arabic -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&amp;family=Public+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2632",
+                    },
+                    fontFamily: {
+                        "display": ["Cairo", "Public Sans", "sans-serif"],
+                        "body": ["Cairo", "Public Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Cairo', 'Public Sans', sans-serif;
+        }
+        /* Hide scrollbar for cleaner mobile look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-family: 'Material Symbols Outlined';
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col font-display pb-20">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between">
+<button class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-800 dark:text-slate-200">
+<span class="material-symbols-outlined text-2xl">arrow_forward</span>
+</button>
+<h1 class="text-lg font-bold text-slate-900 dark:text-white absolute left-1/2 -translate-x-1/2 w-max">الإعدادات والخصوصية</h1>
+<div class="w-10"></div> <!-- Spacer for balance -->
+</header>
+<main class="flex-1 flex flex-col gap-6 p-4 overflow-y-auto no-scrollbar max-w-lg mx-auto w-full">
+<!-- Profile Header -->
+<section class="flex flex-col items-center gap-4 py-2">
+<div class="relative">
+<div class="w-24 h-24 rounded-full bg-cover bg-center border-4 border-white dark:border-surface-dark shadow-md" data-alt="Portrait of a smiling man with a beard" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB1QW2nP745uSYAgk1Uj3pMGQugwdNpYXDEX5FTdGGeE4fRZ6fxlFCqng2yKr5XPArtYfC0uWWFRE3a6FEWt33laZtqBc6OmtkwcIO_5o9zBuvojhSPZDfDsBgQe7stdx3rlO8y_7AVGcjPstHh9M76oJYDyq00JsFNZkR8OIMpBZ8S5pt3IslIba4ePRDdjLEBuBeT4nygND0tD0VImv2xamyrT_bKIA94BhWhUtj0D41ub09v8c6XQVwXZEc0LV1YcIYGZfHv_9E');"></div>
+<div class="absolute bottom-0 left-0 bg-primary text-white rounded-full p-1 border-2 border-white dark:border-surface-dark flex items-center justify-center">
+<span class="material-symbols-filled text-sm">verified</span>
+</div>
+</div>
+<div class="text-center">
+<h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center justify-center gap-2">
+                    أحمد السوري
+                </h2>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">عضو منذ يناير ٢٠٢٣</p>
+<div class="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium">
+<span class="material-symbols-outlined text-base ml-1">check_circle</span>
+                    تم التحقق من الهوية
+                </div>
+</div>
+</section>
+<!-- Trader Mode Toggle Card -->
+<section class="bg-white dark:bg-surface-dark rounded-xl p-5 shadow-sm border border-slate-100 dark:border-slate-800 relative overflow-hidden group">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="flex items-center justify-between gap-4 relative z-10">
+<div class="flex items-start gap-4 flex-1">
+<div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-2xl">storefront</span>
+</div>
+<div class="flex flex-col">
+<h3 class="font-bold text-slate-900 dark:text-white text-base">وضع التاجر/المعمل</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-1 leading-relaxed">الوصول إلى أسعار الجملة، تحليلات السوق، وأدوات البيع المتقدمة.</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-12 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:-translate-x-5 rtl:peer-checked:after:-translate-x-full rtl:peer-checked:after:translate-x-0 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</section>
+<!-- Settings Group: Account -->
+<section class="flex flex-col gap-2">
+<h3 class="px-2 text-sm font-semibold text-slate-500 dark:text-slate-400">الحساب</h3>
+<div class="bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Item -->
+<button class="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group text-right">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">person</span>
+</div>
+<span class="text-base font-medium text-slate-900 dark:text-white">معلومات الحساب</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 rtl:rotate-180">chevron_right</span>
+</button>
+<!-- Item -->
+<button class="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group text-right">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">shield_lock</span>
+</div>
+<span class="text-base font-medium text-slate-900 dark:text-white">الأمان وتسجيل الدخول</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 rtl:rotate-180">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Settings Group: Preferences -->
+<section class="flex flex-col gap-2">
+<h3 class="px-2 text-sm font-semibold text-slate-500 dark:text-slate-400">التفضيلات</h3>
+<div class="bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Item -->
+<button class="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group text-right">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">visibility</span>
+</div>
+<span class="text-base font-medium text-slate-900 dark:text-white">الخصوصية والظهور</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 rtl:rotate-180">chevron_right</span>
+</button>
+<!-- Item -->
+<button class="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group text-right">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</div>
+<span class="text-base font-medium text-slate-900 dark:text-white">الإشعارات</span>
+</div>
+<span class="material-symbols-outlined text-slate-400 rtl:rotate-180">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- Settings Group: App Settings -->
+<section class="flex flex-col gap-2">
+<h3 class="px-2 text-sm font-semibold text-slate-500 dark:text-slate-400">التطبيق</h3>
+<div class="bg-white dark:bg-surface-dark rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Item: Language -->
+<button class="w-full flex items-center justify-between p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group text-right">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">translate</span>
+</div>
+<span class="text-base font-medium text-slate-900 dark:text-white">لغة التطبيق</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-sm text-slate-500">العربية</span>
+<span class="material-symbols-outlined text-slate-400 rtl:rotate-180">chevron_right</span>
+</div>
+</button>
+<!-- Item: Theme -->
+<div class="w-full flex items-center justify-between p-4 bg-white dark:bg-surface-dark group text-right">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined">dark_mode</span>
+</div>
+<span class="text-base font-medium text-slate-900 dark:text-white">المظهر الداكن</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:-translate-x-full rtl:peer-checked:after:-translate-x-full rtl:peer-checked:after:translate-x-0 peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Danger Zone -->
+<section class="mt-4 mb-8 flex flex-col items-center gap-4">
+<button class="w-full bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors">
+<span class="material-symbols-outlined">logout</span>
+                تسجيل الخروج
+            </button>
+<button class="text-slate-400 dark:text-slate-500 text-sm hover:text-red-500 dark:hover:text-red-400 transition-colors hover:underline">
+                حذف الحساب نهائياً
+            </button>
+<p class="text-xs text-slate-400 dark:text-slate-600 mt-2">الإصدار ١.٢.٤ - Recycle24</p>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-surface-dark border-t border-slate-200 dark:border-slate-800 px-6 py-3 pb-6 flex justify-between items-center z-50">
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">الرئيسية</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">search</span>
+<span class="text-[10px] font-medium">بحث</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary relative -top-6">
+<div class="bg-primary text-white p-3 rounded-full shadow-lg shadow-primary/30 flex items-center justify-center transform hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-2xl">add</span>
+</div>
+<span class="text-[10px] font-bold mt-1">إضافة</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">chat</span>
+<span class="text-[10px] font-medium">الرسائل</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-primary transition-colors">
+<span class="material-symbols-filled">person</span>
+<span class="text-[10px] font-bold">حسابي</span>
+</button>
+</nav>
+</body></html>

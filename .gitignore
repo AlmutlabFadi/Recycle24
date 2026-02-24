@@ -1,0 +1,17 @@
+# Node / Next.js artifacts
+node_modules/
+.next/
+dist/
+out/
+**/.DS_Store
+*.log
+*.tsbuildinfo
+
+# Local env files
+.env
+.env.*
+
+# Vercel local metadata
+.vercel/
+
+# Generated screenshots/cache

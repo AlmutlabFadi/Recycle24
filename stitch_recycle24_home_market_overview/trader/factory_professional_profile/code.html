@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html class="dark" dir="rtl" lang="ar"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trader Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1e2936",
+                        "surface-border": "#324d67",
+                        "text-secondary": "#92adc9"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for horizontal scrolling */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-x-hidden">
+<div class="relative flex h-auto min-h-screen w-full flex-col max-w-md mx-auto bg-[#111a22]">
+<!-- Sticky Header -->
+<div class="sticky top-0 z-50 flex items-center bg-[#111a22]/95 backdrop-blur-sm p-4 pb-2 justify-between border-b border-[#324d67]">
+<div class="text-white flex size-12 shrink-0 items-center justify-start cursor-pointer">
+<span class="material-symbols-outlined text-[24px]">arrow_forward</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">ملف التاجر</h2>
+<div class="flex w-12 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-lg h-12 bg-transparent text-white">
+<span class="material-symbols-outlined text-[24px]">share</span>
+</button>
+</div>
+</div>
+<!-- Profile Section -->
+<div class="flex flex-col p-4 gap-4">
+<div class="flex w-full flex-col gap-4 items-center">
+<div class="flex gap-4 flex-col items-center relative">
+<div class="relative">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full min-h-32 w-32 border-4 border-[#1e2936]" data-alt="Profile picture of a metal factory logo or representative" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBlRsGPG28ZaCDe1PZ6Q3rE95PiTvQ2xDF91yY6o7T00MaH8GU_ArGEgqrJennqlExKIP3FJhhJyy3xyGs4bhQRz3vuC2nzVly7_2JTlCc4-j8J8G9o7kAtJZAOG_WMqR3upO2SjPMviHaiOMPFhoiZgllgzKpw2d_HW5i-lGWWbv1X3bHftZ42t1NkekFJ4ExK-oMNH5O6kAYEc-H6O_FBP3zWpudlzqjLDin4kDrQaq8tu7dAjSC1AMqIHNl3JTKG0kWlDRbCp2E");'></div>
+<div class="absolute bottom-1 left-1 bg-primary text-white rounded-full p-1 border-2 border-[#111a22]">
+<span class="material-symbols-outlined text-[16px] block">verified</span>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center">
+<div class="flex items-center gap-2">
+<p class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] text-center">مؤسسة المعادن الحديثة</p>
+<span class="bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/30">موثوق</span>
+</div>
+<div class="flex items-center gap-1 mt-1 text-text-secondary">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<p class="text-base font-normal leading-normal text-center">الرياض، المنطقة الصناعية</p>
+</div>
+<div class="flex items-center gap-1 mt-1">
+<span class="text-yellow-400 material-symbols-outlined text-[18px] fill-1">star</span>
+<p class="text-white text-sm font-bold">4.9</p>
+<p class="text-text-secondary text-sm">(120 تقييم)</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Role Switcher -->
+<div class="flex flex-col items-start justify-between gap-4 rounded-xl border border-[#324d67] bg-[#1e2936] p-4 sm:flex-row sm:items-center">
+<div class="flex flex-col gap-1">
+<p class="text-white text-base font-bold leading-tight">وضع الملف الشخصي</p>
+<p class="text-text-secondary text-sm font-normal leading-normal">التبديل إلى وضع المشتري (مصرح)</p>
+</div>
+<label class="relative flex h-[31px] w-[51px] cursor-pointer items-center rounded-full border-none bg-[#233648] p-0.5 has-[:checked]:justify-end has-[:checked]:bg-primary transition-colors">
+<div class="h-full w-[27px] rounded-full bg-white shadow-sm"></div>
+<input class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Daily Price Board -->
+<div class="px-4 pb-4">
+<div class="flex justify-between items-center mb-3 pt-2">
+<h3 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">لوحة الأسعار اليومية</h3>
+<button class="text-primary text-sm font-bold flex items-center gap-1 hover:bg-primary/10 px-2 py-1 rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+                    تحديث
+                </button>
+</div>
+<div class="grid gap-3">
+<!-- Copper Card -->
+<div class="bg-[#1e2936] p-4 rounded-xl border border-[#324d67] flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
+<span class="text-orange-500 font-bold text-sm">Cu</span>
+</div>
+<div>
+<p class="text-white font-bold text-base">نحاس أحمر</p>
+<p class="text-text-secondary text-xs">آخر تحديث: قبل ساعة</p>
+</div>
+</div>
+<div class="text-left">
+<p class="text-white font-bold text-lg">28.50 <span class="text-xs font-normal text-text-secondary">ر.س</span></p>
+<div class="flex items-center justify-end gap-1 text-green-500">
+<span class="text-xs font-bold">+1.5%</span>
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+</div>
+</div>
+</div>
+<!-- Aluminum Card -->
+<div class="bg-[#1e2936] p-4 rounded-xl border border-[#324d67] flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-gray-400/10 flex items-center justify-center border border-gray-400/20">
+<span class="text-gray-300 font-bold text-sm">Al</span>
+</div>
+<div>
+<p class="text-white font-bold text-base">ألمنيوم</p>
+<p class="text-text-secondary text-xs">آخر تحديث: قبل ساعتين</p>
+</div>
+</div>
+<div class="text-left">
+<p class="text-white font-bold text-lg">8.20 <span class="text-xs font-normal text-text-secondary">ر.س</span></p>
+<div class="flex items-center justify-end gap-1 text-red-500">
+<span class="text-xs font-bold">-0.4%</span>
+<span class="material-symbols-outlined text-[16px]">trending_down</span>
+</div>
+</div>
+</div>
+<!-- Iron Card -->
+<div class="bg-[#1e2936] p-4 rounded-xl border border-[#324d67] flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-slate-500/10 flex items-center justify-center border border-slate-500/20">
+<span class="text-slate-400 font-bold text-sm">Fe</span>
+</div>
+<div>
+<p class="text-white font-bold text-base">حديد سكراب</p>
+<p class="text-text-secondary text-xs">آخر تحديث: أمس</p>
+</div>
+</div>
+<div class="text-left">
+<p class="text-white font-bold text-lg">1.10 <span class="text-xs font-normal text-text-secondary">ر.س</span></p>
+<div class="flex items-center justify-end gap-1 text-gray-400">
+<span class="text-xs font-bold">0.0%</span>
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- About Section -->
+<div class="px-4 py-2">
+<h3 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] mb-2">نبذة عن المؤسسة</h3>
+<div class="bg-[#1e2936] p-4 rounded-xl border border-[#324d67]">
+<p class="text-text-secondary text-sm leading-relaxed">
+                    نحن متخصصون في إعادة تدوير الكابلات والمعادن غير الحديدية. نخدم المصانع والشركات الكبرى في المنطقة الوسطى. نسعى لتقديم أفضل الأسعار التنافسية في السوق مع ضمان الدفع الفوري.
+                </p>
+<button class="text-primary text-sm font-medium mt-2 flex items-center gap-1">
+                    قراءة المزيد
+                    <span class="material-symbols-outlined text-[16px] rotate-180">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Gallery Section -->
+<div class="py-4">
+<div class="px-4 flex justify-between items-center mb-3">
+<h3 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">معرض المستودع</h3>
+<span class="text-primary text-sm">عرض الكل</span>
+</div>
+<div class="flex overflow-x-auto gap-3 px-4 no-scrollbar pb-2">
+<div class="shrink-0 w-48 h-32 rounded-lg overflow-hidden border border-[#324d67]">
+<div class="w-full h-full bg-cover bg-center" data-alt="Warehouse interior with stacked metals" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDDFh9IvZTFlWnozaa2ykUbIlUc7LD7WGoEdx6_e99-qYXD-9NvLT_YsBTkUnfKbDkERBYUrmMfv8pMog7nuD875omb1Vy7ZQzU1cbo925U_jRgZt2EtBddCO7zy9Dn9uE9wOtIQ33dbYFIapfeQpPIYVL_ns1INAwU6DBTwqcxjP1CkymbD9c0qtFVyXqXZLFGhHajRS64D8jkYhBU2yRnVTpKvL7a3mEPHxAJpWdl1KrMKgy6ERqG8e1rABMQiVnfJXerUNVIWJU')"></div>
+</div>
+<div class="shrink-0 w-48 h-32 rounded-lg overflow-hidden border border-[#324d67]">
+<div class="w-full h-full bg-cover bg-center" data-alt="Recycling machinery in operation" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuALW6A0ZBLs_mxlhKaAp5WoSoYY9SjgtXh-wBjqe1h95-CIsLSLq8g5VHYZDFb2rpbAASDkhqxreI2Pqh3XEfYIGfiZBnXk9abFZ8rhIyWRjL_o4A22SE5uLjv__Pw-Orl1vHazjFOb9_XNQ_Ks7Pk_NORWifw6DJEhP2arSKVP-zCuXEC48nEocl-Z1CZdjJpbzo7AwWOwBa-JNnLELd78GyruDFQQk06sJJFbYtM7y900ua4IWEOOig-N9M38_8EpSQKGb8_UEW8')"></div>
+</div>
+<div class="shrink-0 w-48 h-32 rounded-lg overflow-hidden border border-[#324d67]">
+<div class="w-full h-full bg-cover bg-center" data-alt="Stacked copper wires" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDMBE0zpYaoTxiNF8Ni3Y2Gq19Ore4G4_VTPir_NzRv3-Iu2k2Y7V5FAWaYrRjhk86KDvI15RU-OS3raX9fRQUpA7SQfMYWx40-qQOo8r9q4gRWqmj-O_q9zTv_OC_BaVXm8bcVay1_lxqs_QRyQP9GNDYZZvq8QnbDTlda64BUJ2-kKor_LMOeIXz3tfi8vpYt3Gm5qrySN6ni7LT6rY8KrRctDsYbIwC1joISLEE8c8vlGsM6hybLyASerUoqev_sF-s_dUJ2EXc')"></div>
+</div>
+</div>
+</div>
+<!-- Active Requests -->
+<div class="px-4 pb-24">
+<h3 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] mb-3">طلبات الشراء النشطة</h3>
+<div class="space-y-3">
+<div class="bg-[#1e2936] p-3 rounded-lg border-l-4 border-primary flex items-start gap-3">
+<div class="bg-primary/10 p-2 rounded-lg text-primary">
+<span class="material-symbols-outlined">shopping_cart</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h4 class="text-white font-bold text-sm">مطلوب نحاس معزول</h4>
+<span class="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-medium">عاجل</span>
+</div>
+<p class="text-text-secondary text-xs mt-1">الكمية المطلوبة: 5 طن • الموقع: المستودع الرئيسي</p>
+</div>
+</div>
+<div class="bg-[#1e2936] p-3 rounded-lg border-l-4 border-gray-600 flex items-start gap-3">
+<div class="bg-gray-700/30 p-2 rounded-lg text-gray-400">
+<span class="material-symbols-outlined">shopping_cart</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h4 class="text-white font-bold text-sm">مطلوب بطاريات تالفة</h4>
+<span class="text-[10px] bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full font-medium">مفتوح</span>
+</div>
+<p class="text-text-secondary text-xs mt-1">الكمية المطلوبة: مفتوحة • السعر: حسب السوق</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Action Button Area -->
+<div class="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[#111a22] to-transparent pointer-events-none flex justify-center max-w-md mx-auto z-40">
+<div class="flex gap-3 pointer-events-auto w-full">
+<button class="flex-1 bg-green-600 hover:bg-green-700 text-white h-12 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-colors">
+<span class="material-symbols-outlined">chat</span>
+                    واتساب
+                </button>
+<button class="flex-1 bg-primary hover:bg-blue-600 text-white h-12 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg transition-colors">
+<span class="material-symbols-outlined">call</span>
+                    اتصال
+                </button>
+</div>
+</div>
+</div>
+</body></html>
