@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bootstrapAccessControl, requirePermission, PERMISSIONS } from "@/lib/rbac";
 
-export async function PATCH(request: NextRequest, context: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
     try {
         await bootstrapAccessControl();
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
@@ -13,7 +13,7 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
         const body = await request.json();
         const { name, description, permissionIds } = body;
 
-        const role = await db.role.findUnique({ where: { id: context.params.id } });
+        const role = await db.role.findUnique({ where: { id: (await context.params).id } });
         if (!role) {
             return NextResponse.json({ success: false, error: "الدور غير موجود" }, { status: 404 });
         }
@@ -48,7 +48,7 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
     }
 }
 
-export async function DELETE(_: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, context: { params: Promise<{ id: string }> }) {
     try {
         await bootstrapAccessControl();
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
@@ -56,7 +56,7 @@ export async function DELETE(_: NextRequest, context: { params: { id: string } }
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
         }
 
-        const role = await db.role.findUnique({ where: { id: context.params.id } });
+        const role = await db.role.findUnique({ where: { id: (await context.params).id } });
         if (!role) {
             return NextResponse.json({ success: false, error: "الدور غير موجود" }, { status: 404 });
         }

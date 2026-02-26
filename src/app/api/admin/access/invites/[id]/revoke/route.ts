@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bootstrapAccessControl, requirePermission, PERMISSIONS } from "@/lib/rbac";
 
-export async function PATCH(_: Request, context: { params: { id: string } }) {
+export async function PATCH(_: Request, context: { params: Promise<{ id: string }> }) {
     try {
         await bootstrapAccessControl();
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
@@ -11,7 +11,7 @@ export async function PATCH(_: Request, context: { params: { id: string } }) {
         }
 
         await db.staffInvite.update({
-            where: { id: context.params.id },
+            where: { id: (await context.params).id },
             data: { status: "REVOKED" },
         });
 

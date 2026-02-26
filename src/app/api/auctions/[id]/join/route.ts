@@ -5,16 +5,17 @@ import { authOptions } from "@/lib/auth";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const userId = session.user.id;
-    const auctionId = params.id;
+    const auctionId = resolvedParams.id;
 
     if (!auctionId) {
       return NextResponse.json({ error: "Auction ID is required" }, { status: 400 });

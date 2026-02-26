@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserPermissions, hasCenterAccess, requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
 
-export async function PATCH(request: NextRequest, context: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
     try {
         const access = await requirePermission("MANAGE_KNOWLEDGE");
         if (!access.ok) {
@@ -10,7 +10,7 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
         }
 
         const existing = await db.knowledgeItem.findUnique({
-            where: { id: context.params.id },
+            where: { id: (await context.params).id },
             select: { center: true },
         });
 
@@ -46,7 +46,7 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
         const cleanedTags = Array.isArray(tags) ? tags.filter((tag) => typeof tag === "string") : undefined;
 
         const updated = await db.knowledgeItem.update({
-            where: { id: context.params.id },
+            where: { id: (await context.params).id },
             data: {
                 ...(center ? { center } : {}),
                 ...(type ? { type } : {}),
@@ -73,7 +73,7 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
     }
 }
 
-export async function DELETE(_: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(_: NextRequest, context: { params: Promise<{ id: string }> }) {
     try {
         const access = await requirePermission("MANAGE_KNOWLEDGE");
         if (!access.ok) {
@@ -81,7 +81,7 @@ export async function DELETE(_: NextRequest, context: { params: { id: string } }
         }
 
         const existing = await db.knowledgeItem.findUnique({
-            where: { id: context.params.id },
+            where: { id: (await context.params).id },
             select: { center: true },
         });
 
@@ -94,7 +94,7 @@ export async function DELETE(_: NextRequest, context: { params: { id: string } }
             return NextResponse.json({ success: false, error: "لا تملك صلاحية لهذا المركز" }, { status: 403 });
         }
 
-        await db.knowledgeItem.delete({ where: { id: context.params.id } });
+        await db.knowledgeItem.delete({ where: { id: (await context.params).id } });
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Admin knowledge DELETE error:", error);

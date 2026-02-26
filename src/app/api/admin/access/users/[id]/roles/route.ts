@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { bootstrapAccessControl, requirePermission, PERMISSIONS } from "@/lib/rbac";
 
-export async function PUT(request: NextRequest, context: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
     try {
         await bootstrapAccessControl();
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
@@ -18,10 +18,10 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
         }
 
         await db.$transaction(async (tx) => {
-            await tx.userRole.deleteMany({ where: { userId: context.params.id } });
+            await tx.userRole.deleteMany({ where: { userId: (await context.params).id } });
             if (roleIds.length) {
                 await tx.userRole.createMany({
-                    data: roleIds.map((roleId: string) => ({ userId: context.params.id, roleId })),
+                    data: roleIds.map((roleId: string) => ({ userId: (await context.params).id, roleId })),
                 });
             }
         });
