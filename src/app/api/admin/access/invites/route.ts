@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
                 roleId,
                 status: "PENDING",
                 expiresAt: expiresAt ? new Date(expiresAt) : null,
-                createdById: access.userId,
+                createdById: access.userId!,
             },
         });
 

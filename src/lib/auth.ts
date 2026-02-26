@@ -46,12 +46,12 @@ export const authOptions: NextAuthOptions = {
                 email: { label: "Email", type: "text" },
                 password: { label: "Password", type: "password" }
             },
-            async authorize(credentials: Credentials) {
+            async authorize(credentials: Record<string, string> | undefined) {
                 if (!credentials) {
                     throw new Error("Credentials are required");
                 }
 
-                const { phone, email, password } = credentials;
+                const { phone, email, password } = credentials as Record<string, string> & Credentials;
                 if (!phone && !email) {
                     throw new Error("Email or Phone is required");
                 }

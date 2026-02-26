@@ -18,10 +18,11 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         }
 
         await db.$transaction(async (tx) => {
-            await tx.userRole.deleteMany({ where: { userId: (await context.params).id } });
+            const params = await context.params;
+            await tx.userRole.deleteMany({ where: { userId: params.id } });
             if (roleIds.length) {
                 await tx.userRole.createMany({
-                    data: roleIds.map((roleId: string) => ({ userId: (await context.params).id, roleId })),
+                    data: roleIds.map((roleId: string) => ({ userId: params.id, roleId })),
                 });
             }
         });

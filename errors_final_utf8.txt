@@ -1,0 +1,13 @@
+﻿recycle24/src/lib/db.test.ts(2,10): error TS2305: Module '"@/lib/db"' has no exported member 'getDb'.
+recycle24/src/scripts/security-simulation.ts(10,16): error TS2393: Duplicate function implementation.
+recycle24/src/test/setup.ts(11,1): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(13,11): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(14,14): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(15,14): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(16,11): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(17,14): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(18,15): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(21,10): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(22,13): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(23,10): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(39,1): error TS2304: Cannot find name 'vi'.

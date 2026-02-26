@@ -89,14 +89,17 @@ export async function GET(request: NextRequest) {
         const { page, limit } = parsePagination(searchParams, 1, 10);
 
         const where: AuctionWhereInput = {};
-        if (searchParams.has("status")) {
-            where.status = searchParams.get("status");
+        const statusParam = searchParams.get("status");
+        if (statusParam) {
+            where.status = statusParam;
         }
-        if (searchParams.has("material")) {
-            where.category = searchParams.get("material");
+        const materialParam = searchParams.get("material");
+        if (materialParam) {
+            where.category = materialParam;
         }
-        if (searchParams.has("governorate")) {
-            where.location = { contains: searchParams.get("governorate") };
+        const govParam = searchParams.get("governorate");
+        if (govParam) {
+            where.location = { contains: govParam };
         }
 
         const auctions = await db.auction.findMany({
@@ -196,7 +199,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Create auction error:", error);
         return NextResponse.json(
-            { error: error.message || "An error occurred while creating the auction" },
+            { error: error instanceof Error ? error.message : "An error occurred while creating the auction" },
             { status: 500 }
         );
     }

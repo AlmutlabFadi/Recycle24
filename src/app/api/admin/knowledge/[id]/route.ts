@@ -18,13 +18,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
             return NextResponse.json({ success: false, error: "المحتوى غير موجود" }, { status: 404 });
         }
 
-        const permissions = await getUserPermissions(access.userId);
+        const permissions = await getUserPermissions(access.userId!);
         if (!hasCenterAccess(permissions, existing.center)) {
             return NextResponse.json({ success: false, error: "لا تملك صلاحية لهذا المركز" }, { status: 403 });
-        }
-
-        if (center && !hasCenterAccess(permissions, center)) {
-            return NextResponse.json({ success: false, error: "لا تملك صلاحية لنقل المحتوى لهذا المركز" }, { status: 403 });
         }
 
         const body = await request.json();
@@ -42,6 +38,10 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
             authorName,
             sourceLabel,
         } = body;
+
+        if (center && !hasCenterAccess(permissions, center)) {
+            return NextResponse.json({ success: false, error: "لا تملك صلاحية لنقل المحتوى لهذا المركز" }, { status: 403 });
+        }
 
         const cleanedTags = Array.isArray(tags) ? tags.filter((tag) => typeof tag === "string") : undefined;
 
@@ -89,7 +89,7 @@ export async function DELETE(_: NextRequest, context: { params: Promise<{ id: st
             return NextResponse.json({ success: false, error: "المحتوى غير موجود" }, { status: 404 });
         }
 
-        const permissions = await getUserPermissions(access.userId);
+        const permissions = await getUserPermissions(access.userId!);
         if (!hasCenterAccess(permissions, existing.center)) {
             return NextResponse.json({ success: false, error: "لا تملك صلاحية لهذا المركز" }, { status: 403 });
         }

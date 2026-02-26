@@ -7,7 +7,7 @@
  * e.g., `ts-node src/scripts/security-simulation.ts`
  */
 
-async function runSimulation() {
+async function runSecuritySimulation() {
   const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   console.log(`\n🔒 Starting Authorized Live Security Exercise against ${BASE_URL}...`);
 
@@ -74,4 +74,6 @@ async function runSimulation() {
   console.log("\n✅ Simulation Complete. Please check the SOC Dashboard to verify the alerts visually.");
 }
 
-runSimulation();
+runSecuritySimulation();
+
+export {};

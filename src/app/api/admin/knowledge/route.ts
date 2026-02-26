@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         const parsedLimit = parseInt(searchParams.get("limit") || "60", 10);
         const limit = Number.isNaN(parsedLimit) ? 60 : Math.min(parsedLimit, 200);
 
-        const permissions = await getUserPermissions(access.userId);
+        const permissions = await getUserPermissions(access.userId!);
         const allowedCenters = [
             "SAFETY",
             "CONSULTATIONS",
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const permissions = await getUserPermissions(access.userId);
+        const permissions = await getUserPermissions(access.userId!);
         if (!hasCenterAccess(permissions, center)) {
             return NextResponse.json(
                 { success: false, error: "لا تملك صلاحية لهذا المركز" },
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
                 status: status || "DRAFT",
                 authorName: authorName || null,
                 sourceLabel: sourceLabel || null,
-                createdById: access.userId,
+                createdById: access.userId!,
             },
         });
 

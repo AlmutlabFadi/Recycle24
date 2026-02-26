@@ -1,0 +1,44 @@
+﻿next.config.ts(14,3): error TS2353: Object literal may only specify known properties, and 'eslint' does not exist in type 'NextConfig'.
+recycle24/src/lib/db.test.ts(2,10): error TS2305: Module '"@/lib/db"' has no exported member 'getDb'.
+recycle24/src/scripts/security-simulation.ts(10,16): error TS2393: Duplicate function implementation.
+recycle24/src/test/setup.ts(11,1): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(13,11): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(14,14): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(15,14): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(16,11): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(17,14): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(18,15): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(21,10): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(22,13): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(23,10): error TS2304: Cannot find name 'vi'.
+recycle24/src/test/setup.ts(39,1): error TS2304: Cannot find name 'vi'.
+src/app/api/admin/access/invites/route.ts(47,13): error TS2322: Type '{ code: string; email: any; phone: any; roleId: any; status: string; expiresAt: Date | null; createdById: string | undefined; }' is not assignable to type '(Without<StaffInviteCreateInput, StaffInviteUncheckedCreateInput> & StaffInviteUncheckedCreateInput) | (Without<...> & StaffInviteCreateInput)'.
+  Type '{ code: string; email: any; phone: any; roleId: any; status: string; expiresAt: Date | null; createdById: string | undefined; }' is not assignable to type 'Without<StaffInviteUncheckedCreateInput, StaffInviteCreateInput> & StaffInviteCreateInput'.
+    Type '{ code: string; email: any; phone: any; roleId: any; status: string; expiresAt: Date | null; createdById: string | undefined; }' is not assignable to type 'Without<StaffInviteUncheckedCreateInput, StaffInviteCreateInput>'.
+      Types of property 'createdById' are incompatible.
+        Type 'string | undefined' is not assignable to type 'undefined'.
+          Type 'string' is not assignable to type 'undefined'.
+src/app/api/admin/knowledge/[id]/route.ts(21,54): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/api/admin/knowledge/[id]/route.ts(26,13): error TS2448: Block-scoped variable 'center' used before its declaration.
+src/app/api/admin/knowledge/[id]/route.ts(26,53): error TS2448: Block-scoped variable 'center' used before its declaration.
+src/app/api/admin/knowledge/[id]/route.ts(92,54): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/api/admin/knowledge/route.ts(19,54): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/api/admin/knowledge/route.ts(82,54): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/app/api/auctions/route.ts(93,13): error TS2322: Type 'string | null' is not assignable to type 'string | StringFilter<"Auction"> | undefined'.
+  Type 'null' is not assignable to type 'string | StringFilter<"Auction"> | undefined'.
+src/app/api/auctions/route.ts(96,13): error TS2322: Type 'string | null' is not assignable to type 'string | StringFilter<"Auction"> | undefined'.
+  Type 'null' is not assignable to type 'string | StringFilter<"Auction"> | undefined'.
+src/app/api/auctions/route.ts(99,32): error TS2322: Type 'string | null' is not assignable to type 'string | FieldRef<"Auction", "String"> | undefined'.
+  Type 'null' is not assignable to type 'string | FieldRef<"Auction", "String"> | undefined'.
+src/app/api/auctions/route.ts(199,22): error TS18046: 'error' is of type 'unknown'.
+src/lib/auth.ts(49,19): error TS2322: Type '(credentials: Credentials) => Promise<{ id: string; name: string | null; email: string | null; phone: string | null; role: string; userType: string; }>' is not assignable to type '(credentials: Record<"email" | "phone" | "password", string> | undefined, req: Pick<RequestInternal, "query" | "body" | "headers" | "method">) => Awaitable<...>'.
+  Types of parameters 'credentials' and 'credentials' are incompatible.
+    Type 'Record<"email" | "phone" | "password", string> | undefined' is not assignable to type 'Credentials'.
+      Type 'undefined' is not assignable to type 'Credentials'.
+src/lib/db.ts(38,30): error TS2339: Property 'metal' does not exist on type 'Omit<PrismaClient<PrismaClientOptions, never, DefaultArgs>, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">'.
+src/lib/db.ts(47,16): error TS2339: Property 'metal' does not exist on type 'Omit<PrismaClient<PrismaClientOptions, never, DefaultArgs>, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">'.
+src/scripts/security-simulation.ts(10,16): error TS2393: Duplicate function implementation.
