@@ -186,7 +186,7 @@ export default function TransportOrdersPage() {
                             {orders.map((order) => (
                                 <Link
                                     key={order.id}
-                                    href={`/transport/track?trackingId=${order.trackingId}`}
+                                    href={(order.status === "OPEN" || order.status === "HAS_OFFERS") ? `/transport/offers?trackingId=${order.trackingId}` : `/transport/track?trackingId=${order.trackingId}`}
                                     className="bg-surface-dark rounded-xl p-4 border border-slate-800 hover:border-primary/50 transition-colors"
                                 >
                                     <div className="flex justify-between items-start mb-3">

@@ -11,26 +11,26 @@ datasource db {
 // ==================== USER & AUTH ====================
 
 model User {
-  id            String    @id @default(cuid())
-  phone         String?   @unique
-  email         String?   @unique
-  password      String
-  name          String?
-  firstName     String?
-  lastName      String?
-  titleId       String?
-  gender        String    @default("unknown") // male, female, unknown
-  userType      String    @default("TRADER")
-  status        String    @default("PENDING")
-  role          String    @default("TRADER") // TRADER, BUYER, ADMIN
-  isVerified    Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
+  id         String   @id @default(cuid())
+  phone      String?  @unique
+  email      String?  @unique
+  password   String
+  name       String?
+  firstName  String?
+  lastName   String?
+  titleId    String?
+  gender     String   @default("unknown") // male, female, unknown
+  userType   String   @default("TRADER")
+  status     String   @default("PENDING")
+  role       String   @default("TRADER") // TRADER, BUYER, ADMIN
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
   // Security Fields
-  isLocked      Boolean   @default(false)
-  lockReason    String?
-  
+  isLocked   Boolean @default(false)
+  lockReason String?
+
   // Business Info
   companyName       String?
   companyType       String?
@@ -40,7 +40,7 @@ model User {
   jobTitle          String?
   jobTitleOther     String?
   bio               String?
-  
+
   // Notification Settings
   notifEmail     Boolean @default(true)
   notifSms       Boolean @default(false)
@@ -50,50 +50,55 @@ model User {
   notifDeals     Boolean @default(true)
   notifAuctions  Boolean @default(true)
   notifMarketing Boolean @default(false)
-  
+
   // Notification Contacts
-  smsPhone        String?
-  whatsappPhone   String?
+  smsPhone         String?
+  whatsappPhone    String?
   telegramUsername String?
-  
+
   // Verification
   verificationCode   String?
   verificationExpiry DateTime?
-  
+
   // Security Settings
   twoFactorEnabled Boolean @default(false)
   twoFactorMethod  String? // whatsapp, sms, email
   faceIdEnabled    Boolean @default(false)
-  
+
   // Privacy Settings
-  showPhone       Boolean @default(false)
+  showPhone             Boolean @default(false)
   hideWarehouseLocation Boolean @default(false)
-  allowFactoryContact Boolean @default(true)
-  
+  allowFactoryContact   Boolean @default(true)
+
   // Relations
-  trader        Trader?
-  wallet        Wallet?
-  auctions      Auction[]
-  bids          Bid[]
-  alerts        PriceAlert[]
-  deals         Deal[]      @relation("buyer")
-  soldDeals     Deal[]      @relation("seller")
-  sessions      Session[]
-  securityLogs  SecurityLog[]
+  trader                Trader?
+  wallet                Wallet?
+  auctions              Auction[]
+  bids                  Bid[]
+  alerts                PriceAlert[]
+  deals                 Deal[]               @relation("buyer")
+  soldDeals             Deal[]               @relation("seller")
+  sessions              Session[]
+  securityLogs          SecurityLog[]
   auctionParticipations AuctionParticipant[]
+  StolenReport          StolenReport[]
+  knowledgeItems        KnowledgeItem[]
+  userRoles             UserRole[]
+  invitesCreated        StaffInvite[]
+  invitesUsed           StaffInvite[] @relation("InviteUsedBy")
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  device    String?
-  deviceType String? @default("phone") // phone, laptop, tablet
-  location  String?
-  ip        String?
-  userAgent String?
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  device     String?
+  deviceType String?  @default("phone") // phone, laptop, tablet
+  location   String?
+  ip         String?
+  userAgent  String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -104,18 +109,18 @@ model Session {
 // ==================== TRADER VERIFICATION ====================
 
 model Trader {
-  id                String    @id @default(cuid())
-  userId            String    @unique
-  businessName      String
-  licenseNumber     String?
-  location          String?
-  verificationStatus String   @default("PENDING") // PENDING, UNDER_REVIEW, APPROVED, REJECTED
-  verifiedAt        DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                 String    @id @default(cuid())
+  userId             String    @unique
+  businessName       String
+  licenseNumber      String?
+  location           String?
+  verificationStatus String    @default("PENDING") // PENDING, UNDER_REVIEW, APPROVED, REJECTED
+  verifiedAt         DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   documents TraderDocument[]
 
   @@index([verificationStatus])
@@ -124,7 +129,7 @@ model Trader {
 model TraderDocument {
   id        String   @id @default(cuid())
   traderId  String
-  type      String   // IDENTITY_FRONT, IDENTITY_BACK, BUSINESS_LICENSE, LOCATION_PROOF
+  type      String // IDENTITY_FRONT, IDENTITY_BACK, BUSINESS_LICENSE, LOCATION_PROOF
   fileUrl   String
   status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
   createdAt DateTime @default(now())
@@ -138,32 +143,32 @@ model TraderDocument {
 // ==================== AUCTIONS ====================
 
 model Auction {
-  id            String    @id @default(cuid())
-  sellerId      String
-  title         String
-  category      String    // IRON, COPPER, ALUMINUM, PLASTIC, CARDBOARD, MIXED, BRASS, STEEL, ZINC
-  weight        Float
-  weightUnit    String    @default("KG") // KG, TON
-  location      String
-  startingBid   Float
-  buyNowPrice   Float?
-  securityDeposit Float @default(0) // Set by seller, matched by buyers
-  entryFee      Float @default(0) // Non-refundable platform fee per participant
-  duration      Int       // in hours
-  status        String    @default("SCHEDULED") // SCHEDULED, LIVE, ENDED, CANCELLED
-  scheduledAt   DateTime? // When auction will start
-  startedAt     DateTime?
-  endsAt        DateTime?
-  winnerId      String?
-  finalPrice    Float?
-  currentBid    Float?    // Cached highest bid for performance
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  sellerId        String
+  title           String
+  category        String // IRON, COPPER, ALUMINUM, PLASTIC, CARDBOARD, MIXED, BRASS, STEEL, ZINC
+  weight          Float
+  weightUnit      String    @default("KG") // KG, TON
+  location        String
+  startingBid     Float
+  buyNowPrice     Float?
+  securityDeposit Float     @default(0) // Set by seller, matched by buyers
+  entryFee        Float     @default(0) // Non-refundable platform fee per participant
+  duration        Int // in hours
+  status          String    @default("SCHEDULED") // SCHEDULED, LIVE, ENDED, CANCELLED
+  scheduledAt     DateTime? // When auction will start
+  startedAt       DateTime?
+  endsAt          DateTime?
+  winnerId        String?
+  finalPrice      Float?
+  currentBid      Float? // Cached highest bid for performance
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relations
-  seller User @relation(fields: [sellerId], references: [id])
-  bids   Bid[]
-  images AuctionImage[]
+  seller       User                 @relation(fields: [sellerId], references: [id])
+  bids         Bid[]
+  images       AuctionImage[]
   participants AuctionParticipant[]
 
   @@index([sellerId])
@@ -173,15 +178,15 @@ model Auction {
 }
 
 model AuctionParticipant {
-  id              String   @id @default(cuid())
-  auctionId       String
-  userId          String
-  depositPaid     Float    @default(0)
-  entryFeePaid    Float    @default(0)
-  isExempt        Boolean  @default(false) // True for GOVERNMENT accounts
-  depositStatus   String   @default("HELD") // HELD, REFUNDED, APPLIED_TO_DEAL, FORFEITED
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id            String   @id @default(cuid())
+  auctionId     String
+  userId        String
+  depositPaid   Float    @default(0)
+  entryFeePaid  Float    @default(0)
+  isExempt      Boolean  @default(false) // True for GOVERNMENT accounts
+  depositStatus String   @default("HELD") // HELD, REFUNDED, APPLIED_TO_DEAL, FORFEITED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id])
@@ -219,22 +224,22 @@ model Bid {
 // ==================== DEALS & CONTRACTS ====================
 
 model Deal {
-  id              String    @id @default(cuid())
-  auctionId       String?   // If from auction
-  sellerId        String
-  buyerId         String
-  materialType    String
-  weight          Float
-  totalAmount     Float
-  platformFee     Float
-  status          String    @default("PENDING") // PENDING, CONTRACT_SIGNED, DEPOSIT_PAID, COMPLETED, CANCELLED, DISPUTED
-  contractSigned  Boolean   @default(false)
-  signedAt        DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  auctionId      String? // If from auction
+  sellerId       String
+  buyerId        String
+  materialType   String
+  weight         Float
+  totalAmount    Float
+  platformFee    Float
+  status         String    @default("PENDING") // PENDING, CONTRACT_SIGNED, DEPOSIT_PAID, COMPLETED, CANCELLED, DISPUTED
+  contractSigned Boolean   @default(false)
+  signedAt       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  seller User @relation("seller", fields: [sellerId], references: [id])
-  buyer  User @relation("buyer", fields: [buyerId], references: [id])
+  seller       User          @relation("seller", fields: [sellerId], references: [id])
+  buyer        User          @relation("buyer", fields: [buyerId], references: [id])
   transactions Transaction[]
 
   @@index([sellerId])
@@ -245,14 +250,14 @@ model Deal {
 // ==================== WALLET & TRANSACTIONS ====================
 
 model Wallet {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  balanceSYP  Float    @default(0)
-  balanceUSD  Float    @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  balanceSYP Float    @default(0)
+  balanceUSD Float    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
 
   @@index([userId])
@@ -262,10 +267,10 @@ model Transaction {
   id          String   @id @default(cuid())
   walletId    String
   dealId      String?
-  type        String   // DEPOSIT, WITHDRAWAL, PAYMENT, REFUND, FEE, REWARD
+  type        String // DEPOSIT, WITHDRAWAL, PAYMENT, REFUND, FEE, REWARD
   amount      Float
-  currency    String   // SYP, USD
-  status      String   // PENDING, COMPLETED, FAILED, CANCELLED
+  currency    String // SYP, USD
+  status      String // PENDING, COMPLETED, FAILED, CANCELLED
   description String?
   createdAt   DateTime @default(now())
 
@@ -285,7 +290,7 @@ model PriceAlert {
   userId      String
   metal       String
   targetPrice Float
-  condition   String   // ABOVE, BELOW
+  condition   String // ABOVE, BELOW
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
 
@@ -298,19 +303,19 @@ model PriceAlert {
 // ==================== REWARDS & POINTS ====================
 
 model RecyclePoints {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  points     Int      @default(0)
-  level      Int      @default(1)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  points    Int      @default(0)
+  level     Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Achievement {
-  id          String   @id @default(cuid())
-  userId      String
-  badgeType   String
-  unlockedAt  DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  badgeType  String
+  unlockedAt DateTime @default(now())
 
   @@index([userId])
 }
@@ -319,15 +324,15 @@ model Achievement {
 
 model SecurityLog {
   id        String   @id @default(cuid())
-  level     String   // INFO, WARN, CRITICAL, AUDIT
-  event     String   // LOGIN, FAILED_LOGIN, API_ABUSE, ADMIN_ACTION
+  level     String // INFO, WARN, CRITICAL, AUDIT
+  event     String // LOGIN, FAILED_LOGIN, API_ABUSE, ADMIN_ACTION
   details   String?
   ip        String?
   userAgent String?
   userId    String?
   createdAt DateTime @default(now())
 
-  user      User?    @relation(fields: [userId], references: [id])
+  user User? @relation(fields: [userId], references: [id])
 
   @@index([event])
   @@index([level])
@@ -339,15 +344,15 @@ model SecurityLog {
 model Agent {
   id            String   @id @default(cuid())
   name          String   @unique
-  type          String   // TASK_MANAGER, SECURITY, RECOVERY, PERFORMANCE, etc.
+  type          String // TASK_MANAGER, SECURITY, RECOVERY, PERFORMANCE, etc.
   status        String   @default("IDLE") // IDLE, WORKING, OFFLINE, FAILED
   lastHeartbeat DateTime @default(now())
-  metadata      String?  // JSON string for additional state data
-  ipAddress     String?  // Optional IP address of where the agent is running
+  metadata      String? // JSON string for additional state data
+  ipAddress     String? // Optional IP address of where the agent is running
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  tasks         AgentTask[] @relation("assignedAgent")
+  tasks AgentTask[] @relation("assignedAgent")
 
   @@index([type])
   @@index([status])
@@ -355,22 +360,22 @@ model Agent {
 }
 
 model AgentTask {
-  id            String   @id @default(cuid())
-  type          String   // Type of task, e.g., SECURITY_SCAN, SYSTEM_CHECK
-  priority      Int      @default(0) // Higher number = higher priority
-  status        String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, FAILED
-  payload       String?  // JSON string containing task parameters
-  result        String?  // JSON string containing task output/error
-  error         String?
-  assignedToId  String?
-  retryCount    Int      @default(0)
-  maxRetries    Int      @default(3)
-  startedAt     DateTime?
-  completedAt   DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String    @id @default(cuid())
+  type         String // Type of task, e.g., SECURITY_SCAN, SYSTEM_CHECK
+  priority     Int       @default(0) // Higher number = higher priority
+  status       String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, FAILED
+  payload      String? // JSON string containing task parameters
+  result       String? // JSON string containing task output/error
+  error        String?
+  assignedToId String?
+  retryCount   Int       @default(0)
+  maxRetries   Int       @default(3)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  assignedAgent Agent?   @relation("assignedAgent", fields: [assignedToId], references: [id])
+  assignedAgent Agent? @relation("assignedAgent", fields: [assignedToId], references: [id])
 
   @@index([status])
   @@index([priority])
@@ -392,7 +397,7 @@ model TransportBooking {
   deliveryGovernorate String
   pickupDate          DateTime
   notes               String?
-  transportType       String   // pickup, medium, large
+  transportType       String // pickup, medium, large
   status              String   @default("PENDING") // PENDING, CONFIRMED, IN_TRANSIT, DELIVERED, CANCELLED
   estimatedPrice      Float
   actualPrice         Float?
@@ -417,7 +422,7 @@ model SupportTicket {
   userId    String
   ticketId  String   @unique
   subject   String
-  category  String   @default("عام") // تقني, مدفوعات, مزادات, صفقات, عام
+  category  String   @default("Ø¹Ø§Ù…") // ØªÙ‚Ù†ÙŠ, Ù…Ø¯ÙÙˆØ¹Ø§Øª, Ù…Ø²Ø§Ø¯Ø§Øª, ØµÙÙ‚Ø§Øª, Ø¹Ø§Ù…
   priority  String   @default("MEDIUM") // LOW, MEDIUM, HIGH
   status    String   @default("OPEN") // OPEN, PENDING, RESOLVED, CLOSED
   createdAt DateTime @default(now())
@@ -436,7 +441,7 @@ model SupportTicketMessage {
   ticketId   String
   userId     String?
   content    String
-  senderType String   // USER, SUPPORT, AGENT
+  senderType String // USER, SUPPORT, AGENT
   createdAt  DateTime @default(now())
 
   ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
@@ -452,13 +457,13 @@ model AgentReport {
   agentName  String
   taskType   String
   severity   String   @default("INFO") // INFO, WARNING, ERROR, CRITICAL
-  category   String   // lint, security, performance, ux, backend, api, db, etc.
-  file       String?  // affected file path
+  category   String // lint, security, performance, ux, backend, api, db, etc.
+  file       String? // affected file path
   line       Int?
   message    String
-  suggestion String?  // what should be done
-  codeBefore String?  // original code snippet
-  codeAfter  String?  // new code written by agent
+  suggestion String? // what should be done
+  codeBefore String? // original code snippet
+  codeAfter  String? // new code written by agent
   autoFixed  Boolean  @default(false)
   createdAt  DateTime @default(now())
 
@@ -467,4 +472,176 @@ model AgentReport {
   @@index([taskType])
   @@index([autoFixed])
   @@index([createdAt])
+}
+
+// ==================== GSCC SECURITY ====================
+
+model GsoccIncident {
+  id           String   @id @default(cuid())
+  title        String
+  description  String?
+  severity     String   @default("MEDIUM")
+  status       String   @default("OPEN")
+  sourceIp     String?  @map("source_ip")
+  userId       String?  @map("user_id")
+  incidentType String   @map("incident_type")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("gsocc_incidents")
+}
+
+model GsoccEvidenceLog {
+  id               String   @id @default(cuid())
+  incidentId       String   @map("incident_id")
+  actionTaken      String   @map("action_taken")
+  executedBy       String   @map("executed_by")
+  evidenceSnapshot Json?    @map("evidence_snapshot")
+  hashSignature    String?  @map("hash_signature")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@map("gsocc_evidence_logs")
+}
+
+model GsoccSecurityRule {
+  id          String   @id @default(cuid())
+  ruleType    String   @map("rule_type")
+  targetValue String   @map("target_value")
+  action      String
+  createdBy   String   @map("created_by")
+  reason      String?
+  incidentId  String?  @map("incident_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("gsocc_security_rules")
+}
+
+// ==================== STOLEN REPORTS ====================
+
+model StolenReport {
+  id             String   @id @default(cuid())
+  userId         String?
+  reportingOrg   String
+  type           String
+  customItemType String?
+  description    String
+  location       String
+  contactPhone   String
+  plateNumber    String?
+  vehicleType    String?
+  vehicleColor   String?
+  stolenDate     DateTime
+  status         String   @default("ACTIVE") // ACTIVE, RESOLVED
+  images         String[] @default([]) // Store image URLs directly
+  videos         String[] @default([]) // Store video URLs directly
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ==================== KNOWLEDGE CENTERS ====================
+
+model KnowledgeItem {
+  id             String   @id @default(cuid())
+  center         String   // SAFETY, CONSULTATIONS, ACADEMY
+  type           String   // ARTICLE, VIDEO, IMAGE, WARNING, INSTRUCTION
+  title          String
+  summary        String?
+  content        String?
+  mediaUrl       String?
+  coverImageUrl  String?
+  tags           String[] @default([])
+  priority       Int      @default(0)
+  status         String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  authorName     String?
+  sourceLabel    String?
+  createdById    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([center])
+  @@index([type])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  label       String
+  description String?
+  createdAt   DateTime @default(now())
+
+  rolePermissions RolePermission[]
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isSystem    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+  invites         StaffInvite[]
+}
+
+model RolePermission {
+  id           String   @id @default(cuid())
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model StaffInvite {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  email       String?
+  phone       String?
+  roleId      String
+  status      String   @default("PENDING") // PENDING, USED, REVOKED, EXPIRED
+  expiresAt   DateTime?
+  createdById String
+  createdAt   DateTime @default(now())
+  usedById    String?
+  usedAt      DateTime?
+
+  role       Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdBy  User @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  usedBy     User? @relation("InviteUsedBy", fields: [usedById], references: [id])
+
+  @@index([status])
+  @@index([createdById])
+  @@index([roleId])
+  @@index([expiresAt])
 }

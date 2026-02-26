@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import HeaderWithBack from "@/components/HeaderWithBack";
 
@@ -26,8 +26,40 @@ interface Consultation {
     status: "upcoming" | "completed" | "cancelled";
 }
 
+interface KnowledgeItem {
+    id: string;
+    type: string;
+    title: string;
+    summary?: string | null;
+    content?: string | null;
+    coverImageUrl?: string | null;
+    createdAt: string;
+}
+
 export default function ConsultationsPage() {
     const [activeTab, setActiveTab] = useState<"consultants" | "my-consultations">("consultants");
+    const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([]);
+    const [isKnowledgeLoading, setIsKnowledgeLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchKnowledge = async () => {
+            try {
+                const response = await fetch("/api/knowledge?center=CONSULTATIONS&status=PUBLISHED&limit=12", {
+                    cache: "no-store",
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    setKnowledgeItems(data.items || []);
+                }
+            } finally {
+                setIsKnowledgeLoading(false);
+            }
+        };
+
+        fetchKnowledge();
+    }, []);
+
+    const insights = useMemo(() => knowledgeItems.filter((item) => item.type === "ARTICLE" || item.type === "INSTRUCTION"), [knowledgeItems]);
 
     const consultants: Consultant[] = [
         {
@@ -113,6 +145,36 @@ export default function ConsultationsPage() {
                         </div>
                     </div>
                 </div>
+
+                <section className="bg-slate-900/70 rounded-xl border border-slate-800 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-bold text-white">مكتبة الاستشارات</h3>
+                        <span className="text-xs text-slate-400">مواد إرشادية رسمية</span>
+                    </div>
+                    {isKnowledgeLoading ? (
+                        <div className="text-center text-xs text-slate-500 py-6">جار التحميل...</div>
+                    ) : insights.length === 0 ? (
+                        <div className="text-center text-xs text-slate-500 py-6">لا يوجد محتوى منشور حالياً.</div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {insights.slice(0, 4).map((item) => (
+                                <div key={item.id} className="bg-surface-dark rounded-xl border border-slate-800 overflow-hidden">
+                                    {item.coverImageUrl ? (
+                                        <img src={item.coverImageUrl} alt={item.title} className="w-full h-28 object-cover" />
+                                    ) : (
+                                        <div className="h-28 bg-gradient-to-r from-slate-800 to-slate-900"></div>
+                                    )}
+                                    <div className="p-3">
+                                        <h4 className="text-sm font-bold text-white mb-1">{item.title}</h4>
+                                        <p className="text-xs text-slate-400 line-clamp-2">
+                                            {item.summary || item.content}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </section>
 
                 <section>
                     <div className="bg-slate-800 p-1 rounded-lg flex">

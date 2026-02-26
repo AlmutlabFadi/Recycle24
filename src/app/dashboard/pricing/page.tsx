@@ -7,26 +7,36 @@ import BottomNavigation from "@/components/BottomNavigation";
 
 // Initial mock data
 const INITIAL_PRICES: Record<string, number> = {};
+const INITIAL_CURRENCIES: Record<string, string> = {};
 const INITIAL_ENABLED: string[] = ["copper_red_bright", "iron_mixed", "aluminum_window_white"];
 
 allMaterials.forEach(m => {
     if (INITIAL_ENABLED.includes(m.id)) {
         INITIAL_PRICES[m.id] = m.basePrice || 0;
+        INITIAL_CURRENCIES[m.id] = "SYP";
     }
 });
 
 export default function PricingControlPanel() {
     // State management
     const [prices, setPrices] = useState<Record<string, number>>(INITIAL_PRICES);
+    const [currencies, setCurrencies] = useState<Record<string, string>>(INITIAL_CURRENCIES);
     const [enabledMaterials, setEnabledMaterials] = useState<Set<string>>(new Set(INITIAL_ENABLED));
     const [customImages, setCustomImages] = useState<Record<string, string>>({});
     const [materialsList, setMaterialsList] = useState<Material[]>(allMaterials);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCategory, setSelectedCategory] = useState<string>("all");
+    const [showToast, setShowToast] = useState(false);
 
     // New Item State
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [newItem, setNewItem] = useState({ name: "", category: "other", price: "" });
+    const [newItem, setNewItem] = useState({ name: "", category: "other", price: "", currency: "SYP" });
+
+    // Handle Save Custom Prices
+    const handleSave = () => {
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 3000);
+    };
 
     // Toggle Material Visibility
     const toggleMaterial = (id: string) => {
@@ -35,10 +45,11 @@ export default function PricingControlPanel() {
             newEnabled.delete(id);
         } else {
             newEnabled.add(id);
-            // Initialize price if not set
+            // Initialize price and currency if not set
             if (!prices[id]) {
                 const material = materialsList.find(m => m.id === id);
                 setPrices(prev => ({ ...prev, [id]: material?.basePrice || 0 }));
+                setCurrencies(prev => ({ ...prev, [id]: "SYP" }));
             }
         }
         setEnabledMaterials(newEnabled);
@@ -49,6 +60,11 @@ export default function PricingControlPanel() {
         const cleanValue = value.replace(/[^0-9]/g, "");
         const numValue = parseInt(cleanValue, 10);
         setPrices(prev => ({ ...prev, [id]: isNaN(numValue) ? 0 : numValue }));
+    };
+
+    // Update Currency
+    const updateCurrency = (id: string, currency: string) => {
+        setCurrencies(prev => ({ ...prev, [id]: currency }));
     };
 
     // Simulate Image Upload
@@ -90,9 +106,10 @@ export default function PricingControlPanel() {
 
         setMaterialsList([newMaterial, ...materialsList]);
         setPrices(prev => ({ ...prev, [newId]: newMaterial.basePrice || 0 }));
+        setCurrencies(prev => ({ ...prev, [newId]: newItem.currency }));
         setEnabledMaterials(prev => new Set(prev).add(newId));
         setIsAddModalOpen(false);
-        setNewItem({ name: "", category: "other", price: "" });
+        setNewItem({ name: "", category: "other", price: "", currency: "SYP" });
     };
 
     // Filter Materials
@@ -112,7 +129,10 @@ export default function PricingControlPanel() {
                         </Link>
                         <h1 className="text-lg font-bold text-white">لوحة تسعير المواد</h1>
                     </div>
-                    <button className="text-sm font-bold text-primary bg-primary/10 px-4 py-2 rounded-xl border border-primary/20 hover:bg-primary/20 transition">
+                    <button 
+                        onClick={handleSave}
+                        className="text-sm font-bold text-primary bg-primary/10 px-4 py-2 rounded-xl border border-primary/20 hover:bg-primary/20 transition"
+                    >
                         حفظ التغييرات
                     </button>
                 </div>
@@ -240,9 +260,25 @@ export default function PricingControlPanel() {
                                 {/* Price Input */}
                                 {isEnabled && (
                                     <div className="animate-fadeIn">
-                                        <label className="text-xs font-bold text-slate-400 mb-1.5 block">
-                                            سعر الشراء (ل.س / {material.unit === "ton" ? "طن" : "كغ"})
-                                        </label>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <label className="text-xs font-bold text-slate-400">
+                                                سعر الشراء (لكل {material.unit === "ton" ? "طن" : "كغ"})
+                                            </label>
+                                            <div className="flex bg-bg-dark rounded-lg overflow-hidden border border-slate-700">
+                                                <button 
+                                                    onClick={() => updateCurrency(material.id, "SYP")} 
+                                                    className={`px-3 py-1 text-[11px] font-bold transition font-english ${currencies[material.id] === "SYP" ? "bg-primary text-white" : "text-slate-400 hover:text-white"}`}
+                                                >
+                                                    SYP
+                                                </button>
+                                                <button 
+                                                    onClick={() => updateCurrency(material.id, "USD")} 
+                                                    className={`px-3 py-1 text-[11px] font-bold transition font-english ${currencies[material.id] === "USD" ? "bg-primary text-white" : "text-slate-400 hover:text-white"}`}
+                                                >
+                                                    $
+                                                </button>
+                                            </div>
+                                        </div>
                                         <div className="relative">
                                             <input
                                                 type="text"
@@ -300,14 +336,24 @@ export default function PricingControlPanel() {
                                 </div>
 
                                 <div>
-                                    <label className="text-sm text-slate-400 mb-1 block">سعر الشراء المبدئي</label>
-                                    <input 
-                                        type="number" 
-                                        value={newItem.price}
-                                        onChange={(e) => setNewItem({...newItem, price: e.target.value})}
-                                        className="w-full h-12 bg-bg-dark border border-slate-700 rounded-xl px-4 text-white font-english focus:outline-none focus:border-primary"
-                                        placeholder="0"
-                                    />
+                                    <label className="text-sm text-slate-400 mb-1 block">سعر الشراء المبدئي والعملة</label>
+                                    <div className="flex gap-2">
+                                        <input 
+                                            type="number" 
+                                            value={newItem.price}
+                                            onChange={(e) => setNewItem({...newItem, price: e.target.value})}
+                                            className="flex-1 h-12 bg-bg-dark border border-slate-700 rounded-xl px-4 text-white font-english focus:outline-none focus:border-primary"
+                                            placeholder="0"
+                                        />
+                                        <select 
+                                            value={newItem.currency}
+                                            onChange={(e) => setNewItem({...newItem, currency: e.target.value})}
+                                            className="w-24 h-12 bg-bg-dark border border-slate-700 rounded-xl px-2 text-white font-bold font-english focus:outline-none focus:border-primary appearance-none text-center"
+                                        >
+                                            <option value="SYP">SYP</option>
+                                            <option value="USD">$</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -330,6 +376,16 @@ export default function PricingControlPanel() {
                 )}
 
             </main>
+
+            {/* Custom Toast Notification */}
+            {showToast && (
+                <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-bounce-short">
+                    <div className="bg-success text-white px-6 py-3 rounded-xl shadow-xl shadow-success/20 flex items-center gap-3 font-bold border border-success/50">
+                        <span className="material-symbols-outlined">check_circle</span>
+                        تم حفظ التقسيمات وأسعار المواد بنجاح!
+                    </div>
+                </div>
+            )}
 
             <BottomNavigation />
         </>

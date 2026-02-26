@@ -1,0 +1,18 @@
+{
+  "status": "commited",
+  "type": "backend",
+  "scope": "codebase",
+  "localEndpoint": "http://127.0.0.1:3000",
+  "backendAuthType": "public",
+  "executionArgs": {
+    "projectName": "recycle24",
+    "projectPath": "h:\\Metalix24\\Recycle24\\Recycle24-3ae8c036fd49500962703a549df0f3b801be005f\\recycle24",
+    "testIds": [],
+    "additionalInstruction": "",
+    "envs": {
+      "API_KEY": "sk-user-hME51I0vELWskPp0AOOHVXHHI4UiZUCHKNnAbOgHqjjqSt3xiNPftL74rUUiAHhkW8L7ZUU0dl922uTmZQNmOx4h-7HjE7M4zs4pMkoAF2lVB749ROVGtkSqvg-MANh0JCQ"
+    }
+  },
+  "serverPort": 52353,
+  "proxy": "http://d9d48649-44a4-492e-9a4a-19e6a322d5dd:F2SUbs43axRhEiWAjjRYz0ePQ31JeE9U@tun.testsprite.com:8080"
+}

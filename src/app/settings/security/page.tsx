@@ -37,6 +37,12 @@ export default function SecuritySettingsPage() {
     const [securityLogs, setSecurityLogs] = useState<SecurityLog[]>([]);
     const [isUpdating, setIsUpdating] = useState(false);
 
+    // Notification Preferences
+    const [notifyEmail, setNotifyEmail] = useState(true);
+    const [notifyWhatsapp, setNotifyWhatsapp] = useState(true);
+    const [notifyTelegram, setNotifyTelegram] = useState(false);
+    const [notifySms, setNotifySms] = useState(false);
+
     useEffect(() => {
         const fetchSecurityData = async () => {
             setIsLoading(true);
@@ -303,6 +309,106 @@ export default function SecuritySettingsPage() {
                                     checked={faceIdEnabled}
                                     onChange={(e) => handleToggleFaceId(e.target.checked)}
                                     disabled={isUpdating}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-slate-700 peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h3 className="text-slate-400 text-sm font-semibold mb-3 px-1 uppercase tracking-wider">
+                        إعدادات الإشعارات
+                    </h3>
+                    <div className="flex flex-col bg-surface-dark rounded-2xl overflow-hidden border border-slate-800 divide-y divide-slate-800">
+                        <div className="flex items-center justify-between gap-4 px-4 py-4">
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 shrink-0 size-10">
+                                    <span className="material-symbols-outlined !text-[20px]">email</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-base font-medium text-white">البريد الإلكتروني</span>
+                                    <span className="text-xs text-slate-400 mt-0.5">تلقي الإشعارات الهامة عبر الإيميل</span>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                                <input
+                                    type="checkbox"
+                                    checked={notifyEmail}
+                                    onChange={(e) => {
+                                        setNotifyEmail(e.target.checked);
+                                        addToast("تم تحديث إعدادات البريد الإلكتروني", "success");
+                                    }}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-slate-700 peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        <div className="flex items-center justify-between gap-4 px-4 py-4">
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center justify-center rounded-xl bg-green-500/10 text-green-500 shrink-0 size-10">
+                                    <span className="material-symbols-outlined !text-[20px]">chat</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-base font-medium text-white">واتساب</span>
+                                    <span className="text-xs text-slate-400 mt-0.5">تلقي الإشعارات الفورية والمزادات عبر واتساب</span>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                                <input
+                                    type="checkbox"
+                                    checked={notifyWhatsapp}
+                                    onChange={(e) => {
+                                        setNotifyWhatsapp(e.target.checked);
+                                        addToast("تم تحديث إعدادات واتساب", "success");
+                                    }}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-slate-700 peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        <div className="flex items-center justify-between gap-4 px-4 py-4">
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center justify-center rounded-xl bg-sky-500/10 text-sky-400 shrink-0 size-10">
+                                    <span className="material-symbols-outlined !text-[20px]">send</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-base font-medium text-white">تيليجرام</span>
+                                    <span className="text-xs text-slate-400 mt-0.5">إرسال التنبيهات إلى حسابك على تيليجرام</span>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                                <input
+                                    type="checkbox"
+                                    checked={notifyTelegram}
+                                    onChange={(e) => {
+                                        setNotifyTelegram(e.target.checked);
+                                        addToast("تم تحديث إعدادات تيليجرام", "success");
+                                    }}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-11 h-6 bg-slate-700 peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        <div className="flex items-center justify-between gap-4 px-4 py-4">
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center justify-center rounded-xl bg-orange-500/10 text-orange-400 shrink-0 size-10">
+                                    <span className="material-symbols-outlined !text-[20px]">sms</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-base font-medium text-white">رسائل نصية SMS</span>
+                                    <span className="text-xs text-slate-400 mt-0.5">تلقي إشعارات الحماية والدخول</span>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                                <input
+                                    type="checkbox"
+                                    checked={notifySms}
+                                    onChange={(e) => {
+                                        setNotifySms(e.target.checked);
+                                        addToast("تم تحديث إعدادات الرسائل النصية", "success");
+                                    }}
                                     className="sr-only peer"
                                 />
                                 <div className="w-11 h-6 bg-slate-700 peer-focus:ring-2 peer-focus:ring-primary/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>

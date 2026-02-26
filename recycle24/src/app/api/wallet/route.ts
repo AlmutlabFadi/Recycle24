@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         });
 
         if (!wallet) {
-            wallet = await db.wallet.create({
+            const newWallet = await db.wallet.create({
                 data: {
                     userId,
                     balanceSYP: 0,
@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
                     },
                 },
             });
+            wallet = newWallet;
         }
 
         return NextResponse.json({

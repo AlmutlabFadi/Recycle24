@@ -7,7 +7,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 
 export default function WalletPage() {
     const { wallet, isLoading, error, refresh } = useWallet();
-    const { isAuthenticated } = useAuth();
+    const { user, isAuthenticated } = useAuth();
 
     if (!isAuthenticated) {
         return (
@@ -23,6 +23,39 @@ export default function WalletPage() {
                         >
                             تسجيل الدخول
                             <span className="material-symbols-outlined">arrow_back</span>
+                        </Link>
+                    </div>
+                </div>
+                <BottomNavigation />
+            </div>
+        );
+    }
+
+    if (user?.status !== "APPROVED") {
+        return (
+            <div className="flex flex-col min-h-screen bg-bg-dark font-display">
+                <header className="sticky top-0 z-40 bg-bg-dark/90 backdrop-blur-md border-b border-slate-800">
+                    <div className="flex items-center justify-between p-4">
+                        <Link href="/" className="flex items-center justify-center size-10 rounded-full hover:bg-surface-highlight transition">
+                            <span className="material-symbols-outlined text-white">arrow_forward</span>
+                        </Link>
+                        <h1 className="text-base font-bold text-white">المحفظة الرقمية</h1>
+                        <div className="size-10"></div>
+                    </div>
+                </header>
+                <div className="flex-1 flex items-center justify-center p-6">
+                    <div className="text-center">
+                        <span className="material-symbols-outlined text-6xl text-slate-600 mb-4">gpp_bad</span>
+                        <h2 className="text-xl font-bold text-white mb-2">حساب غير موثق</h2>
+                        <p className="text-slate-400 mb-4 text-sm leading-relaxed px-4">
+                            عذراً، لا يمكنك استخدام المحفظة الرقمية وإجراء المعاملات المالية حتى يتم توثيق حسابك بشكل كامل.
+                        </p>
+                        <Link
+                            href="/verification"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-colors"
+                        >
+                            توثيق الحساب الآن
+                            <span className="material-symbols-outlined">verified_user</span>
                         </Link>
                     </div>
                 </div>

@@ -8,29 +8,6 @@ import { TitleSelector } from "@/components/TitleSelector";
 import { TitleBadge } from "@/components/TitleFormatter";
 import { Gender, getTitleDisplay, getTitleById } from "@/lib/title-system";
 
-const menuItems = [
-    { icon: "settings", label: "إعدادات الحساب", href: "/settings/account" },
-    { icon: "security", label: "الأمان والخصوصية", href: "/settings/security" },
-    { icon: "dashboard", label: "لوحة التحكم", href: "/dashboard" },
-    { icon: "account_balance_wallet", label: "المحفظة", href: "/wallet" },
-    { icon: "verified_user", label: "التوثيق", href: "/verification" },
-    { icon: "gavel", label: "مزاداتي", href: "/auctions" },
-    { icon: "local_offer", label: "عروضي", href: "/offers" },
-    { icon: "handshake", label: "الصفقات", href: "/deals" },
-    { icon: "local_shipping", label: "النقل والشحن", href: "/transport" },
-    { icon: "notifications_active", label: "تنبيهات الأسعار", href: "/price-alerts" },
-    { icon: "work", label: "مركز الوظائف", href: "/jobs" },
-    { icon: "psychology", label: "الاستشارات", href: "/consultations" },
-    { icon: "analytics", label: "أسعار السوق", href: "/market" },
-    { icon: "workspace_premium", label: "الاشتراكات", href: "/subscription/plans" },
-    { icon: "redeem", label: "المكافآت", href: "/rewards/store" },
-    { icon: "school", label: "أكاديمية التدريب", href: "/academy" },
-    { icon: "health_and_safety", label: "مركز السلامة", href: "/safety" },
-    { icon: "support_agent", label: "الدعم الفني", href: "/support/chat" },
-    { icon: "report", label: "البلاغات", href: "/stolen-reports" },
-    { icon: "smart_toy", label: "المساعد الذكي", href: "/ai-assistant" },
-    { icon: "help", label: "المساعدة", href: "/help" },
-];
 
 const companyTypes = [
     { value: "INDIVIDUAL", label: "نشاط فردي" },
@@ -63,6 +40,13 @@ const jobTitles = [
     { value: "OTHER", label: "أخرى" },
 ];
 
+const clientBusinessTypes = [
+    { value: "FREELANCE", label: "عمل حر" },
+    { value: "SCRAP_COLLECTOR", label: "جامع خردة" },
+    { value: "EXTRA_INCOME", label: "دخل إضافي" },
+    { value: "OTHER", label: "أخرى" },
+];
+
 interface UserProfile {
     titleId: string;
     firstName: string;
@@ -74,22 +58,49 @@ interface UserProfile {
     bio: string;
     avatar: string | null;
     gender: Gender;
+    customBusinessType?: string;
 }
 
 export default function ProfilePage() {
-    const { user, isAuthenticated, isLoading, logout, updateUser } = useAuth();
+    const { user, isAuthenticated, isLoading, logout, updateUser, activeRole, switchRole } = useAuth();
+    const isTrader = activeRole === "TRADER";
+    const currentMenuItems = [
+        { icon: "settings", label: "إعدادات الحساب", href: "/settings/account" },
+        { icon: "security", label: "الأمان والخصوصية", href: "/settings/security" },
+        { icon: "dashboard", label: "لوحة التحكم", href: "/dashboard" },
+        { icon: "account_balance_wallet", label: isTrader ? "الرصيد التشغيلي" : "المحفظة", href: "/wallet" },
+        { icon: "verified_user", label: "التوثيق", href: "/verification" },
+        { icon: "gavel", label: "المزادات", href: "/auctions" },
+        { icon: "local_offer", label: isTrader ? "الطلبات" : "عروضي", href: "/offers" },
+        { icon: "handshake", label: "الصفقات", href: "/deals" },
+        { icon: "local_shipping", label: "النقل والشحن", href: "/transport" },
+        { icon: "notifications_active", label: "تنبيهات الأسعار", href: "/price-alerts" },
+        { icon: "work", label: "مركز الوظائف", href: "/jobs" },
+        ...(isTrader ? [{ icon: "psychology", label: "الاستشارات", href: "/consultations" }] : []),
+        { icon: "analytics", label: "أسعار السوق", href: "/market" },
+        { icon: "workspace_premium", label: isTrader ? "اشتراكات التاجر" : "اشتراكات العميل", href: "/subscription/plans" },
+        { icon: "redeem", label: "المكافآت", href: "/rewards/store" },
+        { icon: "report", label: "البلاغات", href: "/stolen-reports" },
+        ...(isTrader ? [
+            { icon: "school", label: "أكاديمية التدريب", href: "/academy" }
+        ] : []),
+        { icon: "support_agent", label: "الدعم الفني", href: "/support/chat" },
+        { icon: "help", label: "المساعدة", href: "/help" },
+    ];
+
     const initialProfile = useMemo(() => ({
         titleId: user?.titleId || "",
         firstName: user?.firstName || user?.name?.split(' ')[0] || "",
         lastName: user?.lastName || user?.name?.split(' ').slice(1).join(' ') || "",
         companyName: "",
         companyType: "INDIVIDUAL",
-        businessType: "TRADER",
+        businessType: isTrader ? "TRADER" : "FREELANCE",
         jobTitle: "OWNER",
         bio: "",
         avatar: null as string | null,
         gender: (user?.gender || "male") as Gender,
-    }), [user]);
+        customBusinessType: "",
+    }), [user, isTrader]);
 
     const [isEditing, setIsEditing] = useState(false);
     const [profile, setProfile] = useState<UserProfile>(initialProfile);
@@ -137,6 +148,10 @@ export default function ProfilePage() {
 
     const getCompanyTypeLabel = (value: string) => {
         return companyTypes.find(c => c.value === value)?.label || "";
+    };
+
+    const getClientBusinessLabel = (value: string) => {
+        return clientBusinessTypes.find(c => c.value === value)?.label || "";
     };
 
     const getJobTitleLabel = (value: string) => {
@@ -300,47 +315,75 @@ export default function ProfilePage() {
                                         />
                                     </div>
 
-                                    {/* Company Name */}
-                                    <input
-                                        type="text"
-                                        value={profile.companyName}
-                                        onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
-                                        placeholder="اسم الشركة / المنشأة"
-                                        className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
-                                    />
+                                    {isTrader ? (
+                                        <>
+                                            {/* Company Name */}
+                                            <input
+                                                type="text"
+                                                value={profile.companyName}
+                                                onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
+                                                placeholder="اسم الشركة / المنشأة"
+                                                className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
+                                            />
 
-                                    {/* Company Type */}
-                                    <select
-                                        value={profile.companyType}
-                                        onChange={(e) => setProfile({ ...profile, companyType: e.target.value })}
-                                        className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
-                                    >
-                                        {companyTypes.map((c) => (
-                                            <option key={c.value} value={c.value}>{c.label}</option>
-                                        ))}
-                                    </select>
+                                            {/* Company Type */}
+                                            <select
+                                                value={profile.companyType}
+                                                onChange={(e) => setProfile({ ...profile, companyType: e.target.value })}
+                                                className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
+                                            >
+                                                {companyTypes.map((c) => (
+                                                    <option key={c.value} value={c.value}>{c.label}</option>
+                                                ))}
+                                            </select>
 
-                                    {/* Business Type */}
-                                    <select
-                                        value={profile.businessType}
-                                        onChange={(e) => setProfile({ ...profile, businessType: e.target.value })}
-                                        className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
-                                    >
-                                        {businessTypes.map((b) => (
-                                            <option key={b.value} value={b.value}>{b.label}</option>
-                                        ))}
-                                    </select>
+                                            {/* Business Type */}
+                                            <select
+                                                value={profile.businessType}
+                                                onChange={(e) => setProfile({ ...profile, businessType: e.target.value })}
+                                                className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
+                                            >
+                                                {businessTypes.map((b) => (
+                                                    <option key={b.value} value={b.value}>{b.label}</option>
+                                                ))}
+                                            </select>
 
-                                    {/* Job Title */}
-                                    <select
-                                        value={profile.jobTitle}
-                                        onChange={(e) => setProfile({ ...profile, jobTitle: e.target.value })}
-                                        className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
-                                    >
-                                        {jobTitles.map((j) => (
-                                            <option key={j.value} value={j.value}>{j.label}</option>
-                                        ))}
-                                    </select>
+                                            {/* Job Title */}
+                                            <select
+                                                value={profile.jobTitle}
+                                                onChange={(e) => setProfile({ ...profile, jobTitle: e.target.value })}
+                                                className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
+                                            >
+                                                {jobTitles.map((j) => (
+                                                    <option key={j.value} value={j.value}>{j.label}</option>
+                                                ))}
+                                            </select>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {/* Client Business Type */}
+                                            <select
+                                                value={profile.businessType}
+                                                onChange={(e) => setProfile({ ...profile, businessType: e.target.value })}
+                                                className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
+                                            >
+                                                {clientBusinessTypes.map((c) => (
+                                                    <option key={c.value} value={c.value}>{c.label}</option>
+                                                ))}
+                                            </select>
+                                            
+                                            {/* Custom Business Type input if 'OTHER' */}
+                                            {profile.businessType === "OTHER" && (
+                                                <input
+                                                    type="text"
+                                                    value={profile.customBusinessType || ""}
+                                                    onChange={(e) => setProfile({ ...profile, customBusinessType: e.target.value })}
+                                                    placeholder="يرجى تحديد النشاط..."
+                                                    className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
+                                                />
+                                            )}
+                                        </>
+                                    )}
 
                                     {/* Bio */}
                                     <textarea
@@ -380,15 +423,19 @@ export default function ProfilePage() {
                                         )}
                                     </div>
                                     
-                                    {profile.companyName && (
+                                    {isTrader && profile.companyName && (
                                         <p className="text-sm text-primary font-semibold mt-1">{profile.companyName}</p>
                                     )}
                                     
                                     <p className="text-sm text-slate-400 mt-0.5">
-                                        {getCompanyTypeLabel(profile.companyType)} • {getUserTypeLabel(user?.userType || "TRADER")}
+                                        {isTrader ? (
+                                            `${getCompanyTypeLabel(profile.companyType)} • ${getUserTypeLabel(user?.userType || "TRADER")}`
+                                        ) : (
+                                            `${profile.businessType === "OTHER" ? (profile.customBusinessType || "أخرى") : getClientBusinessLabel(profile.businessType)} • عميل`
+                                        )}
                                     </p>
 
-                                    {profile.jobTitle && (
+                                    {isTrader && profile.jobTitle && (
                                         <p className="text-xs text-slate-500 mt-1">
                                             {getJobTitleLabel(profile.jobTitle)}
                                         </p>
@@ -447,6 +494,32 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
+                {/* Role Toggle Switch */}
+                {isAuthenticated && !isEditing && (
+                    <div className="px-4 mt-4">
+                        <div className="flex bg-surface-highlight border border-slate-700 rounded-xl p-1 w-full max-w-sm mx-auto shadow-sm">
+                            <button
+                                onClick={() => switchRole("CLIENT")}
+                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${activeRole === "CLIENT" ? "bg-primary text-white shadow" : "text-slate-400 hover:text-slate-200"}`}
+                            >
+                                <div className="flex items-center justify-center gap-2">
+                                    <span className="material-symbols-outlined !text-[18px]">shopping_bag</span>
+                                    حساب العميل
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => switchRole("TRADER")}
+                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${activeRole === "TRADER" ? "bg-primary text-white shadow" : "text-slate-400 hover:text-slate-200"}`}
+                            >
+                                <div className="flex items-center justify-center gap-2">
+                                    <span className="material-symbols-outlined !text-[18px]">storefront</span>
+                                    حساب التاجر
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Verification Alert */}
                 {user?.status === "PENDING" && !isEditing && (
                     <div className="px-4 mt-4">
@@ -468,7 +541,7 @@ export default function ProfilePage() {
                     <>
                         <div className="px-4 mt-6">
                             <div className="flex flex-col gap-1">
-                                {menuItems.map((item) => (
+                                {currentMenuItems.map((item) => (
                                     <Link
                                         key={item.href}
                                         href={item.href}

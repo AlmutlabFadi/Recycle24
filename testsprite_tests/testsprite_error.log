@@ -1,0 +1,62 @@
+🚀 Starting test execution...
+checkPortListening error: 3000 127.0.0.1
+Error: connect ECONNREFUSED 127.0.0.1:3000
+checkPortListening error: 3000 127.0.0.1
+Error: connect ECONNREFUSED 127.0.0.1:3000
+checkPortListening error: 3000 127.0.0.1
+Error: connect ECONNREFUSED 127.0.0.1:3000
+checkPortListening error: 3000 127.0.0.1
+Error: connect ECONNREFUSED 127.0.0.1:3000
+checkPortListening failed: 3000 127.0.0.1
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening error: 3000 localhost
+AggregateError
+checkPortListening failed: 3000 localhost
+Error occurred. Cleaning up tunnel...
+HTTP Proxy has been closed.
+Tunnel has been closed.
+❌ Test execution failed: Error: Failed to generate and execute tests: Error:  Failed to set up testing tunnel: Because the local project is not running on port 3000. 
+Step 1: Install all necessary dependencies for the local project.
+Step 2: Restart the local project.
+Step 3: Review and update the local port configuration if needed to ensure the project functions correctly.
+    at _startTunnel (file:///C:/Users/faraj/AppData/Local/npm-cache/_npx/8ddf6bea01b2519d/node_modules/@testsprite/testsprite-mcp/dist/index.js:136501:15)
+    at async _generateCodeAndExecute (file:///C:/Users/faraj/AppData/Local/npm-cache/_npx/8ddf6bea01b2519d/node_modules/@testsprite/testsprite-mcp/dist/index.js:136217:23)
+    at async file:///C:/Users/faraj/AppData/Local/npm-cache/_npx/8ddf6bea01b2519d/node_modules/@testsprite/testsprite-mcp/dist/index.js:134133:24
+    at async Command.<anonymous> (file:///C:/Users/faraj/AppData/Local/npm-cache/_npx/8ddf6bea01b2519d/node_modules/@testsprite/testsprite-mcp/dist/index.js:141005:9)
+    at async Command.parseAsync (file:///C:/Users/faraj/AppData/Local/npm-cache/_npx/8ddf6bea01b2519d/node_modules/@testsprite/testsprite-mcp/dist/index.js:139274:6)
+    at async main (file:///C:/Users/faraj/AppData/Local/npm-cache/_npx/8ddf6bea01b2519d/node_modules/@testsprite/testsprite-mcp/dist/index.js:141230:9)
+    at _generateCodeAndExecute (file:///C:/Users/faraj/AppData/Local/npm-cache/_npx/8ddf6bea01b2519d/node_modules/@testsprite/testsprite-mcp/dist/index.js:136471:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/Users/faraj/AppData/Local/npm-cache/_npx/8ddf6bea01b2519d/node_modules/@testsprite/testsprite-mcp/dist/index.js:134133:24
+    at async Command.<anonymous> (file:///C:/Users/faraj/AppData/Local/npm-cache/_npx/8ddf6bea01b2519d/node_modules/@testsprite/testsprite-mcp/dist/index.js:141005:9)
+    at async Command.parseAsync (file:///C:/Users/faraj/AppData/Local/npm-cache/_npx/8ddf6bea01b2519d/node_modules/@testsprite/testsprite-mcp/dist/index.js:139274:6)
+    at async main (file:///C:/Users/faraj/AppData/Local/npm-cache/_npx/8ddf6bea01b2519d/node_modules/@testsprite/testsprite-mcp/dist/index.js:141230:9)

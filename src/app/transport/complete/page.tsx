@@ -60,7 +60,7 @@ function CompleteDeliveryContent() {
             if (data.success || response.ok) {
                 addToast("تم إنهاء التسليم بنجاح", "success");
                 setTimeout(() => {
-                    router.push("/transport/live");
+                    router.push("/transport/rating?trackingId=" + trackingId);
                 }, 1500);
             } else {
                 addToast(data.error || "فشل في إنهاء التسليم", "error");
@@ -70,7 +70,7 @@ function CompleteDeliveryContent() {
             // Simulate success for demo purposes if backend fails on local
             addToast("تم إنهاء التسليم بنجاح (وضع المحاكاة)!", "success");
             setTimeout(() => {
-                router.push("/transport/live");
+                router.push("/transport/rating?trackingId=" + trackingId);
             }, 1000);
         } finally {
             setIsSubmitting(false);

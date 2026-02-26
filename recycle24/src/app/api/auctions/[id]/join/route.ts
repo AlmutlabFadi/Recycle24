@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,14 +14,13 @@ export async function POST(
     }
 
     const userId = session.user.id;
-    const auctionId = params.id;
+    const { id: auctionId } = await params;
 
     if (!auctionId) {
       return NextResponse.json({ error: "Auction ID is required" }, { status: 400 });
     }
 
-    // Await db first because in this Next.js setup db might be a promise depending on initialization
-    const prisma = await db;
+    const prisma = db;
 
     // 1. Check if auction exists and is active
     const auction = await prisma.auction.findUnique({

@@ -2,11 +2,15 @@
 
 import Link from "next/link";
 import HeaderWithBack from "@/components/HeaderWithBack";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function VerificationPage() {
+    const { activeRole } = useAuth();
+    const isTrader = activeRole === "TRADER";
+
     return (
         <>
-            <HeaderWithBack title="تحقق التاجر" />
+            <HeaderWithBack title={isTrader ? "تحقق التاجر" : "توثيق حساب العميل"} />
 
             <main className="flex-col pb-24">
                 {/* Stepper Progress */}
@@ -64,14 +68,16 @@ export default function VerificationPage() {
                                     verified
                                 </span>
                                 <span className="text-blue-100 text-xs font-bold tracking-wide drop-shadow-sm">
-                                    كن شريكاً معتمداً
+                                    {isTrader ? "كن شريكاً معتمداً" : "احصل على شارة موثق ومعروف"}
                                 </span>
                             </div>
                             <h2 className="text-white text-2xl font-black leading-tight mb-2 tracking-tight drop-shadow-md">
-                                افتح صفقات المصانع الحصرية وعزز سمعتك
+                                {isTrader ? "افتح صفقات المصانع الحصرية وعزز سمعتك" : "تمتع بمزايا حصرية وموثوقية عالية"}
                             </h2>
                             <p className="text-slate-200 text-sm font-medium leading-relaxed max-w-[95%] drop-shadow-sm">
-                                أكمل إجراءات التحقق لتصبح تاجراً موثوقاً في السوق السوري.
+                                {isTrader 
+                                    ? "أكمل إجراءات التحقق لتصبح تاجراً موثوقاً في السوق السوري."
+                                    : "أكمل إجراءات التحقق لتكون عميلاً موثوقاً ومعروفاً وتتمكن من استخدام المحفظة."}
                             </p>
                         </div>
                     </div>
@@ -88,54 +94,109 @@ export default function VerificationPage() {
                         </p>
                     </div>
                     <div className="grid gap-3">
-                        {/* Benefit Card 1 */}
-                        <div className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
-                            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-primary shrink-0">
-                                <span className="material-symbols-outlined filled !text-[24px]">
-                                    trending_up
-                                </span>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <h4 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
-                                    ظهور أعلى في البحث
-                                </h4>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
-                                    يتم إعطاء الأولوية لملفك الشخصي في نتائج البحث للمشترين والمصانع.
-                                </p>
-                            </div>
-                        </div>
-                        {/* Benefit Card 2 */}
-                        <div className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
-                            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 shrink-0">
-                                <span className="material-symbols-outlined filled !text-[24px]">
-                                    verified_user
-                                </span>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <h4 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
-                                    شارة التاجر الموثوق
-                                </h4>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
-                                    تظهر شارة الثقة بجانب اسمك لزيادة مصداقيتك ومبيعاتك.
-                                </p>
-                            </div>
-                        </div>
-                        {/* Benefit Card 3 */}
-                        <div className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
-                            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 shrink-0">
-                                <span className="material-symbols-outlined filled !text-[24px]">
-                                    factory
-                                </span>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <h4 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
-                                    صفقات المصانع المباشرة
-                                </h4>
-                                <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
-                                    الوصول إلى المزادات المغلقة والعروض الحصرية من كبرى المصانع.
-                                </p>
-                            </div>
-                        </div>
+                        {isTrader ? (
+                            <>
+                                {/* Trader Benefit Card 1 */}
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-primary shrink-0">
+                                        <span className="material-symbols-outlined filled !text-[24px]">
+                                            trending_up
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <h4 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                                            ظهور أعلى في البحث
+                                        </h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                                            يتم إعطاء الأولوية لملفك الشخصي في نتائج البحث للمشترين والمصانع.
+                                        </p>
+                                    </div>
+                                </div>
+                                {/* Trader Benefit Card 2 */}
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 shrink-0">
+                                        <span className="material-symbols-outlined filled !text-[24px]">
+                                            verified_user
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <h4 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                                            شارة التاجر الموثوق
+                                        </h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                                            تظهر شارة الثقة بجانب اسمك لزيادة مصداقيتك ومبيعاتك.
+                                        </p>
+                                    </div>
+                                </div>
+                                {/* Trader Benefit Card 3 */}
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 shrink-0">
+                                        <span className="material-symbols-outlined filled !text-[24px]">
+                                            factory
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <h4 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                                            صفقات المصانع المباشرة
+                                        </h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                                            الوصول إلى المزادات المغلقة والعروض الحصرية من كبرى المصانع.
+                                        </p>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                {/* Client Benefit Card 1 */}
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-primary shrink-0">
+                                        <span className="material-symbols-outlined filled !text-[24px]">
+                                            account_balance_wallet
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <h4 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                                            استخدام المحفظة الرقمية
+                                        </h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                                            تفعيل المحفظة القدرة على إجراء عمليات الإيداع والسحب والشراء من خلالها.
+                                        </p>
+                                    </div>
+                                </div>
+                                {/* Client Benefit Card 2 */}
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 shrink-0">
+                                        <span className="material-symbols-outlined filled !text-[24px]">
+                                            workspace_premium
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <h4 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                                            شارة عميل موثوق ومعروف
+                                        </h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                                            تزيد الشارة من موثوقيتك لدى التجار والمصانع وتسهل إتمام صفقاتك.
+                                        </p>
+                                    </div>
+                                </div>
+                                {/* Client Benefit Card 3 */}
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 shrink-0">
+                                        <span className="material-symbols-outlined filled !text-[24px]">
+                                            support_agent
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <h4 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                                            أولوية في خدمة العملاء
+                                        </h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                                            دعم فني أسرع واستجابة فورية لأي مشكلة قد تواجهك خلال استخدام التطبيق.
+                                        </p>
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
 

@@ -55,7 +55,6 @@ export default function TopAppBar() {
                         </h1>
                     </div>
 
-
                     <div className="relative">
                         <button
                             onClick={() => setShowGovernorates(!showGovernorates)}

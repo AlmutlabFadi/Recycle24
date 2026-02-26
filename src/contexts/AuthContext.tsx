@@ -1,8 +1,10 @@
 "use client";
 
-import { createContext, useContext, ReactNode, useCallback } from "react";
+import { createContext, useContext, ReactNode, useCallback, useState, useEffect } from "react";
 import { useSession, signIn, signOut, SessionProvider } from "next-auth/react";
 import { Gender } from "@/lib/title-system";
+
+export type ActiveRole = "CLIENT" | "TRADER" | "ADMIN";
 
 interface User {
   id: string;
@@ -15,11 +17,13 @@ interface User {
   gender?: Gender;
   userType: "TRADER" | "BUYER" | "ADMIN";
   status: string;
+  role?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  activeRole: ActiveRole | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   loginWithPhone: (phone: string, password: string) => Promise<void>;
@@ -28,6 +32,7 @@ interface AuthContextType {
   registerWithEmail: (email: string, password: string, name: string, userType: string, titleId?: string, gender?: Gender) => Promise<void>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
+  switchRole: (role: ActiveRole) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,6 +41,19 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const isLoading = status === "loading";
   const user = session?.user as unknown as User | null;
+  const [activeRole, setActiveRole] = useState<ActiveRole | null>(null);
+
+  useEffect(() => {
+    if (user && !activeRole) {
+      setActiveRole(user.userType === "BUYER" ? "CLIENT" : user.userType as ActiveRole);
+    } else if (!user) {
+      setActiveRole(null);
+    }
+  }, [user, activeRole]);
+
+  const switchRole = useCallback((role: ActiveRole) => {
+    setActiveRole(role);
+  }, []);
 
   const loginWithPhone = useCallback(async (phone: string, password: string) => {
     const result = await signIn("credentials", {
@@ -141,6 +159,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       value={{
         user,
         token: null, // Token isn't directly exposed in NextAuth client
+        activeRole,
         isLoading,
         isAuthenticated: !!user,
         loginWithPhone,
@@ -149,6 +168,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
         registerWithEmail,
         logout,
         updateUser,
+        switchRole,
       }}
     >
       {children}

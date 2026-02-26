@@ -194,20 +194,28 @@ function TrackContent() {
                                         </span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <a
-                                            href={`tel:${tracking.driver.phone}`}
-                                            className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary hover:bg-primary/30 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined">call</span>
-                                        </a>
-                                        <a
-                                            href={`https://wa.me/${tracking.driver.phone.replace(/^0/, "963")}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 hover:bg-green-500/30 transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined">chat</span>
-                                        </a>
+                                        {tracking.status === "CONFIRMED_AWAITING_DETAILS" || tracking.status === "CONFIRMED" ? (
+                                            <div className="text-[10px] text-amber-500/80 bg-amber-500/10 px-2 py-1 flex items-center justify-center rounded border border-amber-500/20 text-center leading-tight">
+                                                بانتظار تفاصيل <br/> الانطلاق
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <a
+                                                    href={`tel:${tracking.driver.phone}`}
+                                                    className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary hover:bg-primary/30 transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined">call</span>
+                                                </a>
+                                                <a
+                                                    href={`https://wa.me/${tracking.driver.phone.replace(/^0/, "963")}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 hover:bg-green-500/30 transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined">chat</span>
+                                                </a>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>

@@ -14,6 +14,7 @@ const protectedRoutes = [
   "/verification",
   "/contracts",
   "/transport/book",
+  "/transport/driver",
   "/support/tickets",
 ];
 

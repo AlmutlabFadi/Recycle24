@@ -1,9 +1,12 @@
+"use client";
+
 import TopAppBar from "@/components/TopAppBar";
 import BottomNavigation from "@/components/BottomNavigation";
 import MarketPriceCard from "@/components/MarketPriceCard";
 import GlobalMarketTicker from "@/components/home/GlobalMarketTicker";
 import PromoCarousel from "@/components/home/PromoCarousel";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 const quickServices = [
   { id: "auction", label: "إنشاء مزاد", icon: "gavel", href: "/auctions/create", color: "bg-purple-500/20 text-purple-400" },
@@ -47,6 +50,11 @@ const buyers = [
 ];
 
 export default function HomePage() {
+  const { activeRole } = useAuth();
+  const isTrader = activeRole === "TRADER";
+
+  const availableQuickServices = quickServices.filter(s => isTrader || (s.id !== "auction" && s.id !== "consultation"));
+
   return (
     <>
       <TopAppBar />
@@ -66,10 +74,12 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ماذا تبيع اليوم؟ */}
+        {/* ماذا تبيع / تشتري اليوم؟ */}
         <section className="px-4 mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-bold text-white">ماذا تبيع اليوم؟</h2>
+            <h2 className="text-lg font-bold text-white">
+              {isTrader ? "ماذا تشتري اليوم؟" : "ماذا تبيع اليوم؟"}
+            </h2>
             <Link href="/sell" className="text-sm font-bold text-primary">
               عرض الكل
             </Link>
@@ -78,7 +88,7 @@ export default function HomePage() {
             {materials.map((material) => (
               <Link
                 key={material.id}
-                href={`/sell?material=${material.id}`}
+                href={isTrader ? `/buy?material=${material.id}` : `/sell?material=${material.id}`}
                 className="flex flex-col items-center gap-2 p-4 rounded-xl border border-slate-700 bg-surface-dark hover:border-primary/50 active:scale-95 transition-all"
               >
                 <div className={`p-3 rounded-xl ${material.color}`}>
@@ -100,7 +110,7 @@ export default function HomePage() {
             <h2 className="text-lg font-bold text-white">الخدمات السريعة</h2>
           </div>
           <div className="grid grid-cols-3 gap-3">
-            {quickServices.map((service) => (
+            {availableQuickServices.map((service) => (
               <Link
                 key={service.id}
                 href={service.href}
@@ -124,25 +134,25 @@ export default function HomePage() {
           <PromoCarousel />
         </section>
 
-        {/* إنشاء مزاد - CTA */}
+        {/* إنشاء / تصفح مزاد - CTA */}
         <section className="px-4 mb-6">
           <Link
-            href="/auctions/create"
+            href={isTrader ? "/auctions/create" : "/auctions"}
             className="block relative overflow-hidden rounded-xl p-5 bg-gradient-to-l from-indigo-600 to-purple-600 group active:scale-[0.98] transition shadow-lg"
           >
             <div className="relative z-10">
               <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
                 <span className="material-symbols-outlined !text-[24px]">gavel</span>
-                عندك كمية كبيرة؟
+                {isTrader ? "عندك كمية كبيرة؟" : "اكتشف المزادات الكبرى"}
               </h3>
               <p className="text-sm text-indigo-100 mb-3">
-                أنشئ مزادك الخاص واحصل على أفضل عروض الأسعار
+                {isTrader ? "أنشئ مزادك الخاص واحصل على أفضل عروض الأسعار" : "تصفح أحدث المزادات وشارك بالمزايدة للحصول على صفقات ممتازة"}
               </p>
               <span className="inline-flex items-center gap-1.5 text-sm font-bold text-white bg-white/20 rounded-full px-4 py-2 hover:bg-white/30 transition">
                 <span className="material-symbols-outlined !text-[18px]">
-                  add_circle
+                  {isTrader ? "add_circle" : "gavel"}
                 </span>
-                إنشاء مزاد جديد
+                {isTrader ? "إنشاء مزاد جديد" : "تصفح المزادات"}
               </span>
             </div>
             <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined !text-[80px] text-white/10">
@@ -192,10 +202,12 @@ export default function HomePage() {
           </Link>
         </section>
 
-        {/* مشترين بالقرب منك */}
+        {/* مشترين / بائعين بالقرب منك */}
         <section className="px-4 pb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-white">مشترين بالقرب منك</h2>
+            <h2 className="text-lg font-bold text-white">
+              {isTrader ? "بائعين بالقرب منك" : "مشترين بالقرب منك"}
+            </h2>
             <Link href="/sell/buyers/map" className="text-sm font-bold text-primary">
               خريطة
             </Link>
@@ -226,7 +238,7 @@ export default function HomePage() {
                     )}
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    يشتري: {buyer.materials}
+                    {isTrader ? `يبيع: ${buyer.materials}` : `يشتري: ${buyer.materials}`}
                   </p>
                   <div className="flex items-center gap-3 mt-1">
                     <span className="text-[11px] text-slate-500 flex items-center gap-0.5">

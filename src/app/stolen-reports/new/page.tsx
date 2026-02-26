@@ -3,6 +3,7 @@
 import HeaderWithBack from "@/components/HeaderWithBack";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface MediaFile {
     url: string;
@@ -12,7 +13,9 @@ interface MediaFile {
 
 export default function NewStolenReportPage() {
     const router = useRouter();
+    const { activeRole } = useAuth();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [formData, setFormData] = useState({
         reportingOrg: "",
@@ -68,13 +71,63 @@ export default function NewStolenReportPage() {
         setItemFiles(prev => prev.filter((_, i) => i !== index));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        // ... (truncated here, but placed above return)
         e.preventDefault();
-        // In a real app, we would upload files headers and form data here
-        console.log("Submitting:", { ...formData, mediaFiles, itemFiles });
-        alert("تم تقديم البلاغ بنجاح!");
-        router.push("/stolen-reports");
+        setIsSubmitting(true);
+        // ... existing logic ...
+        try {
+            const res = await fetch("/api/stolen-reports", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    reportingOrg: formData.reportingOrg,
+                    type: formData.type === "معدات أخرى" ? formData.customItemType : formData.type,
+                    description: formData.description,
+                    location: formData.location,
+                    contactPhone: formData.contactPhone,
+                    plateNumber: formData.plateNumber,
+                    vehicleType: formData.vehicleType,
+                    vehicleColor: formData.vehicleColor,
+                    stolenDate: formData.stolenDate,
+                    images: [], 
+                    videos: []
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("تم تقديم البلاغ بنجاح!");
+                router.push("/stolen-reports");
+            } else {
+                alert(data.error || "حدث خطأ أثناء تقديم البلاغ");
+            }
+        } catch (error) {
+            console.error("Submit error:", error);
+            alert("فشل الاتصال بالخادم");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
+
+    if (activeRole !== "TRADER") {
+        return (
+            <div className="flex flex-col min-h-screen bg-bg-dark font-display items-center justify-center p-4">
+                <HeaderWithBack title="إبلاغ عن سرقة" />
+                <div className="text-center mt-20">
+                    <span className="material-symbols-outlined !text-[64px] text-red-500 mb-4">gavel</span>
+                    <h2 className="text-xl font-bold text-white mb-2">عذراً، غير مصرح لك</h2>
+                    <p className="text-slate-400 mb-6 max-w-sm mx-auto">
+                        هذا الحساب حساب عميل وغير مصرح له بإضافة بلاغات. يجب أن يكون لك حساب تاجر.
+                    </p>
+                    <button onClick={() => router.back()} className="px-6 py-3 bg-surface-highlight text-white rounded-xl hover:bg-slate-700 transition">
+                        العودة للسابق
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col min-h-screen bg-bg-dark font-display">
@@ -377,11 +430,18 @@ export default function NewStolenReportPage() {
                     <div className="pt-4">
                         <button
                             type="submit"
-                            className="w-full py-4 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition shadow-lg shadow-red-600/20"
+                            disabled={isSubmitting}
+                            className={`w-full py-4 text-white rounded-xl font-bold transition shadow-lg ${
+                                isSubmitting ? "bg-slate-600 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 shadow-red-600/20"
+                            }`}
                         >
                             <span className="flex items-center justify-center gap-2">
-                                <span className="material-symbols-outlined">send</span>
-                                إرسال البلاغ
+                                {isSubmitting ? (
+                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                ) : (
+                                    <span className="material-symbols-outlined">send</span>
+                                )}
+                                {isSubmitting ? "جاري الإرسال..." : "إرسال البلاغ"}
                             </span>
                         </button>
                     </div>

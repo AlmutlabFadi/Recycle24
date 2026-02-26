@@ -3,11 +3,15 @@
 import HeaderWithBack from "@/components/HeaderWithBack";
 import { useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 // Generate unique ID helper
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
 export default function CreateAuctionPage() {
+    const router = useRouter();
+    const { activeRole } = useAuth();
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
         title: "",
@@ -63,6 +67,24 @@ export default function CreateAuctionPage() {
         acceptedTerms: false,
         notes: "" // Additional notes
     });
+
+    if (activeRole !== "TRADER") {
+        return (
+            <div className="flex flex-col min-h-screen bg-bg-light dark:bg-bg-dark font-display">
+                <HeaderWithBack title="إنشاء مزاد جديد" />
+                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                    <span className="material-symbols-outlined !text-[80px] text-red-500 mb-4">lock</span>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">غير مصرح لك</h2>
+                    <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm">
+                        هذا الحساب حساب عميل وغير مصرح له في انشاء مزاد يجب ان يكون لديك حساب التاجر الموثق او حساب حكومي موثق.
+                    </p>
+                    <button onClick={() => router.back()} className="bg-slate-200 dark:bg-surface-highlight text-slate-900 dark:text-white px-8 py-3 rounded-xl font-bold">
+                        العودة
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     const handleNext = () => setStep(step + 1);
     const handleBack = () => setStep(step - 1);

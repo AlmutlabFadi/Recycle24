@@ -60,6 +60,7 @@ export default function SupportPage() {
                 {/* Quick Actions */}
                 <section className="mb-6">
                     <div className="grid grid-cols-2 gap-3">
+                        {/*
                         <Link
                             href="/ai-assistant"
                             className="flex flex-col items-center p-4 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30 hover:border-primary transition-all"
@@ -68,6 +69,7 @@ export default function SupportPage() {
                             <span className="font-bold text-white">المساعد الذكي</span>
                             <span className="text-xs text-slate-400 mt-1">رد فوري 24/7</span>
                         </Link>
+                        */}
                         <button className="flex flex-col items-center p-4 rounded-xl bg-surface-highlight border border-slate-700 hover:border-slate-600 transition-all">
                             <span className="material-symbols-outlined text-3xl text-secondary mb-2">chat</span>
                             <span className="font-bold text-white">دردشة مباشرة</span>

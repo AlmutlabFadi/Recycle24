@@ -1,11 +1,10 @@
 import { PrismaClient } from "@prisma/client";
-import { z } from "zod";
 
 declare global {
   var prisma: PrismaClient | undefined;
 }
 
-const isDemoMode = process.env.DEMO_MODE === "true" ||
+const _isDemoMode = process.env.DEMO_MODE === "true" ||
                    process.env.VERCEL === "1" ||
                    !process.env.DATABASE_URL ||
                    process.env.DATABASE_URL?.includes("file:");
@@ -18,11 +17,11 @@ function createPrismaClient(): PrismaClient {
 
 let _db: PrismaClient | null = null;
 
-async function getDb(): Promise<PrismaClient> {
+export async function getDb(): Promise<PrismaClient> {
   if (_db) return _db;
 
   try {
-    if (isDemoMode) {
+    if (_isDemoMode) {
       _db = createPrismaClient();
       return _db;
     }
@@ -43,40 +42,6 @@ async function getDb(): Promise<PrismaClient> {
   }
 }
 
-export const db = getDb();
+export const db = createPrismaClient();
 
-export function isDemoMode(): boolean {
-  return isDemoMode;
-}
-
-// Example usage of Prisma with proper error handling, type safety, and transaction
-async function updateMetalRecord(metalId: string, newDetails: { weight: number; price: number }) {
-  const schema = z.object({
-    weight: z.number().positive(),
-    price: z.number().positive(),
-  });
-
-  const { weight, price } = schema.parse(newDetails);
-
-  try {
-    const prisma = await getDb();
-    await prisma.$transaction(async (tx) => {
-      const metal = await tx.metal.findUnique({
-        where: { id: metalId },
-        select: { weight: true, price: true },
-      });
-
-      if (!metal) {
-        throw new Error('Metal record not found');
-      }
-
-      await tx.metal.update({
-        where: { id: metalId },
-        data: { weight, price },
-      });
-    });
-  } catch (error) {
-    console.error("Failed to update metal record:", error);
-    throw error;
-  }
-}
+export const isDemoMode = _isDemoMode;

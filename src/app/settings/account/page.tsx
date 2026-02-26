@@ -59,7 +59,7 @@ interface ProfileData {
 }
 
 export default function AccountSettingsPage() {
-  const { user, isAuthenticated, isLoading, updateUser } = useAuth();
+  const { user, isAuthenticated, isLoading, updateUser, activeRole } = useAuth();
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState<'personal' | 'business' | 'security'>('personal');
   const [isSaving, setIsSaving] = useState(false);
@@ -601,85 +601,139 @@ export default function AccountSettingsPage() {
             <div className="bg-surface-highlight border border-slate-700 rounded-2xl p-5 space-y-4">
               <h3 className="text-white font-bold flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">store</span>
-                معلومات النشاط التجاري
+                معلومات النشاط
               </h3>
 
-              <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">اسم الشركة / المنشأة</label>
-                <input
-                  type="text"
-                  value={profile.companyName}
-                  onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
-                  placeholder="أدخل اسم الشركة"
-                  className="w-full bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:border-primary focus:outline-none"
-                />
-              </div>
+              {activeRole === 'CLIENT' ? (
+                <>
+                  <div>
+                    <label className="text-sm text-slate-400 mb-1.5 block">نوع العمل</label>
+                    <select
+                      value={profile.companyName}
+                      onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
+                      className="w-full bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:border-primary focus:outline-none"
+                    >
+                      <option value="">اختر نوع العمل</option>
+                      <option value="عمل حر">عمل حر</option>
+                      <option value="دخل إضافي">دخل إضافي</option>
+                      <option value="OTHER">أخرى</option>
+                    </select>
+                    {profile.companyName === 'OTHER' && (
+                      <input
+                        type="text"
+                        value={profile.companyTypeOther}
+                        onChange={(e) => setProfile({ ...profile, companyTypeOther: e.target.value })}
+                        placeholder="أدخل نوع العمل"
+                        className="w-full mt-2 bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:border-primary focus:outline-none"
+                      />
+                    )}
+                  </div>
 
-              <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">نوع النشاط</label>
-                <select
-                  value={profile.companyType}
-                  onChange={(e) => setProfile({ ...profile, companyType: e.target.value })}
-                  className="w-full bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:border-primary focus:outline-none"
-                >
-                  {companyTypes.map((type) => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
-                  ))}
-                </select>
-                {profile.companyType === 'OTHER' && (
-                  <input
-                    type="text"
-                    value={profile.companyTypeOther}
-                    onChange={(e) => setProfile({ ...profile, companyTypeOther: e.target.value })}
-                    placeholder="أدخل نوع النشاط"
-                    className="w-full mt-2 bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:border-primary focus:outline-none"
-                  />
-                )}
-              </div>
+                  <div>
+                    <label className="text-sm text-slate-400 mb-1.5 block">النشاط التجاري</label>
+                    <select
+                      value={profile.businessType}
+                      onChange={(e) => setProfile({ ...profile, businessType: e.target.value })}
+                      className="w-full bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:border-primary focus:outline-none"
+                    >
+                      {businessTypes
+                        .filter(type => !['TRADER', 'EXPORTER', 'IMPORTER'].includes(type.value))
+                        .map((type) => (
+                        <option key={type.value} value={type.value}>{type.label}</option>
+                      ))}
+                    </select>
+                    {profile.businessType === 'OTHER' && (
+                      <input
+                        type="text"
+                        value={profile.businessTypeOther}
+                        onChange={(e) => setProfile({ ...profile, businessTypeOther: e.target.value })}
+                        placeholder="أدخل نشاطك التجاري"
+                        className="w-full mt-2 bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:border-primary focus:outline-none"
+                      />
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="text-sm text-slate-400 mb-1.5 block">اسم الشركة / المنشأة</label>
+                    <input
+                      type="text"
+                      value={profile.companyName}
+                      onChange={(e) => setProfile({ ...profile, companyName: e.target.value })}
+                      placeholder="أدخل اسم الشركة"
+                      className="w-full bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:border-primary focus:outline-none"
+                    />
+                  </div>
 
-              <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">نشاطك التجاري</label>
-                <select
-                  value={profile.businessType}
-                  onChange={(e) => setProfile({ ...profile, businessType: e.target.value })}
-                  className="w-full bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:border-primary focus:outline-none"
-                >
-                  {businessTypes.map((type) => (
-                    <option key={type.value} value={type.value}>{type.label}</option>
-                  ))}
-                </select>
-                {profile.businessType === 'OTHER' && (
-                  <input
-                    type="text"
-                    value={profile.businessTypeOther}
-                    onChange={(e) => setProfile({ ...profile, businessTypeOther: e.target.value })}
-                    placeholder="أدخل نشاطك التجاري"
-                    className="w-full mt-2 bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:border-primary focus:outline-none"
-                  />
-                )}
-              </div>
+                  <div>
+                    <label className="text-sm text-slate-400 mb-1.5 block">نوع التأسيس</label>
+                    <select
+                      value={profile.companyType}
+                      onChange={(e) => setProfile({ ...profile, companyType: e.target.value })}
+                      className="w-full bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:border-primary focus:outline-none"
+                    >
+                      {companyTypes.map((type) => (
+                        <option key={type.value} value={type.value}>{type.label}</option>
+                      ))}
+                    </select>
+                    {profile.companyType === 'OTHER' && (
+                      <input
+                        type="text"
+                        value={profile.companyTypeOther}
+                        onChange={(e) => setProfile({ ...profile, companyTypeOther: e.target.value })}
+                        placeholder="أدخل نوع الشركة"
+                        className="w-full mt-2 bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:border-primary focus:outline-none"
+                      />
+                    )}
+                  </div>
 
-              <div>
-                <label className="text-sm text-slate-400 mb-1.5 block">المسمى الوظيفي</label>
-                <select
-                  value={profile.jobTitle}
-                  onChange={(e) => setProfile({ ...profile, jobTitle: e.target.value })}
-                  className="w-full bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:border-primary focus:outline-none"
-                >
-                  {jobTitles.map((title) => (
-                    <option key={title.value} value={title.value}>{title.label}</option>
-                  ))}
-                </select>
-                {profile.jobTitle === 'OTHER' && (
-                  <input
-                    type="text"
-                    value={profile.jobTitleOther}
-                    onChange={(e) => setProfile({ ...profile, jobTitleOther: e.target.value })}
-                    placeholder="أدخل المسمى الوظيفي"
-                    className="w-full mt-2 bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:border-primary focus:outline-none"
-                  />
-                )}
-              </div>
+                  <div>
+                    <label className="text-sm text-slate-400 mb-1.5 block">النشاط التجاري</label>
+                    <select
+                      value={profile.businessType}
+                      onChange={(e) => setProfile({ ...profile, businessType: e.target.value })}
+                      className="w-full bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:border-primary focus:outline-none"
+                    >
+                      {businessTypes
+                        .filter(type => type.value !== 'SCRAP_COLLECTOR')
+                        .map((type) => (
+                        <option key={type.value} value={type.value}>{type.label}</option>
+                      ))}
+                    </select>
+                    {profile.businessType === 'OTHER' && (
+                      <input
+                        type="text"
+                        value={profile.businessTypeOther}
+                        onChange={(e) => setProfile({ ...profile, businessTypeOther: e.target.value })}
+                        placeholder="أدخل نشاطك التجاري"
+                        className="w-full mt-2 bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:border-primary focus:outline-none"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-sm text-slate-400 mb-1.5 block">المسمى الوظيفي</label>
+                    <select
+                      value={profile.jobTitle}
+                      onChange={(e) => setProfile({ ...profile, jobTitle: e.target.value })}
+                      className="w-full bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white focus:border-primary focus:outline-none"
+                    >
+                      {jobTitles.map((title) => (
+                        <option key={title.value} value={title.value}>{title.label}</option>
+                      ))}
+                    </select>
+                    {profile.jobTitle === 'OTHER' && (
+                      <input
+                        type="text"
+                        value={profile.jobTitleOther}
+                        onChange={(e) => setProfile({ ...profile, jobTitleOther: e.target.value })}
+                        placeholder="أدخل المسمى الوظيفي"
+                        className="w-full mt-2 bg-surface-dark border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-500 focus:border-primary focus:outline-none"
+                      />
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             <button

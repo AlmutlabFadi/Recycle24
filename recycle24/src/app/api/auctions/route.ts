@@ -90,13 +90,13 @@ export async function GET(request: NextRequest) {
 
         const where: AuctionWhereInput = {};
         if (searchParams.has("status")) {
-            where.status = searchParams.get("status");
+            where.status = searchParams.get("status") || undefined;
         }
         if (searchParams.has("material")) {
-            where.category = searchParams.get("material");
+            where.category = searchParams.get("material") || undefined;
         }
         if (searchParams.has("governorate")) {
-            where.location = { contains: searchParams.get("governorate") };
+            where.location = { contains: searchParams.get("governorate") || undefined };
         }
 
         const auctions = await db.auction.findMany({
@@ -193,10 +193,11 @@ export async function POST(request: NextRequest) {
             auction,
             message: "Auction created successfully",
         });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Create auction error:", error);
+        const err = error as Error;
         return NextResponse.json(
-            { error: error.message || "An error occurred while creating the auction" },
+            { error: err.message || "An error occurred while creating the auction" },
             { status: 500 }
         );
     }

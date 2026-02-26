@@ -122,18 +122,11 @@ function getDemoOrders(): TransportOrder[] {
 
 export async function GET(request: NextRequest) {
     try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
-            return NextResponse.json({ error: "غير مصرح لك", success: false }, { status: 401 });
-        }
-
-        const sessionUser = session.user as SessionUser;
-        const userId = sessionUser.id;
-
         const { searchParams } = new URL(request.url);
         const status = searchParams.get("status");
         const limit = parseInt(searchParams.get("limit") || "20");
         const offset = parseInt(searchParams.get("offset") || "0");
+        const view = searchParams.get("view");
 
         if (isDemoMode) {
             let orders = getDemoOrders();
@@ -148,7 +141,21 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        const where: { userId: string; status?: string } = { userId };
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return NextResponse.json({ error: "غير مصرح لك", success: false }, { status: 401 });
+        }
+
+        const sessionUser = session.user as SessionUser;
+        const userId = sessionUser.id;
+
+        const where: any = {};
+        
+        // If it's the driver loads board, show all available orders (don't limit to userId)
+        if (view !== "driver") {
+            where.userId = userId;
+        }
+
         if (status && status !== "all") {
             where.status = status;
         }

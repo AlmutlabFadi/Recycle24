@@ -1,0 +1,77 @@
+version: "2"
+type: backend
+tech_stack:
+  - typescript
+  - nextjs
+  - prisma
+  - postgresql
+features:
+  - name: Transport Offers API
+    description: CRUD operations for transport bids and offers management between drivers and shippers.
+    files:
+      - src/app/api/transport/offers/route.ts
+    endpoints:
+      - method: GET
+        path: /api/transport/offers?trackingId=REQ123
+        description: List all offers for a transport request given the trackingId
+        auth_required: false
+        response_schema:
+          "200": "{ success: boolean, offers: any[] }"
+          "400": "{ success: false, error: string }"
+          "404": "{ success: false, error: string }"
+      - method: POST
+        path: /api/transport/offers
+        description: Create a new price bid/offer from a driver
+        auth_required: false
+        request_schema:
+          body:
+            trackingId: string
+            driverId: string
+            driverName: string
+            driverPhone: string
+            price: number
+            rating: number
+        response_schema:
+          "200": "{ success: boolean, message: string }"
+          "400": "{ success: false, error: string }"
+          "404": "{ success: false, error: string }"
+      - method: PATCH
+        path: /api/transport/offers
+        description: Accept a specific bid/offer by the shipper
+        auth_required: false
+        request_schema:
+          body:
+            trackingId: string
+            driverId: string
+        response_schema:
+          "200": "{ success: boolean, message: string }"
+          "400": "{ success: false, error: string }"
+          "404": "{ success: false, error: string }"
+    depends_on:
+      - Database
+  - name: Transport Dispatch API
+    description: Submission of dispatch details like ETA and vehicle info by driver after their bid is accepted.
+    files:
+      - src/app/api/transport/dispatch/route.ts
+    endpoints:
+      - method: POST
+        path: /api/transport/dispatch
+        description: Submit post-acceptance dispatch details
+        auth_required: false
+        request_schema:
+          body:
+            trackingId: string
+            eta: string
+            date: string
+            timeWindow: string
+            plateNumber: string
+            vehicleColor: string
+            vehicleType: string
+            notes: string
+        response_schema:
+          "200": "{ success: boolean, message: string }"
+          "400": "{ success: false, error: string }"
+          "404": "{ success: false, error: string }"
+    depends_on:
+      - Database
+known_limitations: []

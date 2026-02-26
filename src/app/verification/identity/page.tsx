@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 
 export default function IdentityVerificationPage() {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, activeRole } = useAuth();
     const { addToast } = useToast();
     const router = useRouter();
     
@@ -17,8 +17,15 @@ export default function IdentityVerificationPage() {
     const [commercialDoc, setCommercialDoc] = useState<string | null>(null);
     const [taxId, setTaxId] = useState("");
     const [businessName, setBusinessName] = useState("");
+    // Client specific fields
+    const [licensePlate, setLicensePlate] = useState("");
+    const [vehicleType, setVehicleType] = useState("");
+    const [vehicleColor, setVehicleColor] = useState("");
+    const [governorate, setGovernorate] = useState("دمشق");
+
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const isTrader = activeRole === "TRADER";
 
     useEffect(() => {
         if (user?.firstName && user?.lastName) {
@@ -63,8 +70,13 @@ export default function IdentityVerificationPage() {
             return;
         }
 
-        if (!businessName) {
+        if (isTrader && !businessName) {
             addToast("يرجى إدخال اسم النشاط التجاري", "error");
+            return;
+        }
+
+        if (!isTrader && (!licensePlate || !vehicleType || !vehicleColor)) {
+            addToast("يرجى إدخال جميع معلومات المركبة", "error");
             return;
         }
 
@@ -75,18 +87,24 @@ export default function IdentityVerificationPage() {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
+                body: JSON.stringify(isTrader ? {
                     userId: user.id,
                     businessName,
                     licenseNumber: taxId || undefined,
                     location: "",
+                } : {
+                    userId: user.id,
+                    licensePlate,
+                    vehicleType,
+                    vehicleColor,
+                    governorate,
                 }),
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || "فشل إرسال طلب التوثيق");
+                throw new Error(data.details || data.error || "فشل إرسال طلب التوثيق");
             }
 
             addToast("تم إرسال طلب التوثيق بنجاح! سيتم مراجعته خلال 24-48 ساعة", "success");
@@ -99,7 +117,7 @@ export default function IdentityVerificationPage() {
         }
     };
 
-    const isFormValid = frontImage && backImage && businessName;
+    const isFormValid = frontImage && backImage && (isTrader ? businessName : (licensePlate && vehicleType && vehicleColor));
 
     return (
         <>
@@ -115,28 +133,21 @@ export default function IdentityVerificationPage() {
                 </div>
 
                 <div className="px-5 mb-6">
-                    <h1 className="text-2xl font-black text-white mb-1">Identity Verification</h1>
-                    <p className="text-base text-slate-400 mb-1">التحقق من الهوية</p>
+                    <h1 className="text-2xl font-black text-white mb-1">
+                        {isTrader ? "Identity Verification" : "Client Verification"}
+                    </h1>
+                    <p className="text-base text-slate-400 mb-1">
+                        {isTrader ? "التحقق من الهوية (تاجر موثق)" : "توثيق حساب العميل (الحصول على شارة موثق ومعروف)"}
+                    </p>
                     <p className="text-sm text-slate-500 leading-relaxed mt-3">
-                        يرجى رفع صور واضحة للمستندات لتفعيل حساب التاجر الموثق.
+                        {isTrader 
+                            ? "يرجى رفع صور واضحة للمستندات لتفعيل حساب التاجر الموثق." 
+                            : "يرجى تزويدنا بصور الهوية ومعلومات مركبتك الخاصة لتصبح عميلاً موثقاً."}
                     </p>
                 </div>
 
                 <div className="px-5 flex flex-col gap-6">
-                    <div>
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="material-symbols-outlined text-primary !text-[22px]">store</span>
-                            <h3 className="text-base font-bold text-white">اسم النشاط التجاري</h3>
-                        </div>
-                        <input
-                            type="text"
-                            value={businessName}
-                            onChange={(e) => setBusinessName(e.target.value)}
-                            placeholder="أدخل اسم النشاط التجاري أو اسمك"
-                            className="w-full bg-surface-dark border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary transition"
-                        />
-                    </div>
-
+                    {/* ID Uploads (Both) */}
                     <div>
                         <div className="flex items-center gap-2 mb-4">
                             <span className="material-symbols-outlined text-primary !text-[22px]">badge</span>
@@ -197,59 +208,131 @@ export default function IdentityVerificationPage() {
                         <p className="text-[11px] text-slate-600 text-center">الصيغ المدعومة: JPG, PNG (الحد الأقصى 5MB)</p>
                     </div>
 
-                    <div>
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="material-symbols-outlined text-primary !text-[22px]">description</span>
-                            <h3 className="text-base font-bold text-white">السجل التجاري (اختياري)</h3>
-                        </div>
-
-                        <label className="flex items-center gap-4 p-4 rounded-xl bg-surface-dark border border-slate-700 cursor-pointer hover:border-primary/50 transition group">
-                            <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                                <span className="material-symbols-outlined text-primary !text-[28px]">upload_file</span>
+                    {isTrader ? (
+                        <>
+                            <div>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="material-symbols-outlined text-primary !text-[22px]">store</span>
+                                    <h3 className="text-base font-bold text-white">اسم النشاط التجاري</h3>
+                                </div>
+                                <input
+                                    type="text"
+                                    value={businessName}
+                                    onChange={(e) => setBusinessName(e.target.value)}
+                                    placeholder="أدخل اسم النشاط التجاري أو اسمك"
+                                    className="w-full bg-surface-dark border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary transition"
+                                />
                             </div>
-                            <div className="flex-1 min-w-0">
-                                {commercialDoc ? (
-                                    <div>
-                                        <p className="text-sm font-bold text-green-400 flex items-center gap-1">
-                                            <span className="material-symbols-outlined !text-[16px]">check_circle</span>
-                                            تم رفع المستند
-                                        </p>
-                                        <p className="text-xs text-slate-500">اضغط لتغيير الملف</p>
+
+                            <div>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="material-symbols-outlined text-primary !text-[22px]">description</span>
+                                    <h3 className="text-base font-bold text-white">السجل التجاري (اختياري)</h3>
+                                </div>
+
+                                <label className="flex items-center gap-4 p-4 rounded-xl bg-surface-dark border border-slate-700 cursor-pointer hover:border-primary/50 transition group">
+                                    <div className="size-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                                        <span className="material-symbols-outlined text-primary !text-[28px]">upload_file</span>
                                     </div>
-                                ) : (
-                                    <div>
-                                        <p className="text-sm font-bold text-white">رفع المستند</p>
-                                        <p className="text-xs text-slate-500">PDF, JPG أو PNG</p>
+                                    <div className="flex-1 min-w-0">
+                                        {commercialDoc ? (
+                                            <div>
+                                                <p className="text-sm font-bold text-green-400 flex items-center gap-1">
+                                                    <span className="material-symbols-outlined !text-[16px]">check_circle</span>
+                                                    تم رفع المستند
+                                                </p>
+                                                <p className="text-xs text-slate-500">اضغط لتغيير الملف</p>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <p className="text-sm font-bold text-white">رفع المستند</p>
+                                                <p className="text-xs text-slate-500">PDF, JPG أو PNG</p>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                    <span className="material-symbols-outlined text-slate-500 group-hover:text-primary !text-[20px] transition">cloud_upload</span>
+                                    <input
+                                        type="file"
+                                        accept="image/*,.pdf"
+                                        className="hidden"
+                                        onChange={(e) => handleFileUpload(e, setCommercialDoc, "BUSINESS_LICENSE")}
+                                    />
+                                </label>
                             </div>
-                            <span className="material-symbols-outlined text-slate-500 group-hover:text-primary !text-[20px] transition">cloud_upload</span>
-                            <input
-                                type="file"
-                                accept="image/*,.pdf"
-                                className="hidden"
-                                onChange={(e) => handleFileUpload(e, setCommercialDoc, "BUSINESS_LICENSE")}
-                            />
-                        </label>
-                    </div>
 
-                    <div>
-                        <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary !text-[22px]">receipt_long</span>
-                                <h3 className="text-base font-bold text-white">الرقم الضريبي</h3>
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-primary !text-[22px]">receipt_long</span>
+                                        <h3 className="text-base font-bold text-white">الرقم الضريبي</h3>
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-500 bg-slate-800 px-2 py-1 rounded">اختياري</span>
+                                </div>
+
+                                <input
+                                    type="text"
+                                    value={taxId}
+                                    onChange={(e) => setTaxId(e.target.value)}
+                                    placeholder="أدخل الرقم الضريبي (اختياري)"
+                                    className="w-full bg-surface-dark border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary transition"
+                                />
                             </div>
-                            <span className="text-xs font-bold text-slate-500 bg-slate-800 px-2 py-1 rounded">اختياري</span>
-                        </div>
-
-                        <input
-                            type="text"
-                            value={taxId}
-                            onChange={(e) => setTaxId(e.target.value)}
-                            placeholder="أدخل الرقم الضريبي (اختياري)"
-                            className="w-full bg-surface-dark border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary transition"
-                        />
-                    </div>
+                        </>
+                    ) : (
+                        <>
+                            <div>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <span className="material-symbols-outlined text-primary !text-[22px]">directions_car</span>
+                                    <h3 className="text-base font-bold text-white">معلومات المركبة</h3>
+                                </div>
+                                <div className="grid gap-4">
+                                    <input
+                                        type="text"
+                                        value={licensePlate}
+                                        onChange={(e) => setLicensePlate(e.target.value)}
+                                        placeholder="رقم اللوحة (مثال: دمشق 123456)"
+                                        className="w-full bg-surface-dark border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary transition"
+                                    />
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <input
+                                            type="text"
+                                            value={vehicleType}
+                                            onChange={(e) => setVehicleType(e.target.value)}
+                                            placeholder="نوع المركبة"
+                                            className="w-full bg-surface-dark border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary transition"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={vehicleColor}
+                                            onChange={(e) => setVehicleColor(e.target.value)}
+                                            placeholder="اللون"
+                                            className="w-full bg-surface-dark border border-slate-700 rounded-xl px-4 py-3.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-primary transition"
+                                        />
+                                    </div>
+                                    <select
+                                        value={governorate}
+                                        onChange={(e) => setGovernorate(e.target.value)}
+                                        className="w-full bg-surface-dark border border-slate-700 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-primary transition appearance-none"
+                                    >
+                                        <option value="دمشق">دمشق</option>
+                                        <option value="ريف دمشق">ريف دمشق</option>
+                                        <option value="حلب">حلب</option>
+                                        <option value="حمص">حمص</option>
+                                        <option value="حماة">حماة</option>
+                                        <option value="اللاذقية">اللاذقية</option>
+                                        <option value="طرطوس">طرطوس</option>
+                                        <option value="درعا">درعا</option>
+                                        <option value="السويداء">السويداء</option>
+                                        <option value="دير الزور">دير الزور</option>
+                                        <option value="الحسكة">الحسكة</option>
+                                        <option value="الرقة">الرقة</option>
+                                        <option value="إدلب">إدلب</option>
+                                        <option value="القنيطرة">القنيطرة</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                     <div className="flex items-center justify-center gap-2 py-3">
                         <span className="material-symbols-outlined text-green-500 !text-[16px]">lock</span>

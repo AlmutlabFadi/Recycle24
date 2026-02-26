@@ -1,67 +1,49 @@
 "use client";
 
 import HeaderWithBack from "@/components/HeaderWithBack";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface StolenReport {
+    id: string;
+    reportingOrg: string;
+    type: string;
+    customItemType?: string;
+    description: string;
+    location: string;
+    contactPhone: string;
+    status: string;
+    stolenDate: string;
+    images?: string[];
+    warning?: string;
+    createdAt: string;
+}
 
 export default function StolenReportsPage() {
+    const { activeRole } = useAuth();
+    const isTrader = activeRole === "TRADER";
     const [activeTab, setActiveTab] = useState<"list" | "search">("list");
+    const [stolenItems, setStolenItems] = useState<StolenReport[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Simulated stolen items data with reporting organizations
-    const stolenItems = [
-        {
-            id: "SR-001",
-            reportingOrg: "مديرية كهرباء ريف دمشق",
-            type: "كابل كهربائي",
-            brand: "نحاس عالي الجودة",
-            description: "كابل كهرباء رئيسي",
-            stolenDate: "2026-02-08",
-            location: "منطقة ببيلا - ريف دمشق",
-            contactPhone: "0944444444",
-            status: "نشط",
-            warning: "تحذير إلى كافة تجار الخردة: الإبلاغ الفوري في حال مشاهدة المفقودات",
-            image: "https://via.placeholder.com/120x120/334155/ffffff?text=Cable"
-        },
-        {
-            id: "SR-002",
-            reportingOrg: "مديرية الاتصالات",
-            type: "كابل إنترنت",
-            brand: "Fiber Optic",
-            description: "كابل ألياف بصرية",
-            stolenDate: "2026-02-10",
-            location: "مدينة نوى - درعا",
-            contactPhone: "0944444445",
-            status: "نشط",
-            warning: "تحذير إلى كافة تجار الخردة: الإبلاغ الفوري في حال التعرف عليها",
-            image: "https://via.placeholder.com/120x120/334155/ffffff?text=Fiber"
-        },
-        {
-            id: "SR-003",
-            reportingOrg: "بلدية القصاع - دمشق",
-            type: "راقارات (Radiators)",
-            brand: "حديد صب",
-            description: "راقارات تدفئة حديثة",
-            stolenDate: "2026-01-28",
-            location: "شارع خالد بن الوليد - القصاع",
-            contactPhone: "0944444446",
-            status: "نشط",
-            warning: "تحذير إلى كافة تجار الخردة: الإبلاغ الفوري على الرقم التالي",
-            image: "https://via.placeholder.com/120x120/334155/ffffff?text=Radiator"
-        },
-        {
-            id: "SR-004",
-            reportingOrg: "مديرية الكهرباء في حلب",
-            type: "خطوط كهرباء",
-            brand: "ألمنيوم موصل",
-            description: "خطوط كهرباء هوائية",
-            stolenDate: "2026-02-05",
-            location: "منطقة الشيخ مقصود - شارع علي بن أبي طالب",
-            contactPhone: "0944444447",
-            status: "نشط",
-            warning: "تحذير إلى كافة تجار الخردة: الإبلاغ الفوري في حال مشاهدة المسروقات",
-            image: "https://via.placeholder.com/120x120/334155/ffffff?text=PowerLine"
+    useEffect(() => {
+        async function fetchReports() {
+            try {
+                const res = await fetch("/api/stolen-reports");
+                const data = await res.json();
+                if (data.success) {
+                    setStolenItems(data.reports);
+                }
+            } catch (error) {
+                console.error("Failed to fetch reports:", error);
+            } finally {
+                setIsLoading(false);
+            }
         }
-    ];
+
+        fetchReports();
+    }, []);
 
     return (
         <div className="flex flex-col min-h-screen bg-bg-dark font-display">
@@ -137,7 +119,7 @@ export default function StolenReportsPage() {
                                     <div className="flex gap-3 mb-3">
                                         <div className="shrink-0">
                                             <img
-                                                src={item.image}
+                                                src={item.images?.[0] || "https://placehold.co/100x100/1e293b/ffffff?text=لا+توجد+صورة"}
                                                 alt={item.type}
                                                 className="w-20 h-20 rounded-lg object-cover bg-slate-800"
                                             />
@@ -281,12 +263,14 @@ export default function StolenReportsPage() {
                 )}
 
                 {/* FAB */}
-                <Link
-                    href="/stolen-reports/new"
-                    className="fixed bottom-20 left-4 size-14 bg-red-600 text-white rounded-full shadow-2xl shadow-red-600/40 flex items-center justify-center hover:bg-red-700 transition z-20"
-                >
-                    <span className="material-symbols-outlined !text-[28px]">add</span>
-                </Link>
+                {isTrader && (
+                    <Link
+                        href="/stolen-reports/new"
+                        className="fixed bottom-20 left-4 size-14 bg-red-600 text-white rounded-full shadow-2xl shadow-red-600/40 flex items-center justify-center hover:bg-red-700 transition z-20"
+                    >
+                        <span className="material-symbols-outlined !text-[28px]">add</span>
+                    </Link>
+                )}
             </main>
         </div>
     );

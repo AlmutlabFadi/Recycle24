@@ -1,0 +1,22 @@
+[
+  {
+    "id": "TC001",
+    "title": "get_transport_offers_by_trackingid",
+    "description": "Test retrieving all transport offers for a given trackingId. Verify success response with offers array, 400 for invalid trackingId format, and 404 for non-existent trackingId."
+  },
+  {
+    "id": "TC002",
+    "title": "post_create_transport_offer",
+    "description": "Test creating a new transport offer with valid driver and price details. Verify success response, 400 for invalid input such as negative price or missing fields, and 404 if trackingId or driverId does not exist."
+  },
+  {
+    "id": "TC003",
+    "title": "patch_accept_transport_offer",
+    "description": "Test accepting a specific transport offer by providing trackingId and driverId. Verify success response, 400 for invalid input, and 404 if the offer or driver does not exist."
+  },
+  {
+    "id": "TC004",
+    "title": "post_submit_transport_dispatch_details",
+    "description": "Test submitting dispatch details after offer acceptance with valid data including ETA, vehicle info, and notes. Verify success response, 400 for invalid date/time formats or missing required fields, and 404 if trackingId does not exist."
+  }
+]

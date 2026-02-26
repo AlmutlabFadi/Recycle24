@@ -1,8 +1,45 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import HeaderWithBack from "@/components/HeaderWithBack";
 
+interface KnowledgeItem {
+    id: string;
+    type: string;
+    title: string;
+    summary?: string | null;
+    content?: string | null;
+    coverImageUrl?: string | null;
+    createdAt: string;
+}
+
 export default function AcademyPage() {
+    const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([]);
+    const [isKnowledgeLoading, setIsKnowledgeLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchKnowledge = async () => {
+            try {
+                const response = await fetch("/api/knowledge?center=ACADEMY&status=PUBLISHED&limit=12", {
+                    cache: "no-store",
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    setKnowledgeItems(data.items || []);
+                }
+            } finally {
+                setIsKnowledgeLoading(false);
+            }
+        };
+
+        fetchKnowledge();
+    }, []);
+
+    const featuredLibrary = useMemo(
+        () => knowledgeItems.filter((item) => item.type === "ARTICLE" || item.type === "INSTRUCTION"),
+        [knowledgeItems]
+    );
+
     return (
         <div className="flex flex-col min-h-screen bg-bg-light dark:bg-bg-dark font-display pb-24">
             {/* Header */}
@@ -52,6 +89,38 @@ export default function AcademyPage() {
                         اللوجستيات
                     </button>
                 </div>
+
+                <section className="px-4">
+                    <div className="bg-gradient-to-r from-emerald-500/15 to-slate-200/10 dark:from-emerald-500/10 dark:to-slate-900/40 rounded-2xl border border-emerald-500/20 p-4">
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white">المكتبة الأكاديمية</h3>
+                            <span className="text-xs text-emerald-600 dark:text-emerald-300">إصدارات محدثة</span>
+                        </div>
+                        {isKnowledgeLoading ? (
+                            <div className="text-center text-xs text-slate-500 py-6">جار التحميل...</div>
+                        ) : featuredLibrary.length === 0 ? (
+                            <div className="text-center text-xs text-slate-500 py-6">لا يوجد محتوى منشور حالياً.</div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {featuredLibrary.slice(0, 4).map((item) => (
+                                    <div key={item.id} className="bg-white dark:bg-surface-highlight rounded-xl overflow-hidden border border-slate-100 dark:border-slate-700/50">
+                                        {item.coverImageUrl ? (
+                                            <img src={item.coverImageUrl} alt={item.title} className="w-full h-28 object-cover" />
+                                        ) : (
+                                            <div className="h-28 bg-gradient-to-r from-emerald-300/40 to-slate-200/40 dark:from-emerald-500/20 dark:to-slate-800"></div>
+                                        )}
+                                        <div className="p-3">
+                                            <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">{item.title}</h4>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                                                {item.summary || item.content}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </section>
 
                 {/* My Learning (Ongoing) */}
                 <div className="px-4">

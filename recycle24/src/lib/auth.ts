@@ -14,11 +14,7 @@ interface AuthUser {
     userType?: string | null;
 }
 
-interface Credentials {
-    phone?: string;
-    email?: string;
-    password: string;
-}
+type LoginCredentials = Record<"email" | "phone" | "password", string> | undefined;
 
 declare module "next-auth" {
     interface Session {
@@ -46,12 +42,15 @@ export const authOptions: NextAuthOptions = {
                 email: { label: "Email", type: "text" },
                 password: { label: "Password", type: "password" }
             },
-            async authorize(credentials: Credentials) {
+            async authorize(credentials: LoginCredentials) {
                 if (!credentials) {
                     throw new Error("Credentials are required");
                 }
 
-                const { phone, email, password } = credentials;
+                const phone = credentials.phone;
+                const email = credentials.email;
+                const password = credentials.password;
+                
                 if (!phone && !email) {
                     throw new Error("Email or Phone is required");
                 }
@@ -59,7 +58,7 @@ export const authOptions: NextAuthOptions = {
                 try {
                     // Demo mode
                     if (isDemoMode) {
-                        const identifier = email || phone;
+                        const identifier = (email || phone) as keyof typeof DEMO_USERS;
                         const demoUser = DEMO_USERS[identifier];
                         if (!demoUser || password !== "123456") {
                             throw new Error("Invalid credentials");
@@ -78,18 +77,10 @@ export const authOptions: NextAuthOptions = {
                     const user = await db.user.findFirst({
                         where: {
                             OR: [
-                                { email: email },
-                                { phone: phone }
+                                { email: email || undefined },
+                                { phone: phone || undefined }
                             ]
                         },
-                        select: {
-                            id: true,
-                            name: true,
-                            email: true,
-                            phone: true,
-                            role: true,
-                            userType: true,
-                        }
                     });
 
                     if (!user || !user.password) {
@@ -110,8 +101,9 @@ export const authOptions: NextAuthOptions = {
                         role: user.role,
                         userType: user.userType,
                     };
-                } catch (error) {
-                    throw new Error(`An error occurred: ${error.message}`);
+                } catch (error: unknown) {
+                    const err = error as Error;
+                    throw new Error(`An error occurred: ${err.message}`);
                 }
             }
         })

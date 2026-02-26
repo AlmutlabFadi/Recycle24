@@ -45,12 +45,27 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { userId, businessName, licenseNumber, location } = body;
+        const { userId, businessName, licenseNumber, location, licensePlate, vehicleType, vehicleColor, governorate } = body;
 
-        if (!userId || !businessName) {
+        const finalBusinessName = businessName || (vehicleType ? `مركبة: ${vehicleType} - ${vehicleColor}` : null);
+        const finalLicenseNumber = licenseNumber || licensePlate;
+        const finalLocation = location || governorate;
+
+        if (!userId || !finalBusinessName) {
             return NextResponse.json(
                 { error: "جميع الحقول الأساسية مطلوبة" },
                 { status: 400 }
+            );
+        }
+
+        const userExists = await db.user.findUnique({
+            where: { id: userId }
+        });
+
+        if (!userExists) {
+            return NextResponse.json(
+                { error: "هذا الحساب لم يعد موجوداً في قاعدة البيانات. الرجاء تسجيل الخروج من النظام ثم تسجيل الدخول مرة أخرى." },
+                { status: 404 }
             );
         }
 
@@ -63,9 +78,9 @@ export async function POST(request: NextRequest) {
             trader = await db.trader.update({
                 where: { userId },
                 data: {
-                    businessName,
-                    licenseNumber,
-                    location,
+                    businessName: finalBusinessName,
+                    licenseNumber: finalLicenseNumber,
+                    location: finalLocation,
                     verificationStatus: "UNDER_REVIEW",
                 },
             });
@@ -73,9 +88,9 @@ export async function POST(request: NextRequest) {
             trader = await db.trader.create({
                 data: {
                     userId,
-                    businessName,
-                    licenseNumber,
-                    location,
+                    businessName: finalBusinessName,
+                    licenseNumber: finalLicenseNumber,
+                    location: finalLocation,
                     verificationStatus: "UNDER_REVIEW",
                 },
             });
@@ -94,7 +109,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Create verification error:", error);
         return NextResponse.json(
-            { error: "حدث خطأ أثناء إرسال طلب التوثيق" },
+            { error: "حدث خطأ أثناء إرسال طلب التوثيق", details: error instanceof Error ? error.message : String(error) },
             { status: 500 }
         );
     }

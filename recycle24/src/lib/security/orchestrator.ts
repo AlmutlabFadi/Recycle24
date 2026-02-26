@@ -78,7 +78,7 @@ async function correlateAndRaiseIncident(event: SecurityEvent, severity: Securit
       `;
   }
 
-  if ((severity === 'CRITICAL' || severity === 'HIGH') && incidentId) {
+  if ((severity === 'CRITICAL' || severity === 'HIGH') && incidentId && typeof incidentId === 'string') {
       await executeContainment(incidentId, event, severity);
   }
 }

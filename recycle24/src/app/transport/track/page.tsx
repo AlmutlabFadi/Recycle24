@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import HeaderWithBack from "@/components/HeaderWithBack";
 import { useToast } from "@/contexts/ToastContext";
@@ -43,7 +43,7 @@ interface TrackingData {
     updatedAt: string;
 }
 
-export default function TransportTrackPage() {
+function TrackContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { addToast } = useToast();
@@ -317,5 +317,13 @@ export default function TransportTrackPage() {
                 )}
             </main>
         </div>
+    );
+}
+
+export default function TransportTrackPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-background-dark flex items-center justify-center"><div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>}>
+            <TrackContent />
+        </Suspense>
     );
 }
