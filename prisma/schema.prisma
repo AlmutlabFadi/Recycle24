@@ -83,6 +83,9 @@ model User {
   auctionParticipations AuctionParticipant[]
   StolenReport          StolenReport[]
   knowledgeItems        KnowledgeItem[]
+  safetyIncidentReports SafetyIncidentReport[]
+  safetyTrainingRequests SafetyTrainingRequest[]
+  safetyChecklistSubmissions SafetyChecklistSubmission[]
   userRoles             UserRole[]
   invitesCreated        StaffInvite[]
   invitesUsed           StaffInvite[] @relation("InviteUsedBy")
@@ -571,6 +574,90 @@ model KnowledgeItem {
   @@index([type])
   @@index([status])
   @@index([priority])
+  @@index([createdAt])
+}
+
+model SafetyIncidentReport {
+  id              String   @id @default(cuid())
+  userId          String?
+  reporterName    String?
+  reporterPhone   String?
+  reporterRole    String?
+  incidentType    String
+  severity        String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
+  location        String
+  description     String
+  immediateAction String?
+  status          String   @default("OPEN") // OPEN, IN_REVIEW, RESOLVED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+model SafetyTrainingSession {
+  id             String   @id @default(cuid())
+  title          String
+  description    String?
+  level          String   @default("BASIC") // BASIC, ADVANCED
+  location       String
+  startDate      DateTime
+  durationHours  Int
+  capacity       Int
+  availableSeats Int
+  instructorName String?
+  status         String   @default("OPEN") // OPEN, FULL, CANCELLED, COMPLETED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  requests SafetyTrainingRequest[]
+
+  @@index([status])
+  @@index([startDate])
+}
+
+model SafetyTrainingRequest {
+  id                    String   @id @default(cuid())
+  userId                String?
+  requesterName         String?
+  requesterPhone        String?
+  requesterRole         String?
+  sessionId             String?
+  requestedSessionTitle String?
+  preferredDate         DateTime?
+  participantsCount     Int      @default(1)
+  location              String?
+  notes                 String?
+  status                String   @default("PENDING") // PENDING, CONFIRMED, REJECTED
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user    User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  session SafetyTrainingSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SafetyChecklistSubmission {
+  id            String   @id @default(cuid())
+  userId        String?
+  sessionId     String?
+  checklistName String
+  score         Int
+  responses     Json
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
   @@index([createdAt])
 }
 
