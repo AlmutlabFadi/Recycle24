@@ -20,13 +20,13 @@ describe("db module", () => {
     expect(mod.isDemoMode).toBe(true);
   });
 
-  it("sets demo mode to true when DATABASE_URL is missing", async () => {
+  it("sets demo mode to false when DATABASE_URL is missing", async () => {
     vi.doMock("@prisma/client", () => ({
       PrismaClient: vi.fn(() => ({ mock: true })),
     }));
 
     const mod = await import("@/lib/db");
-    expect(mod.isDemoMode).toBe(true);
+    expect(mod.isDemoMode).toBe(false);
   });
 
   it("sets demo mode to false with DATABASE_URL and DEMO_MODE not true", async () => {
