@@ -1,8 +1,54 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Dispatch, SetStateAction, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/contexts/ToastContext";
+
+interface StarRatingProps {
+    rating: number;
+    hover: number;
+    setRating: Dispatch<SetStateAction<number>>;
+    setHover: Dispatch<SetStateAction<number>>;
+    title: string;
+    subtitle?: string;
+}
+
+const StarRating = ({ rating, hover, setRating, setHover, title, subtitle }: StarRatingProps) => (
+    <div className="bg-[#111820]/80 backdrop-blur-md rounded-3xl border border-white/5 p-6 shadow-xl flex flex-col items-center gap-4 mb-4">
+        <div className="text-center">
+            <h3 className="text-base font-bold text-white mb-1">{title}</h3>
+            {subtitle && <p className="text-xs text-slate-400">{subtitle}</p>}
+        </div>
+        <div className="flex gap-2 flex-row-reverse my-2">
+            {[5, 4, 3, 2, 1].map((star) => (
+                <button
+                    key={star}
+                    type="button"
+                    className={`transition-all duration-300 ${
+                        star <= (hover || rating) 
+                            ? "text-amber-400 scale-110 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]" 
+                            : "text-slate-700 hover:text-slate-500"
+                    }`}
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHover(star)}
+                    onMouseLeave={() => setHover(0)}
+                >
+                    <span className="material-symbols-outlined text-5xl" style={{ fontVariationSettings: `'FILL' ${star <= (hover || rating) ? 1 : 0}` }}>
+                        star
+                    </span>
+                </button>
+            ))}
+        </div>
+        <span className={`text-sm font-bold px-4 py-1.5 rounded-full ${rating > 0 ? 'bg-amber-400/10 text-amber-400 border border-amber-400/20' : 'text-slate-500'}`}>
+            {rating === 5 && "ممتاز جداً - خدمة استثنائية"}
+            {rating === 4 && "جيد جداً - أداء احترافي"}
+            {rating === 3 && "مقبول - يفي بالغرض"}
+            {rating === 2 && "سيء - يحتاج للتحسين"}
+            {rating === 1 && "سيء جداً - تجربة غير مرضية"}
+            {rating === 0 && "الرجاء اختيار التقييم"}
+        </span>
+    </div>
+);
 
 function RatingContent() {
     const router = useRouter();
@@ -31,43 +77,6 @@ function RatingContent() {
             router.push("/");
         }, 1500);
     };
-
-    const StarRating = ({ rating, hover, setRating, setHover, title, subtitle }: any) => (
-        <div className="bg-[#111820]/80 backdrop-blur-md rounded-3xl border border-white/5 p-6 shadow-xl flex flex-col items-center gap-4 mb-4">
-            <div className="text-center">
-                <h3 className="text-base font-bold text-white mb-1">{title}</h3>
-                {subtitle && <p className="text-xs text-slate-400">{subtitle}</p>}
-            </div>
-            <div className="flex gap-2 flex-row-reverse my-2">
-                {[5, 4, 3, 2, 1].map((star) => (
-                    <button
-                        key={star}
-                        type="button"
-                        className={`transition-all duration-300 ${
-                            star <= (hover || rating) 
-                                ? "text-amber-400 scale-110 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]" 
-                                : "text-slate-700 hover:text-slate-500"
-                        }`}
-                        onClick={() => setRating(star)}
-                        onMouseEnter={() => setHover(star)}
-                        onMouseLeave={() => setHover(0)}
-                    >
-                        <span className="material-symbols-outlined text-5xl" style={{ fontVariationSettings: `'FILL' ${star <= (hover || rating) ? 1 : 0}` }}>
-                            star
-                        </span>
-                    </button>
-                ))}
-            </div>
-            <span className={`text-sm font-bold px-4 py-1.5 rounded-full ${rating > 0 ? 'bg-amber-400/10 text-amber-400 border border-amber-400/20' : 'text-slate-500'}`}>
-                {rating === 5 && "ممتاز جداً - خدمة استثنائية"}
-                {rating === 4 && "جيد جداً - أداء احترافي"}
-                {rating === 3 && "مقبول - يفي بالغرض"}
-                {rating === 2 && "سيء - يحتاج للتحسين"}
-                {rating === 1 && "سيء جداً - تجربة غير مرضية"}
-                {rating === 0 && "الرجاء اختيار التقييم"}
-            </span>
-        </div>
-    );
 
     return (
         <div className="flex flex-col min-h-screen bg-[#070b10] font-arabic text-white relative pb-28 overflow-hidden">

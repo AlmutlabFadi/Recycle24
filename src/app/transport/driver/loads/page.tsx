@@ -21,11 +21,20 @@ interface TransportOrder {
     createdAt: string;
 }
 
+interface DriverProfile {
+    id: string;
+    fullName: string;
+    phone: string;
+    ratingAvg: number;
+}
+
 export default function DriverLoadsPage() {
     const { addToast } = useToast();
     const [orders, setOrders] = useState<TransportOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [driverProfile, setDriverProfile] = useState<DriverProfile | null>(null);
+    const [driverProfileLoading, setDriverProfileLoading] = useState(true);
     
     // Bid Modal State
     const [isBidModalOpen, setIsBidModalOpen] = useState(false);
@@ -62,6 +71,32 @@ export default function DriverLoadsPage() {
         fetchOrders();
     }, [fetchOrders]);
 
+    useEffect(() => {
+        const fetchDriverProfile = async () => {
+            try {
+                const response = await fetch("/api/driver/me", { cache: "no-store" });
+                const data = await response.json();
+                if (response.ok && data.driver) {
+                    setDriverProfile({
+                        id: data.driver.id,
+                        fullName: data.driver.fullName,
+                        phone: data.driver.phone,
+                        ratingAvg: data.driver.ratingAvg || 0,
+                    });
+                } else {
+                    setDriverProfile(null);
+                }
+            } catch (error) {
+                console.error("Driver profile fetch error:", error);
+                setDriverProfile(null);
+            } finally {
+                setDriverProfileLoading(false);
+            }
+        };
+
+        fetchDriverProfile();
+    }, []);
+
     const handleRefresh = () => {
         setRefreshing(true);
         fetchOrders();
@@ -75,6 +110,11 @@ export default function DriverLoadsPage() {
 
     const handleSubmitBid = async () => {
         if (!selectedOrder || !bidAmount) return;
+
+        if (!driverProfile) {
+            addToast("يرجى توثيق حساب السائق قبل إرسال العروض", "warning");
+            return;
+        }
         
         setIsSubmitting(true);
         try {
@@ -83,11 +123,11 @@ export default function DriverLoadsPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     trackingId: selectedOrder.trackingId,
-                    driverId: "user-driver", // Dummy logic for now since auth is not fully mocked here
-                    driverName: "محمد السائق (تجريبي)",
-                    driverPhone: "+963900000000",
+                    driverId: driverProfile.id,
+                    driverName: driverProfile.fullName,
+                    driverPhone: driverProfile.phone,
                     price: Number(bidAmount),
-                    rating: 4.8
+                    rating: driverProfile.ratingAvg || 0
                 })
             });
 
@@ -122,6 +162,14 @@ export default function DriverLoadsPage() {
                 <p className="text-sm text-primary font-medium text-center">
                     تصفح أحدث طلبات النقل المتاحة وقدم أفضل عروضك للفوز بها
                 </p>
+                {!driverProfileLoading && !driverProfile && (
+                    <div className="mt-3 text-xs text-amber-400 text-center">
+                        لا يوجد ملف سائق موثق. قم بتوثيق حسابك لإرسال العروض.
+                        <Link href="/verification?role=DRIVER" className="underline mr-1 text-amber-300">
+                            ابدأ التوثيق
+                        </Link>
+                    </div>
+                )}
             </div>
 
             <main className="flex-1 p-4 flex flex-col gap-4">

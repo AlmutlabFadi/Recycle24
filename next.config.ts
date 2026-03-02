@@ -9,20 +9,18 @@ const nextConfig: NextConfig = {
     DATABASE_URL: process.env.DATABASE_URL || "file:./prisma/dev.db",
   },
   typescript: {
+    // !! WARN !!
+    // Dangerously allow production builds to successfully complete even if
+    // your project has type errors.
+    // !! WARN !!
     ignoreBuildErrors: true,
   },
   eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: '/api/:path*',
-      },
-    ];
-  },
+
   images: {
     unoptimized: true,
   },

@@ -4,6 +4,8 @@ import "./globals.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { VerificationProvider } from "@/contexts/VerificationContext";
+import ResponsiveWrapper from "@/components/ResponsiveWrapper";
 
 const notoSansArabic = Noto_Sans_Arabic({
   subsets: ["arabic"],
@@ -25,6 +27,8 @@ const inter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
+
+
 
 export const metadata: Metadata = {
   title: "Metalix24 — منصة تجارة الخردة",
@@ -52,24 +56,22 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className="dark" suppressHydrationWarning>
       <head>
-        {/* Material Symbols - using display=block for better loading */}
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
-        />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
       </head>
       <body suppressHydrationWarning className={`${notoSansArabic.variable} ${cairo.variable} ${inter.variable} bg-bg-dark text-white font-display overflow-x-hidden antialiased`}>
-        <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto bg-bg-dark shadow-xl overflow-hidden">
           <AuthProvider>
             <ToastProvider>
-              <ErrorBoundary>
-                {children}
-              </ErrorBoundary>
+              <VerificationProvider>
+                <ErrorBoundary>
+                  <ResponsiveWrapper>
+                    {children}
+                  </ResponsiveWrapper>
+                </ErrorBoundary>
+              </VerificationProvider>
             </ToastProvider>
           </AuthProvider>
-        </div>
       </body>
     </html>
   );
 }
-// Build: Sun, Feb 22, 2026  3:07:03 AM
+// Build: Sun, Feb 28, 2026  11:05:09 PM

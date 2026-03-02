@@ -8,6 +8,12 @@ import { useToast } from "@/contexts/ToastContext";
 export default function DistanceEstimatorPage() {
     const router = useRouter();
     const { addToast } = useToast();
+
+    const vehicles: Array<{ id: "pickup" | "van" | "truck"; icon: string; label: string }> = [
+        { id: "pickup", icon: "rv_hookup", label: "بيك أب" },
+        { id: "van", icon: "airport_shuttle", label: "فان متوسط" },
+        { id: "truck", icon: "local_shipping", label: "شاحنة" },
+    ];
     
     const [vehicleType, setVehicleType] = useState<"pickup" | "van" | "truck">("truck");
     const [weight, setWeight] = useState(12);
@@ -122,14 +128,10 @@ export default function DistanceEstimatorPage() {
                     </div>
 
                     <div className="flex bg-[#111820]/80 backdrop-blur-md rounded-2xl p-1.5 border border-white/5 shadow-inner">
-                        {[
-                            { id: "pickup", icon: "rv_hookup", label: "بيك أب" },
-                            { id: "van", icon: "airport_shuttle", label: "فان متوسط" },
-                            { id: "truck", icon: "local_shipping", label: "شاحنة" }
-                        ].map((v) => (
+                        {vehicles.map((v) => (
                             <button
                                 key={v.id}
-                                onClick={() => setVehicleType(v.id as any)}
+                                onClick={() => setVehicleType(v.id)}
                                 className={`flex flex-col items-center justify-center flex-1 py-3.5 rounded-xl transition-all duration-300 ${
                                     vehicleType === v.id 
                                         ? "bg-primary text-white shadow-lg shadow-primary/30 transform scale-[1.02]" 

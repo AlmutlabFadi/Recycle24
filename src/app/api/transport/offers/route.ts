@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db, isDemoMode } from "@/lib/db";
+import { db } from "@/lib/db";
 
 // GET: Fetch all bids for a trackingId
 export async function GET(request: NextRequest) {
@@ -44,11 +44,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Missing fields", success: false }, { status: 400 });
         }
 
-        if (isDemoMode) {
-            return NextResponse.json({ success: true, message: "تم إرسال العرض بنجاح (وضع تجريبي)" });
-        }
-
-        let booking = await db.transportBooking.findUnique({
+        const booking = await db.transportBooking.findUnique({
             where: { trackingId },
         });
 
