@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { db, isDemoMode } from "@/lib/db";
+import { db } from "@/lib/db";
+import { sendWhatsAppText } from "@/lib/whatsapp";
 
 interface SessionUser {
     id: string;
@@ -24,7 +25,12 @@ export async function POST(request: NextRequest) {
             requesterName,
             requesterPhone,
             requesterRole,
+            requesterCompanyName,
             location,
+            governorate,
+            city,
+            street,
+            locationUrl,
             notes,
         } = body || {};
 
@@ -44,16 +50,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        if (isDemoMode) {
-            return NextResponse.json({
-                success: true,
-                requestId: `demo-${Date.now()}`,
-                message: "تم استلام طلب التدريب (وضع تجريبي)",
-            });
-        }
-
         const parsedPreferredDate = preferredDate ? new Date(preferredDate) : null;
 
+        let sessionContactWhatsapp: string | null = null;
+        let sessionTitle: string | null = null;
         const requestData = await db.$transaction(async (tx: any) => {
             if (sessionId) {
                 const sessionData = await tx.safetyTrainingSession.findUnique({
@@ -63,6 +63,9 @@ export async function POST(request: NextRequest) {
                 if (!sessionData || sessionData.status === "CANCELLED") {
                     throw new Error("SESSION_NOT_FOUND");
                 }
+
+                sessionContactWhatsapp = sessionData.contactWhatsapp || null;
+                sessionTitle = sessionData.title || null;
 
                 if (sessionData.availableSeats < count) {
                     throw new Error("NO_SEATS");
@@ -84,6 +87,11 @@ export async function POST(request: NextRequest) {
                     requesterName: rName,
                     requesterPhone: requesterPhone || sessionUser?.phone || null,
                     requesterRole: requesterRole || sessionUser?.userType || null,
+                    requesterCompanyName: requesterCompanyName || null,
+                    governorate: governorate || null,
+                    city: city || null,
+                    street: street || null,
+                    locationUrl: locationUrl || null,
                     sessionId: sessionId || null,
                     requestedSessionTitle: requestedSessionTitle || null,
                     preferredDate: parsedPreferredDate,
@@ -94,10 +102,41 @@ export async function POST(request: NextRequest) {
             });
         });
 
+        const recipient = sessionContactWhatsapp || process.env.SAFETY_TRAINING_WHATSAPP_RECIPIENT || "";
+
+        const messageLines = [
+            "📣 طلب تدريب سلامة جديد",
+            sessionId ? `الجلسة: ${sessionTitle || requestedSessionTitle || ""}` : "طلب تدريب مخصص",
+            requestedSessionTitle ? `عنوان التدريب: ${requestedSessionTitle}` : "",
+            preferredDate ? `تاريخ مفضل: ${preferredDate}` : "",
+            `عدد المشاركين: ${count}`,
+            `الموقع: ${location || "غير محدد"}`,
+            governorate ? `المحافظة: ${governorate}` : "",
+            city ? `المدينة: ${city}` : "",
+            street ? `الشارع/الحي: ${street}` : "",
+            locationUrl ? `رابط الموقع: ${locationUrl}` : "",
+            notes ? `ملاحظات: ${notes}` : "",
+            `اسم مقدم الطلب: ${requesterName || sessionUser?.name || "غير محدد"}`,
+            `رقم الهاتف: ${requesterPhone || sessionUser?.phone || "غير متوفر"}`,
+            requesterCompanyName ? `اسم المنشأة: ${requesterCompanyName}` : "",
+        ].filter(Boolean);
+
+        let whatsappError: string | undefined;
+        if (recipient) {
+            const sendResult = await sendWhatsAppText({ to: recipient, body: messageLines.join("\n") });
+            if (!sendResult.ok) whatsappError = sendResult.error;
+        } else {
+            whatsappError = "WHATSAPP_RECIPIENT_NOT_SET";
+        }
+
         return NextResponse.json({
             success: true,
             requestId: requestData.id,
-            message: "تم استلام طلب التدريب وسيتم التواصل قريباً",
+            message: whatsappError
+                ? "تم استلام طلب التدريب، لكن تعذر إرسال إشعار واتساب فوري"
+                : "تم استلام طلب التدريب وسيتم التواصل قريباً",
+            whatsappStatus: whatsappError ? "failed" : "sent",
+            whatsappError,
         });
     } catch (error) {
         if (error instanceof Error && error.message === "SESSION_NOT_FOUND") {
@@ -116,6 +155,57 @@ export async function POST(request: NextRequest) {
         console.error("Safety training request error:", error);
         return NextResponse.json(
             { success: false, error: "تعذر استقبال طلب التدريب" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function GET(request: NextRequest) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const limit = Math.min(parseInt(searchParams.get("limit") || "10", 10), 30);
+        const requesterPhone = searchParams.get("requesterPhone");
+
+        const session = await getServerSession(authOptions);
+        const sessionUser = session?.user as SessionUser | undefined;
+
+        const whereClause: Record<string, any> = {};
+        if (sessionUser?.id) whereClause.userId = sessionUser.id;
+        if (!sessionUser?.id && requesterPhone) whereClause.requesterPhone = requesterPhone;
+
+        const requests = await db.safetyTrainingRequest.findMany({
+            where: Object.keys(whereClause).length ? whereClause : undefined,
+            select: {
+                id: true,
+                requestedSessionTitle: true,
+                preferredDate: true,
+                participantsCount: true,
+                location: true,
+                governorate: true,
+                city: true,
+                street: true,
+                locationUrl: true,
+                requesterCompanyName: true,
+                notes: true,
+                status: true,
+                createdAt: true,
+                session: {
+                    select: {
+                        title: true,
+                        startDate: true,
+                        location: true,
+                    },
+                },
+            },
+            orderBy: { createdAt: "desc" },
+            take: limit,
+        });
+
+        return NextResponse.json({ success: true, requests });
+    } catch (error) {
+        console.error("Safety training requests GET error:", error);
+        return NextResponse.json(
+            { success: false, error: "تعذر تحميل طلبات التدريب" },
             { status: 500 }
         );
     }

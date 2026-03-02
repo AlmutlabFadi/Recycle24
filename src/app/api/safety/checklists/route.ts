@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { db, isDemoMode } from "@/lib/db";
+import { db } from "@/lib/db";
 
 interface SessionUser {
     id: string;
@@ -23,14 +23,6 @@ export async function POST(request: NextRequest) {
         }
 
         const parsedScore = Math.max(0, Math.min(100, parseInt(score || 0, 10)));
-
-        if (isDemoMode) {
-            return NextResponse.json({
-                success: true,
-                submissionId: `demo-${Date.now()}`,
-                message: "تم حفظ التقييم (وضع تجريبي)",
-            });
-        }
 
         const submission = await db.safetyChecklistSubmission.create({
             data: {

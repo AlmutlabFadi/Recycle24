@@ -114,6 +114,30 @@ export async function POST(
             },
         });
 
+        // 🔔 إرسال إشعار للمزايد السابق (Outbid Notification)
+        const previousBidder = auction.bids[0]?.bidderId;
+        if (previousBidder && previousBidder !== bidderId) {
+            const { NotificationService } = await import("@/lib/notifications/service");
+            await NotificationService.create({
+                userId: previousBidder,
+                title: "تمت المزايدة عليك بصورة أعلى!",
+                message: `قام شخص آخر بالمزايدة بمبلغ ${amount.toLocaleString()} ل.س في مزاد "${auction.title}"`,
+                type: "URGENT",
+                link: `/auctions/${auctionId}`,
+                metadata: { auctionId, amount }
+            });
+        }
+
+        // 🌐 بث المزايدة الجديدة لجميع المتصلين (Live Bidding Update)
+        const { sseManager } = await import("@/lib/realtime/sse-server");
+        sseManager.broadcast({
+            type: "BID_PLACED",
+            auctionId,
+            amount: bid.amount,
+            bidderName: bid.bidder.name,
+            createdAt: bid.createdAt
+        });
+
         // تمديد وقت المزاد إذا كان قريباً من الانتهاء (آخر دقيقتين)
         if (auction.endsAt) {
             const timeRemaining = auction.endsAt.getTime() - Date.now();

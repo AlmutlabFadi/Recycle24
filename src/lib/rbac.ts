@@ -5,6 +5,12 @@ import { db } from "@/lib/db";
 export const PERMISSIONS = {
     MANAGE_ACCESS: "MANAGE_ACCESS",
     MANAGE_KNOWLEDGE: "MANAGE_KNOWLEDGE",
+    MANAGE_USERS: "MANAGE_USERS",
+    MANAGE_DRIVERS: "MANAGE_DRIVERS",
+    REVIEW_DRIVER_DOCS: "REVIEW_DRIVER_DOCS",
+    MANAGE_SUPPORT: "MANAGE_SUPPORT",
+    MANAGE_FINANCE: "MANAGE_FINANCE",
+    MANAGE_REWARDS: "MANAGE_REWARDS",
     UPLOAD_MEDIA: "UPLOAD_MEDIA",
     ACCESS_SAFETY: "ACCESS_SAFETY",
     ACCESS_CONSULTATIONS: "ACCESS_CONSULTATIONS",
@@ -14,6 +20,12 @@ export const PERMISSIONS = {
 const DEFAULT_PERMISSIONS = [
     { key: PERMISSIONS.MANAGE_ACCESS, label: "إدارة الصلاحيات", description: "إدارة الأدوار والدعوات" },
     { key: PERMISSIONS.MANAGE_KNOWLEDGE, label: "إدارة المحتوى", description: "إضافة وتحديث محتوى المراكز" },
+    { key: PERMISSIONS.MANAGE_USERS, label: "إدارة المستخدمين", description: "توثيق الحسابات وإدارة بائعي الخردة" },
+    { key: PERMISSIONS.MANAGE_DRIVERS, label: "إدارة السائقين", description: "إدارة ملفات السائقين وحالاتهم" },
+    { key: PERMISSIONS.REVIEW_DRIVER_DOCS, label: "مراجعة وثائق السائق", description: "مراجعة وثائق السائقين واعتمادها" },
+    { key: PERMISSIONS.MANAGE_SUPPORT, label: "الدعم الفني", description: "الرد على تذاكر الدعم وحل المشكلات" },
+    { key: PERMISSIONS.MANAGE_FINANCE, label: "الإدارة المالية", description: "إدارة الاشتراكات والرسوم والتقارير" },
+    { key: PERMISSIONS.MANAGE_REWARDS, label: "نظام المكافآت", description: "إدارة نقاط التدوير والجوائز" },
     { key: PERMISSIONS.UPLOAD_MEDIA, label: "رفع الوسائط", description: "رفع صور وفيديوهات للمحتوى" },
     { key: PERMISSIONS.ACCESS_SAFETY, label: "مركز السلامة", description: "الوصول لمحتوى السلامة" },
     { key: PERMISSIONS.ACCESS_CONSULTATIONS, label: "مركز الاستشارات", description: "الوصول لمحتوى الاستشارات" },
@@ -26,6 +38,17 @@ const DEFAULT_ROLES = [
         description: "المدير الرئيسي للمشروع",
         isSystem: true,
         permissions: Object.values(PERMISSIONS),
+    },
+    {
+        name: "SUPPORT_LEAD",
+        description: "مسؤول الدعم الفني",
+        isSystem: true,
+        permissions: [
+            PERMISSIONS.MANAGE_SUPPORT,
+            PERMISSIONS.MANAGE_USERS,
+            PERMISSIONS.MANAGE_DRIVERS,
+            PERMISSIONS.REVIEW_DRIVER_DOCS,
+        ],
     },
     {
         name: "SAFETY_SUPERVISOR",
@@ -60,21 +83,24 @@ const DEFAULT_ROLES = [
 ];
 
 export async function bootstrapAccessControl() {
-    const existing = await db.permission.count();
-    if (existing > 0) return;
-
     await db.$transaction(async (tx) => {
         const permissions = await Promise.all(
             DEFAULT_PERMISSIONS.map((permission) =>
-                tx.permission.create({ data: permission })
+                tx.permission.upsert({
+                    where: { key: permission.key },
+                    update: { label: permission.label, description: permission.description },
+                    create: permission,
+                })
             )
         );
 
         const permissionMap = new Map(permissions.map((perm) => [perm.key, perm.id]));
 
         for (const role of DEFAULT_ROLES) {
-            const createdRole = await tx.role.create({
-                data: {
+            const createdRole = await tx.role.upsert({
+                where: { name: role.name },
+                update: { description: role.description, isSystem: role.isSystem },
+                create: {
                     name: role.name,
                     description: role.description,
                     isSystem: role.isSystem,
@@ -87,7 +113,18 @@ export async function bootstrapAccessControl() {
                 .map((permissionId) => ({ roleId: createdRole.id, permissionId }));
 
             if (rolePermissionData.length) {
-                await tx.rolePermission.createMany({ data: rolePermissionData });
+                for (const rp of rolePermissionData) {
+                    await tx.rolePermission.upsert({
+                        where: {
+                            roleId_permissionId: {
+                                roleId: rp.roleId,
+                                permissionId: rp.permissionId,
+                            },
+                        },
+                        update: {},
+                        create: rp,
+                    });
+                }
             }
         }
 
@@ -99,13 +136,21 @@ export async function bootstrapAccessControl() {
         if (adminUsers.length) {
             const ownerRole = await tx.role.findUnique({ where: { name: "OWNER" }, select: { id: true } });
             if (ownerRole) {
-                await tx.userRole.createMany({
-                    data: adminUsers.map((user) => ({ userId: user.id, roleId: ownerRole.id })),
-                    skipDuplicates: true,
-                });
+                for (const user of adminUsers) {
+                    await tx.userRole.upsert({
+                        where: {
+                            userId_roleId: {
+                                userId: user.id,
+                                roleId: ownerRole.id,
+                            },
+                        },
+                        update: {},
+                        create: { userId: user.id, roleId: ownerRole.id },
+                    });
+                }
             }
         }
-    });
+    }, { timeout: 60000 });
 }
 
 export async function getSessionUserId() {
@@ -137,8 +182,17 @@ export async function getUserPermissions(userId: string) {
     return Array.from(keys);
 }
 
+let isBootstrapped = false;
+
 export async function requirePermission(permissionKey: string) {
-    await bootstrapAccessControl();
+    if (!isBootstrapped) {
+        try {
+            await bootstrapAccessControl();
+        } catch (e) {
+            console.warn("Bootstrap RBAC skipped (may already be initialized):", e instanceof Error ? e.message : e);
+        }
+        isBootstrapped = true;
+    }
     const userId = await getSessionUserId();
     if (!userId) return { ok: false, status: 401 as const };
 

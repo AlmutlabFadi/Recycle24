@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import HeaderWithBack from "@/components/HeaderWithBack";
+import BottomNavigation from "@/components/BottomNavigation";
 
 interface Message {
     id: string;
@@ -77,28 +78,28 @@ export default function SupportChatPage() {
 
     return (
         <div className="flex flex-col min-h-screen bg-background-dark font-arabic">
-            <header className="flex items-center justify-between px-4 py-3 bg-surface-dark border-b border-slate-800 sticky top-0 z-20">
-                <div className="flex items-center gap-3">
-                    <Link href="/support" className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-slate-800 text-white">
-                        <span className="material-symbols-outlined">arrow_forward</span>
-                    </Link>
-                    <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-slate-400">support_agent</span>
-                            </div>
-                            <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-surface-dark bg-green-500"></span>
-                        </div>
-                        <div className="flex flex-col">
-                            <h1 className="text-base font-bold text-white">سارة أحمد</h1>
-                            <span className="text-xs text-primary font-medium">متصل الآن</span>
-                        </div>
+            <HeaderWithBack 
+                title="مساعد الدعم" 
+                action={
+                    <button className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800 text-primary hover:bg-slate-700">
+                        <span className="material-symbols-outlined">call</span>
+                    </button>
+                }
+            />
+
+            {/* Agent Status Info (Mini) */}
+            <div className="bg-surface-dark px-4 py-2 border-b border-slate-800 flex items-center gap-3">
+                <div className="relative">
+                    <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-slate-400 text-sm">support_agent</span>
                     </div>
+                    <span className="absolute bottom-0 right-0 block h-2 w-2 rounded-full ring-2 ring-surface-dark bg-green-500"></span>
                 </div>
-                <button className="flex items-center justify-center w-10 h-10 rounded-full bg-slate-800 text-primary hover:bg-slate-700">
-                    <span className="material-symbols-outlined">call</span>
-                </button>
-            </header>
+                <div className="flex flex-col">
+                    <span className="text-xs font-bold text-white">سارة أحمد</span>
+                    <span className="text-[10px] text-primary font-medium">متصل الآن</span>
+                </div>
+            </div>
 
             <main className="flex-1 flex flex-col p-4 gap-4 overflow-y-auto pb-24">
                 <div className="flex justify-center">
@@ -111,6 +112,7 @@ export default function SupportChatPage() {
                     <label className="block text-sm font-medium text-slate-300 mb-2">موضوع المحادثة</label>
                     <div className="relative">
                         <select
+                            title="موضوع المحادثة"
                             value={selectedTopic}
                             onChange={(e) => setSelectedTopic(e.target.value)}
                             className="appearance-none w-full bg-slate-800 border border-slate-700 text-slate-200 py-3 pr-4 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
@@ -199,6 +201,7 @@ export default function SupportChatPage() {
                     </button>
                 </div>
             </footer>
+            <BottomNavigation />
         </div>
     );
 }

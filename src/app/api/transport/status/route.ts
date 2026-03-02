@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { isDemoMode, db } from "@/lib/db";
+import { db } from "@/lib/db";
 import { z } from "zod";
 
 interface SessionUser {
@@ -39,18 +39,6 @@ export async function PATCH(request: NextRequest) {
         }
 
         const data = validationResult.data;
-
-        if (isDemoMode) {
-            return NextResponse.json({
-                success: true,
-                message: "تم تحديث حالة الشحنة بنجاح (وضع تجريبي)",
-                tracking: {
-                    trackingId: data.trackingId,
-                    status: data.status,
-                    statusAr: getStatusAr(data.status),
-                },
-            });
-        }
 
         const booking = await db.transportBooking.findUnique({
             where: { trackingId: data.trackingId },

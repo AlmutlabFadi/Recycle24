@@ -1,18 +1,8 @@
 import { NextResponse } from "next/server";
-import { isDemoMode, db } from "@/lib/db";
-
-const demoStats = {
-    incidentsOpen: 6,
-    trainingsUpcoming: 4,
-    checklistSubmissions: 128,
-    avgScore: 86,
-};
+import { db } from "@/lib/db";
 
 export async function GET() {
     try {
-        if (isDemoMode) {
-            return NextResponse.json({ success: true, stats: demoStats });
-        }
 
         const [incidentsOpen, trainingsUpcoming, checklistCount, avgScore] = await Promise.all([
             db.safetyIncidentReport.count({

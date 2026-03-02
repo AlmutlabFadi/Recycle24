@@ -12,12 +12,40 @@ interface Transaction {
   createdAt: string;
 }
 
+interface DebtDetails {
+  slug: string;
+  balance: number;
+  remainingDays: number;
+  expiryDate: string;
+}
+
+interface LedgerHistory {
+  id: string;
+  amount: number;
+  description: string;
+  type: string;
+  date: string;
+  metadata?: {
+    originalAmount?: number;
+    isExempt?: boolean;
+    supportType?: string;
+    auctionId?: string;
+  };
+}
+
 interface Wallet {
   id: string;
   userId: string;
-  balance: number;
-  currency: string;
-  transactions: Transaction[];
+  balanceSYP: number;
+  balanceUSD: number;
+  verifiedBalance: number;
+  availableBalance: number;
+  heldAmount: number;
+  transactions: Transaction[]; // Kept for backward compat if needed
+  history: LedgerHistory[];    // New ledger-based history
+  debtDetails?: DebtDetails[] | null;
+  isLocked?: boolean;
+  lockReason?: string | null;
 }
 
 interface UseWalletReturn {

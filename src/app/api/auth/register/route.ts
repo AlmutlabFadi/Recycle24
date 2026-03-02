@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { hash } from "bcryptjs";
 import { sign } from "jsonwebtoken";
-import { findDemoUser, isDemoMode, registerDemoUser } from "@/lib/demo-data";
 
 function getJwtSecret(): string {
     const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET;
@@ -25,61 +24,29 @@ interface RegisterBody {
     lastName?: string;
     titleId?: string;
     gender?: "male" | "female" | "unknown";
-    userType: "TRADER" | "BUYER" | "ADMIN";
+    userType: "TRADER" | "CLIENT" | "DRIVER" | "GOVERNMENT" | "ADMIN" | "BUYER";
+    referralCode?: string; // This will be the inviter's userId for now
 }
 
 export async function POST(request: NextRequest) {
     try {
         const body: RegisterBody = await request.json();
-        const { phone, email, password, name, firstName, lastName, titleId, gender, userType } = body;
+        const { phone, email, password, name, firstName, lastName, titleId, gender, userType, referralCode } = body;
+
+        const normalizedUserType = userType === "BUYER" ? "CLIENT" : userType;
+        const allowedUserTypes = ["TRADER", "CLIENT", "DRIVER", "GOVERNMENT", "ADMIN"];
+        if (!allowedUserTypes.includes(normalizedUserType)) {
+            return NextResponse.json(
+                { error: "نوع الحساب غير صالح" },
+                { status: 400 }
+            );
+        }
 
         if ((!phone && !email) || !password || !name || !userType) {
             return NextResponse.json(
                 { error: "جميع الحقول مطلوبة" },
                 { status: 400 }
             );
-        }
-
-            const identifier = email || phone || "";
-
-        if (isDemoMode) {
-            if (findDemoUser(identifier)) {
-                return NextResponse.json(
-                    { error: "هذا الحساب مسجل مسبقاً" },
-                    { status: 409 }
-                );
-            }
-
-            const newUser = {
-                id: `demo_user_${Date.now()}`,
-                phone: phone || null,
-                email: email || null,
-                name,
-                firstName: firstName || (name ? name.split(' ')[0] : ""),
-                lastName: lastName || (name ? name.split(' ').slice(1).join(' ') : ""),
-                titleId: titleId || "",
-                gender: gender || "unknown",
-                userType,
-                status: "ACTIVE",
-                role: userType
-            };
-
-            registerDemoUser({
-                ...newUser,
-                password: "123456"
-            });
-
-            const token = sign(
-                { userId: newUser.id, email: newUser.email },
-                getJwtSecret(),
-                { expiresIn: "24h" }
-            );
-
-            return NextResponse.json({
-                success: true,
-                token,
-                user: newUser,
-            });
         }
 
         if (email) {
@@ -108,20 +75,50 @@ export async function POST(request: NextRequest) {
 
         const hashedPassword = await hash(password, 10);
 
-        const user = await db.user.create({
-            data: {
-                phone: phone || null,
-                email: email || null,
-                password: hashedPassword,
-                name,
-                userType,
-                status: "PENDING",
-                firstName: firstName || name?.split(' ')[0] || null,
-                lastName: lastName || name?.split(' ').slice(1).join(' ') || null,
-                titleId: titleId || null,
-                gender: gender || "unknown",
-            },
+        // 🛡️ Create user and wallet in an atomic transaction
+        const { user, wallet } = await db.$transaction(async (tx) => {
+            const newUser = await tx.user.create({
+                data: {
+                    phone: phone || null,
+                    email: email || null,
+                    password: hashedPassword,
+                    name,
+                    userType: normalizedUserType,
+                    status: "PENDING",
+                    firstName: firstName || name?.split(' ')[0] || null,
+                    lastName: lastName || name?.split(' ').slice(1).join(' ') || null,
+                    titleId: titleId || null,
+                    gender: gender || "unknown",
+                },
+            });
+
+            // 💰 Initialize wallet for the new user
+            const newWallet = await tx.wallet.create({
+                data: {
+                    userId: newUser.id,
+                    balanceSYP: 0,
+                    balanceUSD: 0,
+                }
+            });
+
+            return { user: newUser, wallet: newWallet };
         });
+
+        // وإذا تم تقديم كود إحالة، قم بمكافأة الداعي
+        if (referralCode) {
+            try {
+                const inviter = await db.user.findUnique({ where: { id: referralCode } });
+                if (inviter) {
+                    await db.recyclePoints.upsert({
+                        where: { userId: referralCode },
+                        update: { points: { increment: 500 } },
+                        create: { userId: referralCode, points: 500 }
+                    });
+                }
+            } catch (err) {
+                console.error("Referral credit error:", err);
+            }
+        }
 
         const token = sign(
             { userId: user.id, phone: user.phone, email: user.email },
@@ -137,18 +134,23 @@ export async function POST(request: NextRequest) {
                 phone: user.phone,
                 email: user.email,
                 name: user.name,
-                firstName: firstName || name?.split(' ')[0] || null,
-                lastName: lastName || name?.split(' ').slice(1).join(' ') || null,
-                titleId: titleId || null,
-                gender: gender || "unknown",
+                firstName: user.firstName,
+                lastName: user.lastName,
+                titleId: user.titleId,
+                gender: user.gender,
                 userType: user.userType,
                 status: user.status,
             },
         });
     } catch (error) {
-        console.error("Registration error:", error);
+        console.error("Critical Registration Failure:", error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
         return NextResponse.json(
-            { error: "حدث خطأ أثناء التسجيل" },
+            { 
+                error: "حدث خطأ أثناء التسجيل",
+                details: errorMessage,
+                code: (error as any)?.code // Prisma error code if available
+            },
             { status: 500 }
         );
     }

@@ -1,4 +1,3 @@
-// Prisma Schema for Recycle24 Platform
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,87 +7,164 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==================== USER & AUTH ====================
+enum DriverStatus {
+  PENDING
+  UNDER_REVIEW
+  VERIFIED
+  ACTIVE
+  SUSPENDED
+}
+
+enum DocType {
+  ID_CARD
+  LICENSE
+  VEHICLE_REG
+  INSURANCE
+  SELFIE
+}
+
+enum DocStatus {
+  UPLOADED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum OrderStatus {
+  CREATED
+  OFFERED
+  ASSIGNED
+  PICKED_UP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  DELIVERY_FAILED
+  CANCELED
+}
+
+enum AssignmentStatus {
+  OFFERED
+  ACCEPTED
+  DECLINED
+  CANCELED
+  EXPIRED
+}
+
+enum TicketStatus {
+  OPEN
+  PENDING
+  RESOLVED
+  CLOSED
+}
+
+enum RewardType {
+  BONUS
+  PENALTY
+  ADJUSTMENT
+}
+
+enum RewardStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+}
+
+enum AuditActorRole {
+  ADMIN
+  SUPPORT
+  DRIVER
+  SYSTEM
+}
 
 model User {
-  id         String   @id @default(cuid())
-  phone      String?  @unique
-  email      String?  @unique
-  password   String
-  name       String?
-  firstName  String?
-  lastName   String?
-  titleId    String?
-  gender     String   @default("unknown") // male, female, unknown
-  userType   String   @default("TRADER")
-  status     String   @default("PENDING")
-  role       String   @default("TRADER") // TRADER, BUYER, ADMIN
-  isVerified Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  // Security Fields
-  isLocked   Boolean @default(false)
-  lockReason String?
-
-  // Business Info
-  companyName       String?
-  companyType       String?
-  companyTypeOther  String?
-  businessType      String?
-  businessTypeOther String?
-  jobTitle          String?
-  jobTitleOther     String?
-  bio               String?
-
-  // Notification Settings
-  notifEmail     Boolean @default(true)
-  notifSms       Boolean @default(false)
-  notifWhatsapp  Boolean @default(false)
-  notifTelegram  Boolean @default(false)
-  notifPush      Boolean @default(true)
-  notifDeals     Boolean @default(true)
-  notifAuctions  Boolean @default(true)
-  notifMarketing Boolean @default(false)
-
-  // Notification Contacts
-  smsPhone         String?
-  whatsappPhone    String?
-  telegramUsername String?
-
-  // Verification
-  verificationCode   String?
-  verificationExpiry DateTime?
-
-  // Security Settings
-  twoFactorEnabled Boolean @default(false)
-  twoFactorMethod  String? // whatsapp, sms, email
-  faceIdEnabled    Boolean @default(false)
-
-  // Privacy Settings
-  showPhone             Boolean @default(false)
-  hideWarehouseLocation Boolean @default(false)
-  allowFactoryContact   Boolean @default(true)
-
-  // Relations
-  trader                Trader?
-  wallet                Wallet?
-  auctions              Auction[]
-  bids                  Bid[]
-  alerts                PriceAlert[]
-  deals                 Deal[]               @relation("buyer")
-  soldDeals             Deal[]               @relation("seller")
-  sessions              Session[]
-  securityLogs          SecurityLog[]
-  auctionParticipations AuctionParticipant[]
-  StolenReport          StolenReport[]
-  knowledgeItems        KnowledgeItem[]
-  safetyIncidentReports SafetyIncidentReport[]
-  safetyTrainingRequests SafetyTrainingRequest[]
+  id                         String                      @id @default(cuid())
+  phone                      String?                     @unique
+  email                      String?                     @unique
+  password                   String
+  name                       String?
+  firstName                  String?
+  lastName                   String?
+  titleId                    String?
+  gender                     String                      @default("unknown")
+  userType                   String                      @default("CLIENT")
+  status                     String                      @default("PENDING")
+  role                       String                      @default("CLIENT")
+  isVerified                 Boolean                     @default(false)
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime                    @updatedAt
+  isLocked                   Boolean                     @default(false)
+  lockReason                 String?
+  companyName                String?
+  companyType                String?
+  companyTypeOther           String?
+  businessType               String?
+  businessTypeOther          String?
+  jobTitle                   String?
+  jobTitleOther              String?
+  bio                        String?
+  notifEmail                 Boolean                     @default(true)
+  notifSms                   Boolean                     @default(false)
+  notifWhatsapp              Boolean                     @default(false)
+  notifTelegram              Boolean                     @default(false)
+  notifPush                  Boolean                     @default(true)
+  notifDeals                 Boolean                     @default(true)
+  notifAuctions              Boolean                     @default(true)
+  notifMarketing             Boolean                     @default(false)
+  smsPhone                   String?
+  whatsappPhone              String?
+  telegramUsername           String?
+  verificationCode           String?
+  verificationExpiry         DateTime?
+  twoFactorEnabled           Boolean                     @default(false)
+  twoFactorMethod            String?
+  faceIdEnabled              Boolean                     @default(false)
+  showPhone                  Boolean                     @default(false)
+  hideWarehouseLocation      Boolean                     @default(false)
+  allowFactoryContact        Boolean                     @default(true)
+  achievements               Achievement[]
+  auctions                   Auction[]
+  auctionParticipations      AuctionParticipant[]
+  bids                       Bid[]
+  deals                      Deal[]                      @relation("buyer")
+  soldDeals                  Deal[]                      @relation("seller")
+  knowledgeItems             KnowledgeItem[]
+  notifications              Notification[]
+  alerts                     PriceAlert[]
+  recyclePoints              RecyclePoints?
   safetyChecklistSubmissions SafetyChecklistSubmission[]
-  userRoles             UserRole[]
-  invitesCreated        StaffInvite[]
-  invitesUsed           StaffInvite[] @relation("InviteUsedBy")
+  safetyIncidentReports      SafetyIncidentReport[]
+  safetyIncidentStatusLogs   SafetyIncidentStatusLog[]
+  safetyTrainingRequests     SafetyTrainingRequest[]
+  securityLogs               SecurityLog[]
+  sessions                   Session[]
+  invitesCreated             StaffInvite[]
+  invitesUsed                StaffInvite[]               @relation("InviteUsedBy")
+  StolenReport               StolenReport[]
+  supportTickets             SupportTicket[]
+  trader                     Trader?
+  driver                     Driver?
+  userRoles                  UserRole[]
+  subscription               UserSubscription?
+  wallet                     Wallet?
+  reviewsReceived            Review[]                    @relation("reviewee")
+  reviewsGiven               Review[]                    @relation("reviewer")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("INFO")
+  isRead    Boolean  @default(false)
+  link      String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Session {
@@ -96,35 +172,47 @@ model Session {
   userId     String
   token      String   @unique
   device     String?
-  deviceType String?  @default("phone") // phone, laptop, tablet
+  deviceType String?  @default("phone")
   location   String?
   ip         String?
   userAgent  String?
   expiresAt  DateTime
   createdAt  DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
 }
 
-// ==================== TRADER VERIFICATION ====================
-
 model Trader {
-  id                 String    @id @default(cuid())
-  userId             String    @unique
-  businessName       String
-  licenseNumber      String?
-  location           String?
-  verificationStatus String    @default("PENDING") // PENDING, UNDER_REVIEW, APPROVED, REJECTED
-  verifiedAt         DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
-
-  // Relations
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  documents TraderDocument[]
+  id                        String           @id @default(cuid())
+  userId                    String           @unique
+  businessName              String
+  licenseNumber             String?
+  location                  String?
+  verificationStatus        String           @default("PENDING")
+  verifiedAt                DateTime?
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+  chamberMembershipYear     Int?
+  chamberRegistrationNumber String?
+  chamberSerialNumber       String?
+  dateOfBirth               DateTime?
+  expiryDate                DateTime?
+  fatherName                String?
+  governorate               String?
+  issueDate                 DateTime?
+  missingDocuments          String[]         @default([])
+  motherName                String?
+  registrationNumber        String?
+  rejectionReason           String?
+  taxNumber                 String?
+  fieldStatuses             Json?            @default("{}")
+  trustScore                Float            @default(0.0)
+  totalReviews              Int              @default(0)
+  successRate               Float            @default(100.0)
+  user                      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents                 TraderDocument[]
 
   @@index([verificationStatus])
 }
@@ -132,47 +220,42 @@ model Trader {
 model TraderDocument {
   id        String   @id @default(cuid())
   traderId  String
-  type      String // IDENTITY_FRONT, IDENTITY_BACK, BUSINESS_LICENSE, LOCATION_PROOF
+  type      String
   fileUrl   String
-  status    String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  status    String   @default("PENDING")
   createdAt DateTime @default(now())
-
-  trader Trader @relation(fields: [traderId], references: [id], onDelete: Cascade)
+  trader    Trader   @relation(fields: [traderId], references: [id], onDelete: Cascade)
 
   @@index([traderId])
   @@index([status])
 }
 
-// ==================== AUCTIONS ====================
-
 model Auction {
-  id              String    @id @default(cuid())
+  id              String               @id @default(cuid())
   sellerId        String
   title           String
-  category        String // IRON, COPPER, ALUMINUM, PLASTIC, CARDBOARD, MIXED, BRASS, STEEL, ZINC
+  category        String
   weight          Float
-  weightUnit      String    @default("KG") // KG, TON
+  weightUnit      String               @default("KG")
   location        String
   startingBid     Float
   buyNowPrice     Float?
-  securityDeposit Float     @default(0) // Set by seller, matched by buyers
-  entryFee        Float     @default(0) // Non-refundable platform fee per participant
-  duration        Int // in hours
-  status          String    @default("SCHEDULED") // SCHEDULED, LIVE, ENDED, CANCELLED
-  scheduledAt     DateTime? // When auction will start
+  securityDeposit Float                @default(0)
+  entryFee        Float                @default(0)
+  duration        Int
+  status          String               @default("SCHEDULED")
+  scheduledAt     DateTime?
   startedAt       DateTime?
   endsAt          DateTime?
   winnerId        String?
   finalPrice      Float?
-  currentBid      Float? // Cached highest bid for performance
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  // Relations
-  seller       User                 @relation(fields: [sellerId], references: [id])
-  bids         Bid[]
-  images       AuctionImage[]
-  participants AuctionParticipant[]
+  currentBid      Float?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  seller          User                 @relation(fields: [sellerId], references: [id])
+  images          AuctionImage[]
+  participants    AuctionParticipant[]
+  bids            Bid[]
 
   @@index([sellerId])
   @@index([category])
@@ -181,20 +264,25 @@ model Auction {
 }
 
 model AuctionParticipant {
-  id            String   @id @default(cuid())
-  auctionId     String
-  userId        String
-  depositPaid   Float    @default(0)
-  entryFeePaid  Float    @default(0)
-  isExempt      Boolean  @default(false) // True for GOVERNMENT accounts
-  depositStatus String   @default("HELD") // HELD, REFUNDED, APPLIED_TO_DEAL, FORFEITED
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  auctionId           String
+  userId              String
+  depositPaid         Float    @default(0)
+  entryFeePaid        Float    @default(0)
+  isExempt            Boolean  @default(false)
+  depositStatus       String   @default("HELD")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  agreedToCommission  Boolean  @default(false)
+  agreedToDataSharing Boolean  @default(false)
+  agreedToInvoice     Boolean  @default(false)
+  agreedToPrivacy     Boolean  @default(false)
+  agreedToTerms       Boolean  @default(false)
+  hasInspectedGoods   Boolean  @default(false)
+  auction             Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user                User     @relation(fields: [userId], references: [id])
 
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id])
-
-  @@unique([auctionId, userId]) // User can only participate once per auction
+  @@unique([auctionId, userId])
   @@index([auctionId])
   @@index([userId])
 }
@@ -205,8 +293,7 @@ model AuctionImage {
   imageUrl  String
   order     Int      @default(0)
   createdAt DateTime @default(now())
-
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
 
   @@index([auctionId])
 }
@@ -217,51 +304,45 @@ model Bid {
   bidderId  String
   amount    Float
   createdAt DateTime @default(now())
-
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  bidder  User    @relation(fields: [bidderId], references: [id])
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  bidder    User     @relation(fields: [bidderId], references: [id])
 
   @@index([auctionId, createdAt])
 }
 
-// ==================== DEALS & CONTRACTS ====================
-
 model Deal {
-  id             String    @id @default(cuid())
-  auctionId      String? // If from auction
+  id             String        @id @default(cuid())
+  auctionId      String?
   sellerId       String
   buyerId        String
   materialType   String
   weight         Float
   totalAmount    Float
   platformFee    Float
-  status         String    @default("PENDING") // PENDING, CONTRACT_SIGNED, DEPOSIT_PAID, COMPLETED, CANCELLED, DISPUTED
-  contractSigned Boolean   @default(false)
+  status         String        @default("PENDING")
+  contractSigned Boolean       @default(false)
   signedAt       DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-
-  seller       User          @relation("seller", fields: [sellerId], references: [id])
-  buyer        User          @relation("buyer", fields: [buyerId], references: [id])
-  transactions Transaction[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  buyer          User          @relation("buyer", fields: [buyerId], references: [id])
+  seller         User          @relation("seller", fields: [sellerId], references: [id])
+  transactions   Transaction[]
+  reviews        Review[]
 
   @@index([sellerId])
   @@index([buyerId])
   @@index([status])
 }
 
-// ==================== WALLET & TRANSACTIONS ====================
-
 model Wallet {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  balanceSYP Float    @default(0)
-  balanceUSD Float    @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String        @id @default(cuid())
+  userId       String        @unique
+  balanceSYP   Float         @default(0)
+  balanceUSD   Float         @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   transactions Transaction[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -270,15 +351,14 @@ model Transaction {
   id          String   @id @default(cuid())
   walletId    String
   dealId      String?
-  type        String // DEPOSIT, WITHDRAWAL, PAYMENT, REFUND, FEE, REWARD
+  type        String
   amount      Float
-  currency    String // SYP, USD
-  status      String // PENDING, COMPLETED, FAILED, CANCELLED
+  currency    String
+  status      String
   description String?
   createdAt   DateTime @default(now())
-
-  wallet Wallet @relation(fields: [walletId], references: [id])
-  deal   Deal?  @relation(fields: [dealId], references: [id])
+  deal        Deal?    @relation(fields: [dealId], references: [id])
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
 
   @@index([walletId])
   @@index([dealId])
@@ -286,24 +366,19 @@ model Transaction {
   @@index([createdAt])
 }
 
-// ==================== MARKET INTELLIGENCE ====================
-
 model PriceAlert {
   id          String   @id @default(cuid())
   userId      String
   metal       String
   targetPrice Float
-  condition   String // ABOVE, BELOW
+  condition   String
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([isActive])
 }
-
-// ==================== REWARDS & POINTS ====================
 
 model RecyclePoints {
   id        String   @id @default(cuid())
@@ -312,6 +387,7 @@ model RecyclePoints {
   level     Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Achievement {
@@ -319,43 +395,75 @@ model Achievement {
   userId     String
   badgeType  String
   unlockedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
-// ==================== SECURITY & COMPLIANCE ====================
+model SubscriptionPackage {
+  id            String             @id @default(cuid())
+  name          String             @unique
+  price         Float
+  durationDays  Int                @default(30)
+  benefits      String[]
+  isActive      Boolean            @default(true)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  subscriptions UserSubscription[]
+}
+
+model UserSubscription {
+  id        String               @id @default(cuid())
+  userId    String               @unique
+  packageId String?
+  plan      String               @default("FREE")
+  status    String               @default("ACTIVE")
+  startDate DateTime             @default(now())
+  endDate   DateTime?
+  pricePaid Float                @default(0)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  package   SubscriptionPackage? @relation(fields: [packageId], references: [id])
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CompanyWallet {
+  id               String   @id @default(cuid())
+  totalRevenue     Float    @default(0)
+  totalCommissions Float    @default(0)
+  totalDeposits    Float    @default(0)
+  balanceSYP       Float    @default(0)
+  balanceUSD       Float    @default(0)
+  updatedAt        DateTime @updatedAt
+}
 
 model SecurityLog {
   id        String   @id @default(cuid())
-  level     String // INFO, WARN, CRITICAL, AUDIT
-  event     String // LOGIN, FAILED_LOGIN, API_ABUSE, ADMIN_ACTION
+  level     String
+  event     String
   details   String?
   ip        String?
   userAgent String?
   userId    String?
   createdAt DateTime @default(now())
-
-  user User? @relation(fields: [userId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@index([event])
   @@index([level])
   @@index([createdAt])
 }
 
-// ==================== SUPREME ORCHESTRATOR ====================
-
 model Agent {
-  id            String   @id @default(cuid())
-  name          String   @unique
-  type          String // TASK_MANAGER, SECURITY, RECOVERY, PERFORMANCE, etc.
-  status        String   @default("IDLE") // IDLE, WORKING, OFFLINE, FAILED
-  lastHeartbeat DateTime @default(now())
-  metadata      String? // JSON string for additional state data
-  ipAddress     String? // Optional IP address of where the agent is running
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  tasks AgentTask[] @relation("assignedAgent")
+  id            String      @id @default(cuid())
+  name          String      @unique
+  type          String
+  status        String      @default("IDLE")
+  lastHeartbeat DateTime    @default(now())
+  metadata      String?
+  ipAddress     String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  tasks         AgentTask[] @relation("assignedAgent")
 
   @@index([type])
   @@index([status])
@@ -363,30 +471,27 @@ model Agent {
 }
 
 model AgentTask {
-  id           String    @id @default(cuid())
-  type         String // Type of task, e.g., SECURITY_SCAN, SYSTEM_CHECK
-  priority     Int       @default(0) // Higher number = higher priority
-  status       String    @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED, FAILED
-  payload      String? // JSON string containing task parameters
-  result       String? // JSON string containing task output/error
-  error        String?
-  assignedToId String?
-  retryCount   Int       @default(0)
-  maxRetries   Int       @default(3)
-  startedAt    DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-
-  assignedAgent Agent? @relation("assignedAgent", fields: [assignedToId], references: [id])
+  id            String    @id @default(cuid())
+  type          String
+  priority      Int       @default(0)
+  status        String    @default("PENDING")
+  payload       String?
+  result        String?
+  error         String?
+  assignedToId  String?
+  retryCount    Int       @default(0)
+  maxRetries    Int       @default(3)
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  assignedAgent Agent?    @relation("assignedAgent", fields: [assignedToId], references: [id])
 
   @@index([status])
   @@index([priority])
   @@index([type])
   @@index([assignedToId])
 }
-
-// ==================== TRANSPORT ====================
 
 model TransportBooking {
   id                  String   @id @default(cuid())
@@ -400,8 +505,8 @@ model TransportBooking {
   deliveryGovernorate String
   pickupDate          DateTime
   notes               String?
-  transportType       String // pickup, medium, large
-  status              String   @default("PENDING") // PENDING, CONFIRMED, IN_TRANSIT, DELIVERED, CANCELLED
+  transportType       String
+  status              String   @default("PENDING")
   estimatedPrice      Float
   actualPrice         Float?
   driverId            String?
@@ -418,20 +523,18 @@ model TransportBooking {
   @@index([driverId])
 }
 
-// ==================== SUPPORT ====================
-
 model SupportTicket {
-  id        String   @id @default(cuid())
+  id        String                 @id @default(cuid())
   userId    String
-  ticketId  String   @unique
+  ticketId  String                 @unique
   subject   String
-  category  String   @default("Ø¹Ø§Ù…") // ØªÙ‚Ù†ÙŠ, Ù…Ø¯ÙÙˆØ¹Ø§Øª, Ù…Ø²Ø§Ø¯Ø§Øª, ØµÙÙ‚Ø§Øª, Ø¹Ø§Ù…
-  priority  String   @default("MEDIUM") // LOW, MEDIUM, HIGH
-  status    String   @default("OPEN") // OPEN, PENDING, RESOLVED, CLOSED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  messages SupportTicketMessage[]
+  category  String                 @default("Ø¹Ø§Ù…")
+  priority  String                 @default("MEDIUM")
+  status    String                 @default("OPEN")
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+  user      User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  SupportTicketMessage[]
 
   @@index([userId])
   @@index([ticketId])
@@ -440,33 +543,30 @@ model SupportTicket {
 }
 
 model SupportTicketMessage {
-  id         String   @id @default(cuid())
+  id         String        @id @default(cuid())
   ticketId   String
   userId     String?
   content    String
-  senderType String // USER, SUPPORT, AGENT
-  createdAt  DateTime @default(now())
-
-  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderType String
+  createdAt  DateTime      @default(now())
+  ticket     SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
   @@index([createdAt])
 }
 
-// ==================== AI AGENT REPORTS ====================
-
 model AgentReport {
   id         String   @id @default(cuid())
   agentName  String
   taskType   String
-  severity   String   @default("INFO") // INFO, WARNING, ERROR, CRITICAL
-  category   String // lint, security, performance, ux, backend, api, db, etc.
-  file       String? // affected file path
+  severity   String   @default("INFO")
+  category   String
+  file       String?
   line       Int?
   message    String
-  suggestion String? // what should be done
-  codeBefore String? // original code snippet
-  codeAfter  String? // new code written by agent
+  suggestion String?
+  codeBefore String?
+  codeAfter  String?
   autoFixed  Boolean  @default(false)
   createdAt  DateTime @default(now())
 
@@ -476,8 +576,6 @@ model AgentReport {
   @@index([autoFixed])
   @@index([createdAt])
 }
-
-// ==================== GSCC SECURITY ====================
 
 model GsoccIncident {
   id           String   @id @default(cuid())
@@ -519,8 +617,6 @@ model GsoccSecurityRule {
   @@map("gsocc_security_rules")
 }
 
-// ==================== STOLEN REPORTS ====================
-
 model StolenReport {
   id             String   @id @default(cuid())
   userId         String?
@@ -534,13 +630,12 @@ model StolenReport {
   vehicleType    String?
   vehicleColor   String?
   stolenDate     DateTime
-  status         String   @default("ACTIVE") // ACTIVE, RESOLVED
-  images         String[] @default([]) // Store image URLs directly
-  videos         String[] @default([]) // Store video URLs directly
+  status         String   @default("ACTIVE")
+  images         String[] @default([])
+  videos         String[] @default([])
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-
-  user User? @relation(fields: [userId], references: [id])
+  user           User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([status])
@@ -548,27 +643,24 @@ model StolenReport {
   @@index([createdAt])
 }
 
-// ==================== KNOWLEDGE CENTERS ====================
-
 model KnowledgeItem {
-  id             String   @id @default(cuid())
-  center         String   // SAFETY, CONSULTATIONS, ACADEMY
-  type           String   // ARTICLE, VIDEO, IMAGE, WARNING, INSTRUCTION
-  title          String
-  summary        String?
-  content        String?
-  mediaUrl       String?
-  coverImageUrl  String?
-  tags           String[] @default([])
-  priority       Int      @default(0)
-  status         String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
-  authorName     String?
-  sourceLabel    String?
-  createdById    String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  id            String   @id @default(cuid())
+  center        String
+  type          String
+  title         String
+  summary       String?
+  content       String?
+  mediaUrl      String?
+  coverImageUrl String?
+  tags          String[] @default([])
+  priority      Int      @default(0)
+  status        String   @default("DRAFT")
+  authorName    String?
+  sourceLabel   String?
+  createdById   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     User?    @relation(fields: [createdById], references: [id])
 
   @@index([center])
   @@index([type])
@@ -578,21 +670,29 @@ model KnowledgeItem {
 }
 
 model SafetyIncidentReport {
-  id              String   @id @default(cuid())
-  userId          String?
-  reporterName    String?
-  reporterPhone   String?
-  reporterRole    String?
-  incidentType    String
-  severity        String   @default("MEDIUM") // LOW, MEDIUM, HIGH, CRITICAL
-  location        String
-  description     String
-  immediateAction String?
-  status          String   @default("OPEN") // OPEN, IN_REVIEW, RESOLVED
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id                  String                    @id @default(cuid())
+  userId              String?
+  reporterName        String?
+  reporterPhone       String?
+  reporterRole        String?
+  reporterCompanyName String?
+  incidentType        String
+  severity            String                    @default("MEDIUM")
+  location            String
+  governorate         String?
+  city                String?
+  street              String?
+  locationUrl         String?
+  latitude            Float?
+  longitude           Float?
+  locationAccuracy    Int?
+  description         String
+  immediateAction     String?
+  status              String                    @default("IN_REVIEW")
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  user                User?                     @relation(fields: [userId], references: [id])
+  statusLogs          SafetyIncidentStatusLog[]
 
   @@index([userId])
   @@index([status])
@@ -600,45 +700,64 @@ model SafetyIncidentReport {
   @@index([createdAt])
 }
 
-model SafetyTrainingSession {
-  id             String   @id @default(cuid())
-  title          String
-  description    String?
-  level          String   @default("BASIC") // BASIC, ADVANCED
-  location       String
-  startDate      DateTime
-  durationHours  Int
-  capacity       Int
-  availableSeats Int
-  instructorName String?
-  status         String   @default("OPEN") // OPEN, FULL, CANCELLED, COMPLETED
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+model SafetyIncidentStatusLog {
+  id          String               @id @default(cuid())
+  incidentId  String
+  status      String
+  note        String?
+  changedById String?
+  createdAt   DateTime             @default(now())
+  changedBy   User?                @relation(fields: [changedById], references: [id])
+  incident    SafetyIncidentReport @relation(fields: [incidentId], references: [id], onDelete: Cascade)
 
-  requests SafetyTrainingRequest[]
+  @@index([incidentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SafetyTrainingSession {
+  id              String                  @id @default(cuid())
+  title           String
+  description     String?
+  level           String                  @default("BASIC")
+  location        String
+  contactWhatsapp String?
+  startDate       DateTime
+  durationHours   Int
+  capacity        Int
+  availableSeats  Int
+  instructorName  String?
+  status          String                  @default("OPEN")
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  requests        SafetyTrainingRequest[]
 
   @@index([status])
   @@index([startDate])
 }
 
 model SafetyTrainingRequest {
-  id                    String   @id @default(cuid())
+  id                    String                 @id @default(cuid())
   userId                String?
   requesterName         String?
   requesterPhone        String?
   requesterRole         String?
+  requesterCompanyName  String?
+  governorate           String?
+  city                  String?
+  street                String?
+  locationUrl           String?
   sessionId             String?
   requestedSessionTitle String?
   preferredDate         DateTime?
-  participantsCount     Int      @default(1)
+  participantsCount     Int                    @default(1)
   location              String?
   notes                 String?
-  status                String   @default("PENDING") // PENDING, CONFIRMED, REJECTED
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-
-  user    User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
-  session SafetyTrainingSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  status                String                 @default("PENDING")
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  session               SafetyTrainingSession? @relation(fields: [sessionId], references: [id])
+  user                  User?                  @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([status])
@@ -654,42 +773,38 @@ model SafetyChecklistSubmission {
   responses     Json
   notes         String?
   createdAt     DateTime @default(now())
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user          User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([createdAt])
 }
 
 model Permission {
-  id          String   @id @default(cuid())
-  key         String   @unique
-  label       String
-  description String?
-  createdAt   DateTime @default(now())
-
+  id              String           @id @default(cuid())
+  key             String           @unique
+  label           String
+  description     String?
+  createdAt       DateTime         @default(now())
   rolePermissions RolePermission[]
 }
 
 model Role {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  description String?
-  isSystem    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
+  id              String           @id @default(cuid())
+  name            String           @unique
+  description     String?
+  isSystem        Boolean          @default(false)
+  createdAt       DateTime         @default(now())
   rolePermissions RolePermission[]
-  userRoles       UserRole[]
   invites         StaffInvite[]
+  userRoles       UserRole[]
 }
 
 model RolePermission {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   roleId       String
   permissionId String
-
-  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([roleId, permissionId])
   @@index([roleId])
@@ -701,9 +816,8 @@ model UserRole {
   userId    String
   roleId    String
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, roleId])
   @@index([userId])
@@ -711,24 +825,453 @@ model UserRole {
 }
 
 model StaffInvite {
-  id          String   @id @default(cuid())
-  code        String   @unique
+  id          String    @id @default(cuid())
+  code        String    @unique
   email       String?
   phone       String?
   roleId      String
-  status      String   @default("PENDING") // PENDING, USED, REVOKED, EXPIRED
+  status      String    @default("PENDING")
   expiresAt   DateTime?
   createdById String
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
   usedById    String?
   usedAt      DateTime?
-
-  role       Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  createdBy  User @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  usedBy     User? @relation("InviteUsedBy", fields: [usedById], references: [id])
+  createdBy   User      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  role        Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  usedBy      User?     @relation("InviteUsedBy", fields: [usedById], references: [id])
 
   @@index([status])
   @@index([createdById])
   @@index([roleId])
   @@index([expiresAt])
+}
+
+model LedgerAccount {
+  id            String        @id @default(cuid())
+  ownerId       String?
+  slug          String        @unique
+  currency      String        @default("SYP")
+  balance       Float         @default(0)
+  metadata      Json?
+  status        String        @default("ACTIVE")
+  debtStartedAt DateTime?
+  creditLimit   Float         @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  lines         JournalLine[]
+  holds         LedgerHold[]
+
+  @@index([ownerId])
+  @@index([slug])
+}
+
+model JournalEntry {
+  id             String        @id @default(cuid())
+  type           String
+  description    String?
+  metadata       Json?
+  idempotencyKey String?       @unique
+  postedAt       DateTime      @default(now())
+  lines          JournalLine[]
+
+  @@index([type])
+  @@index([postedAt])
+}
+
+model JournalLine {
+  id          String        @id @default(cuid())
+  entryId     String
+  accountId   String
+  amount      Float
+  description String?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+  account     LedgerAccount @relation(fields: [accountId], references: [id])
+  entry       JournalEntry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@index([entryId])
+  @@index([accountId])
+  @@index([createdAt])
+}
+
+model LedgerHold {
+  id            String        @id @default(cuid())
+  accountId     String
+  amount        Float
+  status        String        @default("OPEN")
+  referenceType String?
+  referenceId   String?
+  expiresAt     DateTime?
+  metadata      Json?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  account       LedgerAccount @relation(fields: [accountId], references: [id])
+
+  @@index([accountId])
+  @@index([status])
+  @@index([referenceId])
+}
+
+model Driver {
+  id           String        @id @default(cuid())
+  userId       String        @unique
+  fullName     String
+  phone        String
+  city         String?
+  status       DriverStatus  @default(PENDING)
+  ratingAvg    Float         @default(0)
+  ratingCount  Int           @default(0)
+  vehicles     Vehicle[]
+  documents    DriverDocument[]
+  sessions     DriverSession[]
+  assignments  DeliveryAssignment[]
+  deliveries   Delivery[]
+  rewards      DriverReward[]
+  ratings      DriverRating[]
+  trustScore   Float         @default(0.0)
+  totalReviews Int           @default(0)
+  successRate  Float         @default(100.0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Vehicle {
+  id          String   @id @default(cuid())
+  driverId    String
+  plateNumber String
+  make        String?
+  model       String?
+  year        Int?
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  driver      Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId])
+  @@index([plateNumber])
+}
+
+model DriverDocument {
+  id           String    @id @default(cuid())
+  driverId     String
+  type         DocType
+  status       DocStatus @default(UPLOADED)
+  fileUrl      String
+  fileSha256   String
+  expiresAt    DateTime?
+  reviewedBy   String?
+  reviewedAt   DateTime?
+  rejectReason String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  driver       Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId])
+  @@index([status])
+  @@index([type])
+}
+
+model DriverSession {
+  id         String   @id @default(cuid())
+  driverId   String
+  deviceId   String
+  pushToken  String?
+  lastLat    Float?
+  lastLng    Float?
+  lastSeenAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  driver     Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId])
+  @@index([deviceId])
+  @@index([lastSeenAt])
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  status         OrderStatus @default(CREATED)
+  pickupAddress  String
+  dropoffAddress String
+  recipientName  String?
+  recipientPhone String?
+  offers         DeliveryAssignment[]
+  deliveries     Delivery[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model DeliveryAssignment {
+  id           String           @id @default(cuid())
+  orderId      String
+  driverId     String
+  status       AssignmentStatus @default(OFFERED)
+  offeredPrice Int?
+  offeredAt    DateTime         @default(now())
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  declinedAt   DateTime?
+  canceledAt   DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  order        Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driver       Driver           @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([driverId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model Delivery {
+  id               String      @id @default(cuid())
+  orderId          String
+  driverId         String
+  status           OrderStatus @default(ASSIGNED)
+  pickedUpAt       DateTime?
+  outForDeliveryAt DateTime?
+  deliveredAt      DateTime?
+  failedAt         DateTime?
+  failReason       String?
+  pod              ProofOfDelivery?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  order            Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driver           Driver      @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([driverId])
+  @@index([status])
+}
+
+model ProofOfDelivery {
+  id           String   @id @default(cuid())
+  deliveryId   String   @unique
+  signedName   String?
+  signatureSvg String?
+  photoUrls    String[]
+  lat          Float?
+  lng          Float?
+  occurredAt   DateTime
+  createdAt    DateTime @default(now())
+  delivery     Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+
+  @@index([deliveryId])
+  @@index([occurredAt])
+}
+
+model DriverRating {
+  id        String   @id @default(cuid())
+  orderId   String
+  driverId  String
+  score     Int
+  comment   String?
+  createdAt DateTime @default(now())
+  driver    Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([driverId])
+  @@index([score])
+}
+
+model DriverReward {
+  id          String       @id @default(cuid())
+  driverId    String
+  type        RewardType
+  status      RewardStatus @default(PENDING)
+  amount      Int
+  reason      String
+  referenceId String?
+  approvedBy  String?
+  approvedAt  DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  driver      Driver       @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId])
+  @@index([status])
+  @@index([type])
+  @@index([referenceId])
+}
+
+model AuditLog {
+  id         String         @id @default(cuid())
+  actorRole  AuditActorRole
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  beforeJson Json?
+  afterJson  Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime       @default(now())
+
+  @@index([actorId])
+  @@index([actorRole])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  reviewerId  String
+  revieweeId  String
+  dealId      String?
+  rating      Int
+  comment     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reviewer    User     @relation("reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee    User     @relation("reviewee", fields: [revieweeId], references: [id], onDelete: Cascade)
+  deal        Deal?    @relation(fields: [dealId], references: [id])
+
+  @@index([revieweeId])
+  @@index([reviewerId])
+  @@index([rating])
+}
+
+// ──────────────────────────────────────────────────────────
+// CONTROL TOWER — Event Stream + Alerts + Actions + KillSwitch
+// ──────────────────────────────────────────────────────────
+
+/// مكونات النظام المراقبة (مزاد، دفع، WAF، Ledger، لوجستيات)
+model SystemComponent {
+  id              String    @id @default(cuid())
+  key             String    @unique             // "auction", "ledger", "payments", "waf", "logistics"
+  name            String                        // اسم عربي للعرض
+  criticality     String    @default("medium")  // low | medium | high | critical
+  status          String    @default("healthy") // healthy | degraded | down | maintenance
+  lastHeartbeatAt DateTime?
+  meta            Json      @default("{}")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status])
+  @@index([criticality])
+}
+
+/// تيار الأحداث — القلب النابض للمنظومة (Event Sourcing light)
+model ControlEvent {
+  id                  String   @id @default(cuid())
+  ts                  DateTime @default(now())
+  sourceComponentKey  String                       // FK منطقي → SystemComponent.key
+  eventType           String                       // "AUCTION.BID_PLACED" / "LEDGER.TRANSFER_POSTED"
+  severity            String   @default("info")    // info | warn | critical
+  tenantCountry       String?                      // سوريا / ألمانيا
+  actorUserId         String?                      // المستخدم المسبب (إن وجد)
+  entityType          String?                      // "auction" | "bid" | "ledger_txn" | "shipment"
+  entityId            String?                      // معرف الكيان المرتبط
+  traceId             String?                      // correlation id
+  ip                  String?
+  payload             Json     @default("{}")
+
+  @@index([ts(sort: Desc)])
+  @@index([eventType, ts(sort: Desc)])
+  @@index([entityType, entityId])
+  @@index([sourceComponentKey])
+  @@index([severity])
+}
+
+/// تنبيهات ناتجة عن قواعد الكشف (Detection Rules)
+model CtAlert {
+  id                  String    @id @default(cuid())
+  createdAt           DateTime  @default(now())
+  status              String    @default("open")    // open | ack | snoozed | resolved | false_positive
+  severity            String    @default("medium")  // low | medium | high | critical
+  ruleKey             String                        // "API_ABUSE_500RPS" / "BID_COLLUSION"
+  title               String
+  description         String?
+  primaryEntityType   String?
+  primaryEntityId     String?
+  relatedEntities     Json      @default("[]")
+  evidence            Json      @default("{}")      // event_ids, metrics, samples
+  assignedToUserId    String?
+  acknowledgedByUserId String?
+  acknowledgedAt      DateTime?
+  resolvedByUserId    String?
+  resolvedAt          DateTime?
+
+  @@index([status, severity, createdAt(sort: Desc)])
+  @@index([ruleKey, createdAt(sort: Desc)])
+  @@index([assignedToUserId])
+}
+
+/// حوادث — تجميع عدة تنبيهات/أحداث للتحقيق
+model Incident {
+  id          String         @id @default(cuid())
+  createdAt   DateTime       @default(now())
+  status      String         @default("open")     // open | investigating | contained | closed
+  severity    String         @default("medium")   // low | medium | high | critical
+  title       String
+  summary     String?
+  ownerUserId String?
+  tags        String[]       @default([])
+  timeline    Json           @default("[]")        // نقاط زمنية مختصرة
+  updatedAt   DateTime       @updatedAt
+
+  links       IncidentLink[]
+
+  @@index([status, severity])
+  @@index([ownerUserId])
+}
+
+/// روابط الحوادث (ربط alert/event بحادث)
+model IncidentLink {
+  id          String   @id @default(cuid())
+  incidentId  String
+  linkType    String                                // "alert" | "event"
+  linkId      String                                // id of the alert or event
+  createdAt   DateTime @default(now())
+
+  incident    Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@unique([incidentId, linkType, linkId])
+  @@index([linkType, linkId])
+}
+
+/// إجراءات الاحتواء/التصعيد/الموافقة
+model ControlAction {
+  id                String    @id @default(cuid())
+  createdAt         DateTime  @default(now())
+  type              String                          // "FREEZE_USER" | "PAUSE_AUCTION" | "BLOCK_IP"
+  status            String    @default("pending")   // pending | approved | rejected | executed | failed | rolled_back
+  requestedByUserId String
+  approvedByUserId  String?
+  approvedAt        DateTime?
+  executedAt        DateTime?
+  reason            String                          // إلزامي — لماذا هذا الإجراء
+  scope             Json      @default("{}")        // { userId, auctionId, ip, componentKey... }
+  incidentId        String?
+  result            Json      @default("{}")
+  updatedAt         DateTime  @updatedAt
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([type])
+  @@index([requestedByUserId])
+  @@index([incidentId])
+}
+
+/// مفاتيح الإيقاف الطارئ — Kill Switch
+model KillSwitch {
+  id              String   @id @default(cuid())
+  key             String   @unique                 // "AUCTIONS_GLOBAL" | "PAYMENTS_GLOBAL" | "PAYMENTS_SYRIA"
+  name            String                           // اسم عربي للعرض
+  description     String?
+  state           String   @default("off")         // on | off
+  updatedAt       DateTime @updatedAt
+  updatedByUserId String
+  reason          String                           // سبب آخر تغيير
+
+  @@index([state])
 }

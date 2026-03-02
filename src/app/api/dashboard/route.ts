@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isDemoMode } from "@/lib/demo-data";
 
 interface AuctionWithRelations {
     id: string;
@@ -27,62 +26,6 @@ export async function GET(request: NextRequest) {
 
         if (!userId) {
             return NextResponse.json({ error: "معرف المستخدم مطلوب" }, { status: 400 });
-        }
-
-        if (isDemoMode) {
-            return NextResponse.json({
-                success: true,
-                stats: {
-                    totalSales: 45680000,
-                    activeAuctions: 3,
-                    activeDeals: 5,
-                    walletBalance: 8300000,
-                    loyaltyPoints: 2450,
-                    monthlyRevenue: 12.5,
-                },
-                activeAuctions: [
-                    {
-                        id: "demo_1",
-                        title: "طن حديد HMS",
-                        currentBid: 18500000,
-                        bidders: 8,
-                        timeLeft: "4 ساعات",
-                        status: "LIVE",
-                    },
-                    {
-                        id: "demo_2",
-                        title: "ألمنيوم نظيف",
-                        currentBid: 12000000,
-                        bidders: 5,
-                        timeLeft: "1 يوم",
-                        status: "LIVE",
-                    },
-                    {
-                        id: "demo_3",
-                        title: "نحاس أسلاك",
-                        currentBid: 9200000,
-                        bidders: 12,
-                        timeLeft: "8 ساعات",
-                        status: "LIVE",
-                    },
-                ],
-                recentDeals: [
-                    {
-                        id: "DEAL-7782",
-                        buyer: { id: "buyer_1", name: "محمد التجاري" },
-                        material: "حديد",
-                        amount: 15000000,
-                        status: "COMPLETED",
-                    },
-                    {
-                        id: "DEAL-7781",
-                        buyer: { id: "buyer_2", name: "أحمد الصناعي" },
-                        material: "نحاس",
-                        amount: 8500000,
-                        status: "PENDING",
-                    },
-                ],
-            });
         }
 
         const user = await db.user.findUnique({

@@ -1,22 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { isDemoMode } from "@/lib/demo-data";
-
-type DemoUser = {
-    id: string;
-    name?: string;
-    firstName?: string;
-    lastName?: string;
-    titleId?: string;
-    gender?: string;
-    companyName?: string;
-    companyType?: string;
-    businessType?: string;
-    jobTitle?: string;
-    bio?: string;
-};
-
-const demoUsers: Map<string, DemoUser> = new Map();
 
 export async function PUT(request: NextRequest) {
     try {
@@ -41,48 +24,37 @@ export async function PUT(request: NextRequest) {
             );
         }
 
-        if (isDemoMode) {
-            let user = demoUsers.get(userId) ?? {
-                id: userId,
-                name: "",
-                firstName: "",
-                lastName: "",
-                titleId: "",
-                gender: "unknown",
-            };
-
-            const fullName = firstName && lastName 
-                ? `${firstName} ${lastName}`.trim()
-                : user.name || "";
-
-            user = {
-                ...user,
-                ...(firstName && { firstName }),
-                ...(lastName && { lastName }),
-                ...(fullName && { name: fullName }),
-                ...(titleId && { titleId }),
-                ...(gender && { gender }),
-                ...(companyName !== undefined && { companyName }),
-                ...(companyType && { companyType }),
-                ...(businessType && { businessType }),
-                ...(jobTitle && { jobTitle }),
-                ...(bio !== undefined && { bio }),
-            };
-
-            demoUsers.set(userId, user);
-
-            return NextResponse.json({
-                success: true,
-                user,
-            });
-        }
-
-        const updateData: { firstName?: string; lastName?: string; titleId?: string; gender?: string } = {};
+        const updateData: { 
+            firstName?: string; 
+            lastName?: string; 
+            titleId?: string; 
+            gender?: string;
+            userType?: string;
+            status?: string;
+        } = {};
         
         if (firstName !== undefined) updateData.firstName = firstName;
         if (lastName !== undefined) updateData.lastName = lastName;
         if (titleId !== undefined) updateData.titleId = titleId;
         if (gender !== undefined) updateData.gender = gender;
+
+        // Special handling for trader upgrade request
+        if (body.upgradeToTrader) {
+            // We only need to check or initialize the Trader record
+            const existingTrader = await db.trader.findUnique({
+                where: { userId }
+            });
+
+            if (!existingTrader) {
+                await db.trader.create({
+                    data: {
+                        userId,
+                        businessName: firstName && lastName ? `${firstName} ${lastName}` : "قيد الإعداد",
+                        verificationStatus: "PENDING"
+                    }
+                });
+            }
+        }
 
         const user = await db.user.update({
             where: { id: userId },
@@ -129,16 +101,6 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        if (isDemoMode) {
-            const user = demoUsers.get(userId);
-            if (!user) {
-                return NextResponse.json({
-                    user: null,
-                });
-            }
-            return NextResponse.json({ user });
-        }
-
         const user = await db.user.findUnique({
             where: { id: userId },
             select: {
@@ -152,6 +114,20 @@ export async function GET(request: NextRequest) {
                 phone: true,
                 userType: true,
                 status: true,
+                trader: {
+                    select: {
+                        trustScore: true,
+                        successRate: true,
+                        totalReviews: true,
+                    }
+                },
+                driver: {
+                    select: {
+                        trustScore: true,
+                        successRate: true,
+                        totalReviews: true,
+                    }
+                }
             },
         });
 

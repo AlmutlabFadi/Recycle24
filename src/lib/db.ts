@@ -5,8 +5,6 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-export const isDemoMode = process.env.DEMO_MODE === "true" || !process.env.DATABASE_URL;
-
 function createPrismaClient(): PrismaClient {
   return new PrismaClient({
     log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],

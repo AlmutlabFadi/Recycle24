@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { isDemoMode, db } from "@/lib/db";
+import { db } from "@/lib/db";
 import { z } from "zod";
 
 interface SessionUser {
@@ -80,29 +80,6 @@ export async function POST(request: NextRequest) {
         const distance = getDistance(data.pickupGovernorate, data.deliveryGovernorate);
         const requestId = generateRequestId();
         const estimatedDuration = Math.ceil(distance / 60);
-
-        if (isDemoMode) {
-            return NextResponse.json({
-                success: true,
-                booking: {
-                    id: `demo-${Date.now()}`,
-                    trackingId: requestId,
-                    status: "OPEN",
-                    materialType: data.materialType,
-                    weight,
-                    pickupAddress: data.pickupAddress,
-                    pickupGovernorate: data.pickupGovernorate,
-                    deliveryAddress: data.deliveryAddress,
-                    deliveryGovernorate: data.deliveryGovernorate,
-                    pricingType: data.pricingType,
-                    estimatedDuration,
-                    distance,
-                    offersCount: 0,
-                    createdAt: new Date().toISOString(),
-                },
-                message: "تم نشر طلب النقل بنجاح (وضع تجريبي)",
-            });
-        }
 
         const booking = await db.transportBooking.create({
             data: {

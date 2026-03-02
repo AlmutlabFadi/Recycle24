@@ -37,11 +37,19 @@ export default withAuth(
     const isAuth = !!token;
     const isAuthPage = req.nextUrl.pathname.startsWith("/login") || req.nextUrl.pathname.startsWith("/register");
 
+    // تحقق من حالة الحساب (حظر المستخدم)
+    if (isAuth && (token as any).status === "BANNED") {
+        return new NextResponse(
+            JSON.stringify({ error: 'Your account has been suspended by GSOCC Governance.' }),
+            { status: 403, headers: { 'content-type': 'application/json' } }
+        );
+    }
+
     if (isAuthPage) {
-      if (isAuth) {
-        return NextResponse.redirect(new URL("/", req.url));
-      }
-      return null;
+        if (isAuth) {
+            return NextResponse.redirect(new URL("/", req.url));
+        }
+        return null;
     }
 
     const isProtectedRoute = protectedRoutes.some(

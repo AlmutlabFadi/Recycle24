@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
             );
         }
 
+        // Check Trader
         const trader = await db.trader.findUnique({
             where: { userId },
             include: {
@@ -20,18 +21,40 @@ export async function GET(request: NextRequest) {
             },
         });
 
-        if (!trader) {
+        if (trader) {
             return NextResponse.json({
                 success: true,
-                trader: null,
-                verificationStatus: "NOT_STARTED",
+                trader,
+                verificationStatus: trader.verificationStatus,
             });
         }
 
+        // Check Driver
+        const driver = await db.driver.findUnique({
+            where: { userId },
+            include: {
+                documents: true,
+                vehicles: true
+            },
+        });
+
+        if (driver) {
+            return NextResponse.json({
+                success: true,
+                trader: {
+                    ...driver,
+                    isDriver: true
+                },
+                verificationStatus: (driver as any).status || (driver as any).verificationStatus || "PENDING",
+            });
+        }
+
+        // Also check if user is a standard CLIENT with an active verification process if needed
+        // For now, return NOT_STARTED if neither found
         return NextResponse.json({
             success: true,
-            trader,
-            verificationStatus: trader.verificationStatus,
+            trader: null,
+            verificationStatus: "NOT_STARTED",
         });
     } catch (error) {
         console.error("Get verification error:", error);
@@ -45,7 +68,28 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { userId, businessName, licenseNumber, location, licensePlate, vehicleType, vehicleColor, governorate } = body;
+        const { 
+            userId, 
+            businessName, 
+            licenseNumber, 
+            location, 
+            licensePlate, 
+            vehicleType, 
+            vehicleColor, 
+            governorate,
+            // New trader fields
+            taxNumber,
+            registrationNumber,
+            issueDate,
+            expiryDate,
+            chamberRegistrationNumber,
+            chamberSerialNumber,
+            chamberMembershipYear,
+            // Personal fields
+            fatherName,
+            motherName,
+            dateOfBirth
+        } = body;
 
         const finalBusinessName = businessName || (vehicleType ? `مركبة: ${vehicleType} - ${vehicleColor}` : null);
         const finalLicenseNumber = licenseNumber || licensePlate;
@@ -58,52 +102,148 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const userExists = await db.user.findUnique({
-            where: { id: userId }
+        const user = await db.user.findUnique({
+            where: { id: userId },
+            select: { id: true, isVerified: true, userType: true, role: true, name: true, phone: true }
         });
 
-        if (!userExists) {
+        if (!user) {
             return NextResponse.json(
                 { error: "هذا الحساب لم يعد موجوداً في قاعدة البيانات. الرجاء تسجيل الخروج من النظام ثم تسجيل الدخول مرة أخرى." },
                 { status: 404 }
             );
         }
 
-        const existingTrader = await db.trader.findUnique({
-            where: { userId },
-        });
-
-        let trader;
+        // Check for duplicate submissions - prevent re-submission if already pending/under_review/approved
+        const existingTrader = await db.trader.findUnique({ where: { userId } });
+        const existingDriver = await db.driver.findUnique({ where: { userId } });
+        
         if (existingTrader) {
-            trader = await db.trader.update({
-                where: { userId },
-                data: {
-                    businessName: finalBusinessName,
-                    licenseNumber: finalLicenseNumber,
-                    location: finalLocation,
-                    verificationStatus: "UNDER_REVIEW",
-                },
-            });
-        } else {
-            trader = await db.trader.create({
-                data: {
-                    userId,
-                    businessName: finalBusinessName,
-                    licenseNumber: finalLicenseNumber,
-                    location: finalLocation,
-                    verificationStatus: "UNDER_REVIEW",
-                },
-            });
+            const currentStatus = existingTrader.verificationStatus;
+            if (currentStatus === "PENDING" || currentStatus === "UNDER_REVIEW") {
+                return NextResponse.json(
+                    { error: "لديك طلب توثيق قيد المعالجة بالفعل. يرجى انتظار نتيجة المراجعة.", alreadySubmitted: true },
+                    { status: 409 }
+                );
+            }
+            if (currentStatus === "APPROVED") {
+                return NextResponse.json(
+                    { error: "حسابك موثق بالفعل!", alreadyVerified: true },
+                    { status: 409 }
+                );
+            }
+            // REJECTED status: allow re-submission (will update existing record below)
+        }
+        
+        if (existingDriver) {
+            const currentStatus = (existingDriver as any).status;
+            if (currentStatus === "PENDING" || currentStatus === "UNDER_REVIEW") {
+                return NextResponse.json(
+                    { error: "لديك طلب توثيق قيد المعالجة بالفعل. يرجى انتظار نتيجة المراجعة.", alreadySubmitted: true },
+                    { status: 409 }
+                );
+            }
+            if (currentStatus === "VERIFIED" || currentStatus === "APPROVED") {
+                return NextResponse.json(
+                    { error: "حسابك موثق بالفعل!", alreadyVerified: true },
+                    { status: 409 }
+                );
+            }
         }
 
-        await db.user.update({
-            where: { id: userId },
-            data: { status: "UNDER_REVIEW" },
-        });
+        const effectiveType = body.userType || user.userType || user.role;
+        const isDriver = effectiveType === "DRIVER";
+        const isTrader = effectiveType === "TRADER";
+
+        let resultData;
+
+        if (isDriver) {
+            // Handle Driver Verification
+            const driverData = {
+                fullName: body.name || user.name || "سائق جديد",
+                phone: user.phone || body.phone || "0000000000",
+                city: governorate || location || null,
+                status: "PENDING" as any,
+            };
+
+            const existingDriver = await db.driver.findUnique({ where: { userId } });
+            
+            if (existingDriver) {
+                resultData = await db.driver.update({
+                    where: { userId },
+                    data: driverData,
+                });
+            } else {
+                resultData = await db.driver.create({
+                    data: {
+                        userId,
+                        ...driverData,
+                    },
+                });
+            }
+
+            // Also handle vehicle if provided
+            if (licensePlate || vehicleType) {
+                const existingVehicle = await db.vehicle.findFirst({ where: { driverId: resultData.id } });
+                const vehiclePayload = {
+                    plateNumber: licensePlate || "---",
+                    make: vehicleType || null,
+                    color: vehicleColor || null,
+                };
+                if (existingVehicle) {
+                    await db.vehicle.update({ where: { id: existingVehicle.id }, data: vehiclePayload });
+                } else {
+                    await db.vehicle.create({ data: { driverId: resultData.id, ...vehiclePayload } });
+                }
+            }
+        } else {
+            // Default to Trader or Handle as Trader for common business fields
+            const traderData = {
+                businessName: finalBusinessName,
+                licenseNumber: finalLicenseNumber,
+                location: finalLocation,
+                taxNumber: taxNumber || undefined,
+                registrationNumber: registrationNumber || undefined,
+                governorate: governorate || (location && !isTrader ? location : undefined),
+                issueDate: issueDate ? new Date(issueDate) : undefined,
+                expiryDate: expiryDate ? new Date(expiryDate) : undefined,
+                chamberRegistrationNumber: chamberRegistrationNumber || undefined,
+                chamberSerialNumber: chamberSerialNumber || undefined,
+                chamberMembershipYear: chamberMembershipYear ? parseInt(chamberMembershipYear) : undefined,
+                fatherName: fatherName || undefined,
+                motherName: motherName || undefined,
+                dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+                verificationStatus: "PENDING",
+                rejectionReason: null,
+                missingDocuments: [],
+            };
+
+            const existingTrader = await db.trader.findUnique({ where: { userId } });
+
+            if (existingTrader) {
+                resultData = await db.trader.update({
+                    where: { userId },
+                    data: traderData,
+                });
+            } else {
+                resultData = await db.trader.create({
+                    data: {
+                        userId,
+                        ...traderData,
+                    },
+                });
+            }
+        }
+
+            await db.user.update({
+                where: { id: userId },
+                data: { status: "PENDING" },
+            });
 
         return NextResponse.json({
             success: true,
-            trader,
+            trader: isDriver ? null : resultData,
+            driver: isDriver ? resultData : null,
             message: "تم إرسال طلب التوثيق بنجاح، سيتم مراجعته خلال 24-48 ساعة",
         });
     } catch (error) {

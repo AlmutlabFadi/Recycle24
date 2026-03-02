@@ -145,6 +145,35 @@ export async function PATCH(request: NextRequest) {
             data: updateData,
         });
 
+        // إذا اكتملت الصفقة، قم بتحديث محفظة الشركة بعمولة المنصة
+        if (status === "COMPLETED" && deal.platformFee > 0) {
+            try {
+                // البحث عن المحفظة المركزية (إنشاء واحدة إذا لم توجد)
+                const wallet = await db.companyWallet.findFirst();
+                if (wallet) {
+                    await db.companyWallet.update({
+                        where: { id: wallet.id },
+                        data: {
+                            totalCommissions: { increment: deal.platformFee },
+                            balanceSYP: { increment: deal.platformFee },
+                            totalRevenue: { increment: deal.platformFee }
+                        }
+                    });
+                } else {
+                    await db.companyWallet.create({
+                        data: {
+                            totalCommissions: deal.platformFee,
+                            balanceSYP: deal.platformFee,
+                            totalRevenue: deal.platformFee
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to update company wallet for deal:", err);
+                // We don't fail the deal update if wallet update fails, but we log it
+            }
+        }
+
         return NextResponse.json({
             success: true,
             deal,

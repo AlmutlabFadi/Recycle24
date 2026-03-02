@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { isDemoMode } from "@/lib/demo-data";
 
 interface SessionUser {
     id: string;
@@ -9,43 +8,6 @@ interface SessionUser {
     email?: string | null;
     role?: string;
 }
-
-interface DemoTicket {
-    id: string;
-    ticketId: string;
-    userId: string;
-    subject: string;
-    category: string;
-    priority: string;
-    status: string;
-    createdAt: Date;
-    updatedAt: Date;
-}
-
-const demoTickets: DemoTicket[] = [
-    {
-        id: "demo-1",
-        ticketId: "TKT-001",
-        userId: "demo-user",
-        subject: "مشكلة في سحب الرصيد",
-        category: "المدفوعات",
-        priority: "HIGH",
-        status: "OPEN",
-        createdAt: new Date(Date.now() - 86400000),
-        updatedAt: new Date(),
-    },
-    {
-        id: "demo-2",
-        ticketId: "TKT-002",
-        userId: "demo-user",
-        subject: "استفسار عن رسوم المنصة",
-        category: "عام",
-        priority: "LOW",
-        status: "RESOLVED",
-        createdAt: new Date(Date.now() - 172800000),
-        updatedAt: new Date(Date.now() - 86400000),
-    },
-];
 
 export async function GET(request: NextRequest) {
     try {
@@ -56,18 +18,6 @@ export async function GET(request: NextRequest) {
 
         const { searchParams } = new URL(request.url);
         const status = searchParams.get("status");
-
-        // Demo mode
-        if (isDemoMode) {
-            let filtered = demoTickets;
-            if (status && status !== "all") {
-                filtered = demoTickets.filter(t => t.status === status.toUpperCase());
-            }
-            return NextResponse.json({
-                success: true,
-                tickets: filtered,
-            });
-        }
 
         // Real DB mode
         const sessionUser = session.user as SessionUser;
@@ -119,30 +69,6 @@ export async function POST(request: NextRequest) {
         }
 
         const ticketId = `TKT-${Date.now().toString().slice(-6)}`;
-
-        // Demo mode
-        if (isDemoMode) {
-            const newTicket: DemoTicket = {
-                id: `demo-${Date.now()}`,
-                ticketId,
-                userId,
-                subject,
-                category: category || "عام",
-                priority: priority || "MEDIUM",
-                status: "OPEN",
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            };
-            demoTickets.unshift(newTicket);
-            return NextResponse.json({
-                success: true,
-                ticket: {
-                    id: newTicket.id,
-                    ticketId: newTicket.ticketId,
-                },
-                message: "تم إنشاء التذكرة بنجاح (وضع تجريبي)",
-            });
-        }
 
         // Real DB mode
         const { db } = await import("@/lib/db");
