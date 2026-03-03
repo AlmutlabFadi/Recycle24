@@ -115,6 +115,7 @@ describe("Auth smoke", () => {
     const { db } = createMockDb();
     mockDb = db;
     mockIsDemoMode = false;
+    vi.stubEnv("DATABASE_URL", "postgresql://test");
   });
 
   afterEach(() => {
