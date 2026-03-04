@@ -33,7 +33,7 @@ export async function POST(
             return NextResponse.json({ success: false, error: rate.error, retryAfter: rate.retryAfter }, { status: rate.status });
         }
 
-        const nonce = await enforceControlNonce(request, auth.actor.userId);
+        const nonce = await enforceControlNonce(request, auth.actor.userId, "control:actions:approve");
         if (!nonce.ok) {
             return NextResponse.json({ success: false, error: nonce.error }, { status: nonce.status });
         }

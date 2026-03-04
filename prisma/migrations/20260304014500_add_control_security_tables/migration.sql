@@ -21,6 +21,7 @@ CREATE TABLE "ControlNonce" (
     "id" TEXT NOT NULL,
     "nonce" TEXT NOT NULL,
     "actorUserId" TEXT NOT NULL,
+    "routeKey" TEXT NOT NULL,
     "expiresAt" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -58,7 +59,7 @@ CREATE INDEX "ControlNonce_actorUserId_idx" ON "ControlNonce"("actorUserId");
 CREATE INDEX "ControlNonce_expiresAt_idx" ON "ControlNonce"("expiresAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ControlNonce_actorUserId_nonce_key" ON "ControlNonce"("actorUserId", "nonce");
+CREATE UNIQUE INDEX "ControlNonce_actorUserId_routeKey_nonce_key" ON "ControlNonce"("actorUserId", "routeKey", "nonce");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ControlRateLimit_actorUserId_routeKey_windowStart_key" ON "ControlRateLimit"("actorUserId", "routeKey", "windowStart");
@@ -80,3 +81,22 @@ ALTER TABLE "ControlNonce" ADD CONSTRAINT "ControlNonce_actorUserId_fkey" FOREIG
 
 -- AddForeignKey
 ALTER TABLE "ControlRateLimit" ADD CONSTRAINT "ControlRateLimit_actorUserId_fkey" FOREIGN KEY ("actorUserId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Immutable audit log triggers
+CREATE OR REPLACE FUNCTION forbid_control_audit_mutations()
+RETURNS trigger AS $$
+BEGIN
+  RAISE EXCEPTION 'ControlAuditLog is immutable';
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_forbid_control_audit_update ON "ControlAuditLog";
+DROP TRIGGER IF EXISTS trg_forbid_control_audit_delete ON "ControlAuditLog";
+
+CREATE TRIGGER trg_forbid_control_audit_update
+BEFORE UPDATE ON "ControlAuditLog"
+FOR EACH ROW EXECUTE FUNCTION forbid_control_audit_mutations();
+
+CREATE TRIGGER trg_forbid_control_audit_delete
+BEFORE DELETE ON "ControlAuditLog"
+FOR EACH ROW EXECUTE FUNCTION forbid_control_audit_mutations();

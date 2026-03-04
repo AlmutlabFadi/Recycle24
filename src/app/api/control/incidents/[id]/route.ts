@@ -89,7 +89,7 @@ export async function PATCH(
             return NextResponse.json({ success: false, error: rate.error, retryAfter: rate.retryAfter }, { status: rate.status });
         }
 
-        const nonce = await enforceControlNonce(request, auth.actor.userId);
+        const nonce = await enforceControlNonce(request, auth.actor.userId, "control:incidents:update");
         if (!nonce.ok) {
             return NextResponse.json({ success: false, error: nonce.error }, { status: nonce.status });
         }

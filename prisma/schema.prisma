@@ -547,6 +547,7 @@ model ControlNonce {
   id          String   @id @default(cuid())
   nonce       String
   actorUserId String
+  routeKey    String
   expiresAt   DateTime
   createdAt   DateTime @default(now())
 
@@ -554,7 +555,7 @@ model ControlNonce {
 
   @@index([actorUserId])
   @@index([expiresAt])
-  @@unique([actorUserId, nonce])
+  @@unique([actorUserId, routeKey, nonce])
 }
 
 model ControlRateLimit {

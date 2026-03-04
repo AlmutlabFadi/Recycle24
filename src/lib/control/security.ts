@@ -52,7 +52,7 @@ export async function enforceControlKillSwitch() {
     await guardKillSwitch("CONTROL_PLANE", "Control plane is disabled by kill switch");
 }
 
-export async function enforceControlNonce(request: NextRequest, actorUserId: string) {
+export async function enforceControlNonce(request: NextRequest, actorUserId: string, routeKey: string) {
     const nonce = request.headers.get("x-control-nonce");
     if (!nonce) {
         return { ok: false as const, status: 400, error: "Missing x-control-nonce" };
@@ -68,6 +68,7 @@ export async function enforceControlNonce(request: NextRequest, actorUserId: str
             data: {
                 nonce,
                 actorUserId,
+                routeKey,
                 expiresAt,
             },
         });
@@ -123,7 +124,7 @@ export async function recordControlAudit(params: {
     payload?: unknown;
 }) {
     const payloadHash = params.payload
-        ? crypto.createHash("sha256").update(JSON.stringify(params.payload)).digest("hex")
+        ? crypto.createHash("sha256").update(stableStringify(params.payload)).digest("hex")
         : null;
 
     await db.controlAuditLog.create({
@@ -140,6 +141,23 @@ export async function recordControlAudit(params: {
             payload: params.payload ?? null,
         },
     });
+}
+
+function stableStringify(value: unknown): string {
+    if (value === null || value === undefined) return String(value);
+
+    if (typeof value !== "object") {
+        return JSON.stringify(value);
+    }
+
+    if (Array.isArray(value)) {
+        return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+    }
+
+    const obj = value as Record<string, unknown>;
+    const keys = Object.keys(obj).sort();
+    const entries = keys.map((key) => `${JSON.stringify(key)}:${stableStringify(obj[key])}`);
+    return `{${entries.join(",")}}`;
 }
 
 export function isKillSwitchError(error: unknown): error is KillSwitchError {
