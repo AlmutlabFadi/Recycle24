@@ -71,24 +71,27 @@ model User {
   allowFactoryContact   Boolean @default(true)
 
   // Relations
-  trader                Trader?
-  wallet                Wallet?
-  auctions              Auction[]
-  bids                  Bid[]
-  alerts                PriceAlert[]
-  deals                 Deal[]               @relation("buyer")
-  soldDeals             Deal[]               @relation("seller")
-  sessions              Session[]
-  securityLogs          SecurityLog[]
-  auctionParticipations AuctionParticipant[]
-  StolenReport          StolenReport[]
-  knowledgeItems        KnowledgeItem[]
-  safetyIncidentReports SafetyIncidentReport[]
-  safetyTrainingRequests SafetyTrainingRequest[]
+  trader                     Trader?
+  wallet                     Wallet?
+  auctions                   Auction[]
+  bids                       Bid[]
+  alerts                     PriceAlert[]
+  deals                      Deal[]                      @relation("buyer")
+  soldDeals                  Deal[]                      @relation("seller")
+  sessions                   Session[]
+  securityLogs               SecurityLog[]
+  controlAuditLogs           ControlAuditLog[]           @relation("UserControlAuditLogs")
+  controlNonces              ControlNonce[]              @relation("UserControlNonces")
+  controlRateLimits          ControlRateLimit[]          @relation("UserControlRateLimits")
+  auctionParticipations      AuctionParticipant[]
+  StolenReport               StolenReport[]
+  knowledgeItems             KnowledgeItem[]
+  safetyIncidentReports      SafetyIncidentReport[]
+  safetyTrainingRequests     SafetyTrainingRequest[]
   safetyChecklistSubmissions SafetyChecklistSubmission[]
-  userRoles             UserRole[]
-  invitesCreated        StaffInvite[]
-  invitesUsed           StaffInvite[] @relation("InviteUsedBy")
+  userRoles                  UserRole[]
+  invitesCreated             StaffInvite[]
+  invitesUsed                StaffInvite[]               @relation("InviteUsedBy")
 }
 
 model Session {
@@ -535,7 +538,7 @@ model ControlAuditLog {
   payload     Json?
   createdAt   DateTime @default(now())
 
-  actor User @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+  actor User @relation("UserControlAuditLogs", fields: [actorUserId], references: [id], onDelete: Restrict)
 
   @@index([actorUserId])
   @@index([actionType])
@@ -551,11 +554,11 @@ model ControlNonce {
   expiresAt   DateTime
   createdAt   DateTime @default(now())
 
-  actor User @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+  actor User @relation("UserControlNonces", fields: [actorUserId], references: [id], onDelete: Cascade)
 
+  @@unique([actorUserId, routeKey, nonce])
   @@index([actorUserId])
   @@index([expiresAt])
-  @@unique([actorUserId, routeKey, nonce])
 }
 
 model ControlRateLimit {
@@ -566,7 +569,7 @@ model ControlRateLimit {
   count       Int      @default(0)
   updatedAt   DateTime @updatedAt
 
-  actor User @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+  actor User @relation("UserControlRateLimits", fields: [actorUserId], references: [id], onDelete: Cascade)
 
   @@unique([actorUserId, routeKey, windowStart])
   @@index([routeKey])
@@ -606,22 +609,22 @@ model StolenReport {
 // ==================== KNOWLEDGE CENTERS ====================
 
 model KnowledgeItem {
-  id             String   @id @default(cuid())
-  center         String   // SAFETY, CONSULTATIONS, ACADEMY
-  type           String   // ARTICLE, VIDEO, IMAGE, WARNING, INSTRUCTION
-  title          String
-  summary        String?
-  content        String?
-  mediaUrl       String?
-  coverImageUrl  String?
-  tags           String[] @default([])
-  priority       Int      @default(0)
-  status         String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
-  authorName     String?
-  sourceLabel    String?
-  createdById    String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String   @id @default(cuid())
+  center        String // SAFETY, CONSULTATIONS, ACADEMY
+  type          String // ARTICLE, VIDEO, IMAGE, WARNING, INSTRUCTION
+  title         String
+  summary       String?
+  content       String?
+  mediaUrl      String?
+  coverImageUrl String?
+  tags          String[] @default([])
+  priority      Int      @default(0)
+  status        String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  authorName    String?
+  sourceLabel   String?
+  createdById   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   createdBy User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
@@ -677,7 +680,7 @@ model SafetyTrainingSession {
 }
 
 model SafetyTrainingRequest {
-  id                    String   @id @default(cuid())
+  id                    String    @id @default(cuid())
   userId                String?
   requesterName         String?
   requesterPhone        String?
@@ -685,12 +688,12 @@ model SafetyTrainingRequest {
   sessionId             String?
   requestedSessionTitle String?
   preferredDate         DateTime?
-  participantsCount     Int      @default(1)
+  participantsCount     Int       @default(1)
   location              String?
   notes                 String?
-  status                String   @default("PENDING") // PENDING, CONFIRMED, REJECTED
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  status                String    @default("PENDING") // PENDING, CONFIRMED, REJECTED
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   user    User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
   session SafetyTrainingSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
@@ -739,7 +742,7 @@ model Role {
 }
 
 model RolePermission {
-  id           String   @id @default(cuid())
+  id           String @id @default(cuid())
   roleId       String
   permissionId String
 
@@ -766,21 +769,21 @@ model UserRole {
 }
 
 model StaffInvite {
-  id          String   @id @default(cuid())
-  code        String   @unique
+  id          String    @id @default(cuid())
+  code        String    @unique
   email       String?
   phone       String?
   roleId      String
-  status      String   @default("PENDING") // PENDING, USED, REVOKED, EXPIRED
+  status      String    @default("PENDING") // PENDING, USED, REVOKED, EXPIRED
   expiresAt   DateTime?
   createdById String
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
   usedById    String?
   usedAt      DateTime?
 
-  role       Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  createdBy  User @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  usedBy     User? @relation("InviteUsedBy", fields: [usedById], references: [id])
+  role      Role  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  createdBy User  @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  usedBy    User? @relation("InviteUsedBy", fields: [usedById], references: [id])
 
   @@index([status])
   @@index([createdById])
