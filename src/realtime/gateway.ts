@@ -109,9 +109,3 @@ export async function startRealtimeGateway() {
     };
 }
 
-if (process.env.NODE_ENV !== "test") {
-    startRealtimeGateway().catch((e) => {
-        console.error("[Gateway] Fatal error:", e);
-        process.exit(1);
-    });
-}
