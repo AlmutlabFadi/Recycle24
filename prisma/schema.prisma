@@ -80,9 +80,9 @@ model User {
   soldDeals                  Deal[]                      @relation("seller")
   sessions                   Session[]
   securityLogs               SecurityLog[]
-  controlAuditLogs           ControlAuditLog[]           @relation("UserControlAuditLogs")
-  controlNonces              ControlNonce[]              @relation("UserControlNonces")
-  controlRateLimits          ControlRateLimit[]          @relation("UserControlRateLimits")
+  controlAuditLogs           ControlAuditLog[]           @relation("UserControlAuditLog")
+  controlNonces              ControlNonce[]              @relation("UserControlNonce")
+  controlRateLimits          ControlRateLimit[]          @relation("UserControlRateLimit")
   auctionParticipations      AuctionParticipant[]
   StolenReport               StolenReport[]
   knowledgeItems             KnowledgeItem[]
@@ -538,7 +538,7 @@ model ControlAuditLog {
   payload     Json?
   createdAt   DateTime @default(now())
 
-  actor User @relation("UserControlAuditLogs", fields: [actorUserId], references: [id], onDelete: Restrict)
+  actor User @relation("UserControlAuditLog", fields: [actorUserId], references: [id], onDelete: Restrict)
 
   @@index([actorUserId])
   @@index([actionType])
@@ -554,7 +554,7 @@ model ControlNonce {
   expiresAt   DateTime
   createdAt   DateTime @default(now())
 
-  actor User @relation("UserControlNonces", fields: [actorUserId], references: [id], onDelete: Cascade)
+  actor User @relation("UserControlNonce", fields: [actorUserId], references: [id], onDelete: Cascade)
 
   @@unique([actorUserId, routeKey, nonce])
   @@index([actorUserId])
@@ -569,7 +569,7 @@ model ControlRateLimit {
   count       Int      @default(0)
   updatedAt   DateTime @updatedAt
 
-  actor User @relation("UserControlRateLimits", fields: [actorUserId], references: [id], onDelete: Cascade)
+  actor User @relation("UserControlRateLimit", fields: [actorUserId], references: [id], onDelete: Cascade)
 
   @@unique([actorUserId, routeKey, windowStart])
   @@index([routeKey])
