@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { emitControlEvent } from "@/lib/control/emit-event";
+import {
+    enforceControlKillSwitch,
+    enforceControlNonce,
+    enforceControlRateLimit,
+    getRequestMeta,
+    isKillSwitchError,
+    recordControlAudit,
+    requireControlAccess,
+} from "@/lib/control/security";
 
 // POST: Approve or reject a pending action
 export async function POST(
@@ -8,13 +17,34 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        await enforceControlKillSwitch();
+        const auth = await requireControlAccess(request);
+        if (!auth.ok) {
+            return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+        }
+
+        const rate = await enforceControlRateLimit({
+            actorUserId: auth.actor.userId,
+            routeKey: "control:actions:approve",
+            limit: 6,
+            windowMs: 60_000,
+        });
+        if (!rate.ok) {
+            return NextResponse.json({ success: false, error: rate.error, retryAfter: rate.retryAfter }, { status: rate.status });
+        }
+
+        const nonce = await enforceControlNonce(request, auth.actor.userId);
+        if (!nonce.ok) {
+            return NextResponse.json({ success: false, error: nonce.error }, { status: nonce.status });
+        }
+
         const { id } = await params;
         const body = await request.json();
-        const { decision, userId, reason } = body;
+        const { decision, reason } = body;
 
-        if (!decision || !userId) {
+        if (!decision) {
             return NextResponse.json(
-                { success: false, error: "decision (approve|reject) and userId are required" },
+                { success: false, error: "decision (approve|reject) is required" },
                 { status: 400 }
             );
         }
@@ -40,7 +70,7 @@ export async function POST(
         }
 
         // Two-person rule: approver must be different from requester
-        if (action.requestedByUserId === userId) {
+        if (action.requestedByUserId === auth.actor.userId) {
             return NextResponse.json(
                 { success: false, error: "Cannot approve your own action (two-person rule)" },
                 { status: 403 }
@@ -53,7 +83,7 @@ export async function POST(
                 where: { id },
                 data: {
                     status: "approved",
-                    approvedByUserId: userId,
+                    approvedByUserId: auth.actor.userId,
                     approvedAt: new Date(),
                 },
             });
@@ -65,25 +95,27 @@ export async function POST(
             }
 
             // Audit
-            await db.auditLog.create({
-                data: {
-                    actorRole: "ADMIN",
-                    actorId: userId,
-                    action: "ACTION.APPROVED",
-                    entityType: "ControlAction",
-                    entityId: id,
-                    afterJson: { decision, type: action.type },
-                },
+            const meta = getRequestMeta(request);
+            await recordControlAudit({
+                actorUserId: auth.actor.userId,
+                actorRole: auth.actor.role,
+                actionType: "ACTION.APPROVED",
+                entityType: "ControlAction",
+                entityId: id,
+                requestId: meta.requestId,
+                ip: meta.ip,
+                userAgent: meta.userAgent,
+                payload: { decision, type: action.type },
             });
 
             await emitControlEvent({
                 sourceComponentKey: "auth",
                 eventType: `ACTION.APPROVED.${action.type}`,
                 severity: "warn",
-                actorUserId: userId,
+                actorUserId: auth.actor.userId,
                 entityType: "action",
                 entityId: id,
-                payload: { type: action.type, approvedBy: userId },
+                payload: { type: action.type, approvedBy: auth.actor.userId },
             });
 
             return NextResponse.json({ success: true, data: updated });
@@ -93,24 +125,29 @@ export async function POST(
                 where: { id },
                 data: {
                     status: "rejected",
-                    result: { rejectedBy: userId, rejectionReason: reason || "No reason given" },
+                    result: { rejectedBy: auth.actor.userId, rejectionReason: reason || "No reason given" },
                 },
             });
 
-            await db.auditLog.create({
-                data: {
-                    actorRole: "ADMIN",
-                    actorId: userId,
-                    action: "ACTION.REJECTED",
-                    entityType: "ControlAction",
-                    entityId: id,
-                    afterJson: { decision, reason },
-                },
+            const meta = getRequestMeta(request);
+            await recordControlAudit({
+                actorUserId: auth.actor.userId,
+                actorRole: auth.actor.role,
+                actionType: "ACTION.REJECTED",
+                entityType: "ControlAction",
+                entityId: id,
+                requestId: meta.requestId,
+                ip: meta.ip,
+                userAgent: meta.userAgent,
+                payload: { decision, reason },
             });
 
             return NextResponse.json({ success: true, data: updated });
         }
     } catch (error) {
+        if (isKillSwitchError(error)) {
+            return NextResponse.json({ success: false, error: error.message }, { status: error.statusCode });
+        }
         console.error("Action approve error:", error);
         return NextResponse.json(
             { success: false, error: error instanceof Error ? error.message : String(error) },

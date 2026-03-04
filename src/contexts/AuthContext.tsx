@@ -64,7 +64,16 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     if (result?.error) {
       throw new Error(result.error);
     }
-    window.location.href = "/";
+    // Check role via session API to route admin users correctly
+    const sessionRes = await fetch("/api/auth/session");
+    const sessionData = await sessionRes.json();
+    const userType = sessionData?.user?.userType;
+    const userRole = sessionData?.user?.role;
+    if (userType === "ADMIN" || userRole === "ADMIN") {
+      window.location.href = "/admin/soc";
+    } else {
+      window.location.href = "/";
+    }
   }, []);
 
   const loginWithEmail = useCallback(async (email: string, password: string) => {
@@ -76,7 +85,16 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     if (result?.error) {
       throw new Error(result.error);
     }
-    window.location.href = "/";
+    // Check role via session API to route admin users correctly
+    const sessionRes = await fetch("/api/auth/session");
+    const sessionData = await sessionRes.json();
+    const userType = sessionData?.user?.userType;
+    const userRole = sessionData?.user?.role;
+    if (userType === "ADMIN" || userRole === "ADMIN") {
+      window.location.href = "/admin/soc";
+    } else {
+      window.location.href = "/";
+    }
   }, []);
 
   const registerWithPhone = useCallback(async (phone: string, password: string, name: string, userType: string, titleId?: string, gender?: Gender) => {

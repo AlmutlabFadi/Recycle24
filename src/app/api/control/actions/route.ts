@@ -1,10 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { emitControlEvent } from "@/lib/control/emit-event";
+import {
+    enforceControlKillSwitch,
+    enforceControlNonce,
+    enforceControlRateLimit,
+    getRequestMeta,
+    isKillSwitchError,
+    recordControlAudit,
+    requireControlAccess,
+} from "@/lib/control/security";
 
 // GET: List actions with filters
 export async function GET(request: NextRequest) {
     try {
+        const auth = await requireControlAccess(request);
+        if (!auth.ok) {
+            return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+        }
+
         const { searchParams } = new URL(request.url);
         const status = searchParams.get("status");
         const type = searchParams.get("type");
@@ -22,6 +36,9 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({ success: true, data: actions });
     } catch (error) {
+        if (isKillSwitchError(error)) {
+            return NextResponse.json({ success: false, error: error.message }, { status: error.statusCode });
+        }
         return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
     }
 }
@@ -29,13 +46,34 @@ export async function GET(request: NextRequest) {
 // POST: Request a new containment action
 export async function POST(request: NextRequest) {
     try {
+        await enforceControlKillSwitch();
+        const auth = await requireControlAccess(request);
+        if (!auth.ok) {
+            return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+        }
+
+        const rate = await enforceControlRateLimit({
+            actorUserId: auth.actor.userId,
+            routeKey: "control:actions:create",
+            limit: 10,
+            windowMs: 60_000,
+        });
+        if (!rate.ok) {
+            return NextResponse.json({ success: false, error: rate.error, retryAfter: rate.retryAfter }, { status: rate.status });
+        }
+
+        const nonce = await enforceControlNonce(request, auth.actor.userId);
+        if (!nonce.ok) {
+            return NextResponse.json({ success: false, error: nonce.error }, { status: nonce.status });
+        }
+
         const body = await request.json();
-        const { type, reason, scope, requestedByUserId, incidentId } = body;
+        const { type, reason, scope, incidentId } = body;
 
         // Validate required fields
-        if (!type || !reason || !scope || !requestedByUserId) {
+        if (!type || !reason || !scope) {
             return NextResponse.json(
-                { success: false, error: "type, reason, scope, and requestedByUserId are required" },
+                { success: false, error: "type, reason, and scope are required" },
                 { status: 400 }
             );
         }
@@ -60,7 +98,7 @@ export async function POST(request: NextRequest) {
             data: {
                 type,
                 status: "pending",
-                requestedByUserId,
+                requestedByUserId: auth.actor.userId,
                 reason,
                 scope: scope || {},
                 incidentId: incidentId || null,
@@ -69,15 +107,17 @@ export async function POST(request: NextRequest) {
         });
 
         // Audit log
-        await db.auditLog.create({
-            data: {
-                actorRole: "ADMIN",
-                actorId: requestedByUserId,
-                action: "ACTION.REQUESTED",
-                entityType: "ControlAction",
-                entityId: action.id,
-                afterJson: { type, reason, scope },
-            },
+        const meta = getRequestMeta(request);
+        await recordControlAudit({
+            actorUserId: auth.actor.userId,
+            actorRole: auth.actor.role,
+            actionType: "ACTION.REQUESTED",
+            entityType: "ControlAction",
+            entityId: action.id,
+            requestId: meta.requestId,
+            ip: meta.ip,
+            userAgent: meta.userAgent,
+            payload: { type, reason, scope, incidentId },
         });
 
         // Emit control event
@@ -85,7 +125,7 @@ export async function POST(request: NextRequest) {
             sourceComponentKey: "auth",
             eventType: `ACTION.REQUESTED.${type}`,
             severity: "warn",
-            actorUserId: requestedByUserId,
+            actorUserId: auth.actor.userId,
             entityType: "action",
             entityId: action.id,
             payload: { type, reason, scope },
@@ -93,6 +133,9 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true, data: action });
     } catch (error) {
+        if (isKillSwitchError(error)) {
+            return NextResponse.json({ success: false, error: error.message }, { status: error.statusCode });
+        }
         console.error("Action request error:", error);
         return NextResponse.json(
             { success: false, error: error instanceof Error ? error.message : String(error) },

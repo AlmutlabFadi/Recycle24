@@ -3,7 +3,8 @@
 import Link from "next/link";
 import BottomNavigation from "@/components/BottomNavigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { TitleSelector } from "@/components/TitleSelector";
 import { TitleBadge } from "@/components/TitleFormatter";
 import { Gender, getTitleDisplay, getTitleById } from "@/lib/title-system";
@@ -63,7 +64,17 @@ interface UserProfile {
 
 export default function ProfilePage() {
     const { user, isAuthenticated, isLoading, logout, updateUser, activeRole, switchRole } = useAuth();
+    const router = useRouter();
+    const isAdmin = (user as any)?.userType === "ADMIN" || (user as any)?.role === "ADMIN";
     const isTrader = activeRole === "TRADER";
+
+    // Immediately redirect admin users to the admin section
+    useEffect(() => {
+        if (!isLoading && isAuthenticated && isAdmin) {
+            router.replace("/admin/soc");
+        }
+    }, [isLoading, isAuthenticated, isAdmin, router]);
+
     const currentMenuItems = [
         { icon: "settings", label: "إعدادات الحساب", href: "/settings/account" },
         { icon: "security", label: "الأمان والخصوصية", href: "/settings/security" },
