@@ -1,7 +1,7 @@
 -- CreateTable
 CREATE TABLE "ControlAuditLog" (
     "id" TEXT NOT NULL,
-    "actorUserId" TEXT,
+    "actorUserId" TEXT NOT NULL,
     "actorRole" TEXT,
     "actionType" TEXT NOT NULL,
     "entityType" TEXT NOT NULL,
@@ -52,16 +52,16 @@ CREATE INDEX "ControlAuditLog_entityType_idx" ON "ControlAuditLog"("entityType")
 CREATE INDEX "ControlAuditLog_createdAt_idx" ON "ControlAuditLog"("createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ControlNonce_nonce_key" ON "ControlNonce"("nonce");
-
--- CreateIndex
 CREATE INDEX "ControlNonce_actorUserId_idx" ON "ControlNonce"("actorUserId");
 
 -- CreateIndex
 CREATE INDEX "ControlNonce_expiresAt_idx" ON "ControlNonce"("expiresAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ControlRateLimit_actorUserId_routeKey_key" ON "ControlRateLimit"("actorUserId", "routeKey");
+CREATE UNIQUE INDEX "ControlNonce_actorUserId_nonce_key" ON "ControlNonce"("actorUserId", "nonce");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ControlRateLimit_actorUserId_routeKey_windowStart_key" ON "ControlRateLimit"("actorUserId", "routeKey", "windowStart");
 
 -- CreateIndex
 CREATE INDEX "ControlRateLimit_routeKey_idx" ON "ControlRateLimit"("routeKey");
@@ -69,8 +69,11 @@ CREATE INDEX "ControlRateLimit_routeKey_idx" ON "ControlRateLimit"("routeKey");
 -- CreateIndex
 CREATE INDEX "ControlRateLimit_updatedAt_idx" ON "ControlRateLimit"("updatedAt");
 
+-- CreateIndex
+CREATE INDEX "ControlRateLimit_windowStart_idx" ON "ControlRateLimit"("windowStart");
+
 -- AddForeignKey
-ALTER TABLE "ControlAuditLog" ADD CONSTRAINT "ControlAuditLog_actorUserId_fkey" FOREIGN KEY ("actorUserId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "ControlAuditLog" ADD CONSTRAINT "ControlAuditLog_actorUserId_fkey" FOREIGN KEY ("actorUserId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ControlNonce" ADD CONSTRAINT "ControlNonce_actorUserId_fkey" FOREIGN KEY ("actorUserId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

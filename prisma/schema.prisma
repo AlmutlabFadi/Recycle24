@@ -523,7 +523,7 @@ model GsoccSecurityRule {
 
 model ControlAuditLog {
   id          String   @id @default(cuid())
-  actorUserId String?
+  actorUserId String
   actorRole   String?
   actionType  String
   entityType  String
@@ -535,7 +535,7 @@ model ControlAuditLog {
   payload     Json?
   createdAt   DateTime @default(now())
 
-  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  actor User @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
 
   @@index([actorUserId])
   @@index([actionType])
@@ -545,7 +545,7 @@ model ControlAuditLog {
 
 model ControlNonce {
   id          String   @id @default(cuid())
-  nonce       String   @unique
+  nonce       String
   actorUserId String
   expiresAt   DateTime
   createdAt   DateTime @default(now())
@@ -554,6 +554,7 @@ model ControlNonce {
 
   @@index([actorUserId])
   @@index([expiresAt])
+  @@unique([actorUserId, nonce])
 }
 
 model ControlRateLimit {
@@ -566,9 +567,10 @@ model ControlRateLimit {
 
   actor User @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
 
-  @@unique([actorUserId, routeKey])
+  @@unique([actorUserId, routeKey, windowStart])
   @@index([routeKey])
   @@index([updatedAt])
+  @@index([windowStart])
 }
 
 // ==================== STOLEN REPORTS ====================

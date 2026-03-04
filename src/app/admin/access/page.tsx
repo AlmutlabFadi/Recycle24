@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import HeaderWithBack from "@/components/HeaderWithBack";
 
 type Permission = {
     id: string;
@@ -227,17 +228,7 @@ export default function AccessControlPage() {
 
     return (
         <div className="min-h-screen bg-bg-dark text-white font-display">
-            <header className="sticky top-0 z-40 backdrop-blur-md bg-bg-dark/80 border-b border-slate-800">
-                <div className="px-4 py-4 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-lg font-bold">لوحة توزيع الأدوار والصلاحيات</h1>
-                        <p className="text-xs text-slate-400">إدارة دقيقة ومقيّدة لصلاحيات الموظفين</p>
-                    </div>
-                    <Link href="/dashboard" className="text-xs text-emerald-400 font-bold">
-                        العودة للوحة التحكم
-                    </Link>
-                </div>
-            </header>
+            <HeaderWithBack title="لوحة توزيع الأدوار والصلاحيات" />
 
             <main className="p-4 pb-20 flex flex-col gap-6">
                 {error && (

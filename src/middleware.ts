@@ -35,13 +35,34 @@ export default withAuth(
 
     const token = req.nextauth.token;
     const isAuth = !!token;
+    const isAdmin = token?.role === "ADMIN" || token?.userType === "ADMIN";
     const isAuthPage = req.nextUrl.pathname.startsWith("/login") || req.nextUrl.pathname.startsWith("/register");
+    const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
 
+    // Redirect authenticated users away from login/register
     if (isAuthPage) {
       if (isAuth) {
+        if (isAdmin) {
+          return NextResponse.redirect(new URL("/admin/soc", req.url));
+        }
         return NextResponse.redirect(new URL("/", req.url));
       }
       return null;
+    }
+
+    // Protect /admin routes — only ADMIN role allowed
+    if (isAdminRoute) {
+      if (!isAuth) {
+        return NextResponse.redirect(new URL("/login", req.url));
+      }
+      if (!isAdmin) {
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+    }
+
+    // Redirect admin users away from client pages
+    if (!isAdminRoute && isAuth && isAdmin && (req.nextUrl.pathname === "/" || req.nextUrl.pathname.startsWith("/profile"))) {
+      return NextResponse.redirect(new URL("/admin/soc", req.url));
     }
 
     const isProtectedRoute = protectedRoutes.some(
@@ -57,6 +78,7 @@ export default withAuth(
         new URL(`/login?redirect=${encodeURIComponent(from)}`, req.url)
       );
     }
+
   },
   {
     callbacks: {

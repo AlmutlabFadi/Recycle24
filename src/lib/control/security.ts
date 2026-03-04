@@ -85,28 +85,26 @@ export async function enforceControlRateLimit(params: {
 }) {
     const { actorUserId, routeKey, limit, windowMs } = params;
     const now = new Date();
-    const windowStart = new Date(now.getTime() - windowMs);
+    const windowStart = new Date(Math.floor(now.getTime() / windowMs) * windowMs);
 
     const existing = await db.controlRateLimit.findUnique({
-        where: { actorUserId_routeKey: { actorUserId, routeKey } },
+        where: { actorUserId_routeKey_windowStart: { actorUserId, routeKey, windowStart } },
     });
 
-    if (!existing || existing.windowStart < windowStart) {
-        await db.controlRateLimit.upsert({
-            where: { actorUserId_routeKey: { actorUserId, routeKey } },
-            create: { actorUserId, routeKey, windowStart: now, count: 1 },
-            update: { windowStart: now, count: 1 },
+    if (!existing) {
+        await db.controlRateLimit.create({
+            data: { actorUserId, routeKey, windowStart, count: 1 },
         });
         return { ok: true as const };
     }
 
     if (existing.count >= limit) {
-        const retryAfter = Math.max(1, Math.ceil((existing.windowStart.getTime() + windowMs - now.getTime()) / 1000));
+        const retryAfter = Math.max(1, Math.ceil((windowStart.getTime() + windowMs - now.getTime()) / 1000));
         return { ok: false as const, status: 429, error: "Rate limit exceeded", retryAfter };
     }
 
     await db.controlRateLimit.update({
-        where: { actorUserId_routeKey: { actorUserId, routeKey } },
+        where: { actorUserId_routeKey_windowStart: { actorUserId, routeKey, windowStart } },
         data: { count: { increment: 1 } },
     });
 
