@@ -519,6 +519,61 @@ model GsoccSecurityRule {
   @@map("gsocc_security_rules")
 }
 
+// ==================== CONTROL PLANE SECURITY ====================
+
+model ControlAuditLog {
+  id          String   @id @default(cuid())
+  actorUserId String
+  actorRole   String?
+  actionType  String
+  entityType  String
+  entityId    String?
+  requestId   String?
+  ip          String?
+  userAgent   String?
+  payloadHash String?
+  payload     Json?
+  createdAt   DateTime @default(now())
+
+  actor User @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([actorUserId])
+  @@index([actionType])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+model ControlNonce {
+  id          String   @id @default(cuid())
+  nonce       String
+  actorUserId String
+  routeKey    String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  actor User @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+
+  @@index([actorUserId])
+  @@index([expiresAt])
+  @@unique([actorUserId, routeKey, nonce])
+}
+
+model ControlRateLimit {
+  id          String   @id @default(cuid())
+  actorUserId String
+  routeKey    String
+  windowStart DateTime
+  count       Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  actor User @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+
+  @@unique([actorUserId, routeKey, windowStart])
+  @@index([routeKey])
+  @@index([updatedAt])
+  @@index([windowStart])
+}
+
 // ==================== STOLEN REPORTS ====================
 
 model StolenReport {

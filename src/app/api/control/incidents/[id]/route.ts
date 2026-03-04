@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import {
+    enforceControlKillSwitch,
+    enforceControlNonce,
+    enforceControlRateLimit,
+    getRequestMeta,
+    isKillSwitchError,
+    recordControlAudit,
+    requireControlAccess,
+} from "@/lib/control/security";
 
 // GET: Get incident details with linked alerts/events
 export async function GET(
@@ -7,6 +16,11 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const auth = await requireControlAccess(request);
+        if (!auth.ok) {
+            return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+        }
+
         const { id } = await params;
 
         const incident = await db.incident.findUnique({ where: { id } });
@@ -46,6 +60,9 @@ export async function GET(
             },
         });
     } catch (error) {
+        if (isKillSwitchError(error)) {
+            return NextResponse.json({ success: false, error: error.message }, { status: error.statusCode });
+        }
         return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
     }
 }
@@ -56,9 +73,30 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        await enforceControlKillSwitch();
+        const auth = await requireControlAccess(request);
+        if (!auth.ok) {
+            return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
+        }
+
+        const rate = await enforceControlRateLimit({
+            actorUserId: auth.actor.userId,
+            routeKey: "control:incidents:update",
+            limit: 12,
+            windowMs: 60_000,
+        });
+        if (!rate.ok) {
+            return NextResponse.json({ success: false, error: rate.error, retryAfter: rate.retryAfter }, { status: rate.status });
+        }
+
+        const nonce = await enforceControlNonce(request, auth.actor.userId, "control:incidents:update");
+        if (!nonce.ok) {
+            return NextResponse.json({ success: false, error: nonce.error }, { status: nonce.status });
+        }
+
         const { id } = await params;
         const body = await request.json();
-        const { status, summary, userId } = body;
+        const { status, summary } = body;
 
         const incident = await db.incident.findUnique({ where: { id } });
         if (!incident) {
@@ -74,7 +112,7 @@ export async function PATCH(
         timeline.push({
             ts: new Date().toISOString(),
             action: `status_changed_to_${status}`,
-            by: userId,
+            by: auth.actor.userId,
         });
 
         const updated = await db.incident.update({
@@ -86,19 +124,24 @@ export async function PATCH(
             },
         });
 
-        await db.auditLog.create({
-            data: {
-                actorRole: "ADMIN",
-                actorId: userId || "system",
-                action: `INCIDENT.${status?.toUpperCase() || "UPDATED"}`,
-                entityType: "Incident",
-                entityId: id,
-                afterJson: { status, summary },
-            },
+        const meta = getRequestMeta(request);
+        await recordControlAudit({
+            actorUserId: auth.actor.userId,
+            actorRole: auth.actor.role,
+            actionType: `INCIDENT.${status?.toUpperCase() || "UPDATED"}`,
+            entityType: "Incident",
+            entityId: id,
+            requestId: meta.requestId,
+            ip: meta.ip,
+            userAgent: meta.userAgent,
+            payload: { status, summary },
         });
 
         return NextResponse.json({ success: true, data: updated });
     } catch (error) {
+        if (isKillSwitchError(error)) {
+            return NextResponse.json({ success: false, error: error.message }, { status: error.statusCode });
+        }
         return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
     }
 }
