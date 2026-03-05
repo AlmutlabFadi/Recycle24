@@ -16,9 +16,9 @@ export default async function GSOCCAuditPage() {
     try {
         if (db) {
             const rawLogs = await db.$queryRaw<EvidenceLogRecord[]>`
-                SELECT id, incident_id, action_taken, executed_by, timestamp, evidence_snapshot, hash_signature
+                SELECT id, incident_id, action_taken, executed_by, created_at AS "timestamp", evidence_snapshot, hash_signature
                 FROM public.gsocc_evidence_logs
-                ORDER BY timestamp DESC
+                ORDER BY created_at DESC
                 LIMIT 100
             `;
             logs = rawLogs;

@@ -64,8 +64,8 @@ async function correlateAndRaiseIncident(event: SecurityEvent, severity: Securit
       const description = `Incident created automatically via GSOCC Orchestrator.\nReason: ${reason}\nTarget IP: ${event.source_ip}\nTarget User: ${event.user_id || 'N/A'}`;
       
       const newIncident = await db.$queryRaw<IncidentResult[]>`
-           INSERT INTO public.gsocc_incidents (title, status, severity, description, root_cause)
-           VALUES (${title}, 'OPEN', ${severity}, ${description}, 'Awaiting deep automated analysis')
+           INSERT INTO public.gsocc_incidents (title, status, severity, description)
+           VALUES (${title}, 'OPEN', ${severity}, ${description})
            RETURNING id
       `;
       incidentId = newIncident[0]?.id;

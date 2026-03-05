@@ -8,7 +8,6 @@ interface IncidentRecord {
     status: string;
     created_at: Date;
     description?: string;
-    root_cause?: string;
     target?: string;
     source?: string;
     actionTaken?: string;
@@ -35,7 +34,7 @@ export default async function GSOCCIncidents() {
   try {
     if (db) {
       const incidents = await db.$queryRaw<IncidentRecord[]>`
-        SELECT id, title, severity, status, created_at, description, root_cause
+        SELECT id, title, severity, status, created_at, description
         FROM public.gsocc_incidents
         ORDER BY created_at DESC
         LIMIT 50
