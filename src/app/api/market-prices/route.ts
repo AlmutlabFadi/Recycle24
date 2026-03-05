@@ -140,5 +140,10 @@ export async function GET(request: NextRequest) {
         };
     });
 
-    return NextResponse.json(allItems, { headers });
+    const responseHeaders = {
+        ...headers,
+        "Cache-Control": "s-maxage=60, stale-while-revalidate=300",
+    };
+
+    return NextResponse.json(allItems, { headers: responseHeaders });
 }
