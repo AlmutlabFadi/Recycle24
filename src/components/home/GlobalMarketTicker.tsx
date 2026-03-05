@@ -15,34 +15,50 @@ interface MarketItem {
     iconColor: string;
 }
 
+const REFRESH_MS = 60_000;
+
 export default function GlobalMarketTicker() {
     const [data, setData] = useState<MarketItem[]>([]);
+    const [error, setError] = useState<string | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [isPaused, setIsPaused] = useState(false);
     const scrollRef = useRef<number>(0);
     const requestRef = useRef<number>(0);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Configuration
     const SPEED = 0.2; // Slow but visible (User asked for 0.1, but browser might freeze 0.1. Using 0.2)
     const ITEM_WIDTH = 240; // Card + gap (220+20) - Ensure CSS matches
 
     useEffect(() => {
-        const fetchData = async () => {
+        let mounted = true;
+        const controller = new AbortController();
+        const load = async () => {
             try {
-                // Add random query param to avoid caching stale data if needed
-                const res = await fetch("/api/market-prices");
-                if (res.ok) {
-                    const json = await res.json();
-                    setData(json);
-                }
-            } catch (error) {
-                console.error("Failed to fetch market prices", error);
+                setError(null);
+                const res = await fetch("/api/market-prices", {
+                    method: "GET",
+                    headers: { Accept: "application/json" },
+                    cache: "no-store",
+                    signal: controller.signal,
+                });
+                if (!res.ok) throw new Error(`market-prices HTTP ${res.status}`);
+                const json = await res.json();
+                if (mounted) setData(json);
+            } catch (e: any) {
+                if (e?.name === "AbortError") return;
+                if (mounted) setError(e?.message ?? "Failed to load market prices");
             }
         };
 
-        fetchData();
-        const interval = setInterval(fetchData, 10000);
-        return () => clearInterval(interval);
+        load();
+        timerRef.current = setInterval(load, REFRESH_MS);
+        return () => {
+            mounted = false;
+            controller.abort();
+            if (timerRef.current) clearInterval(timerRef.current);
+            timerRef.current = null;
+        };
     }, []);
 
     useEffect(() => {
@@ -110,6 +126,9 @@ export default function GlobalMarketTicker() {
     if (data.length === 0) {
         return (
             <div className="flex overflow-x-auto gap-4 px-4 pb-4 no-scrollbar">
+                {error ? (
+                    <div className="text-sm text-red-400 px-2">{error}</div>
+                ) : null}
                 {[1, 2, 3, 4, 5].map((i) => (
                     <div key={i} className="min-w-[220px] h-[100px] rounded-xl bg-slate-800/50 animate-pulse border border-slate-700"></div>
                 ))}
