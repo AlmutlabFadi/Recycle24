@@ -29,7 +29,6 @@ export interface Incident {
   severity: SecuritySeverity;
   description: string;
   affected_components: string[];
-  root_cause: string;
   created_at: string;
   updated_at: string;
   resolved_at?: string;
