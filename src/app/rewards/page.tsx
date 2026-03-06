@@ -1,9 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import HeaderWithBack from "@/components/HeaderWithBack";
 import Link from "next/link";
 
-const rewards = [
+const rewardsList = [
     {
         id: 1,
         title: "رصيد محفظة 50K",
@@ -38,91 +39,123 @@ const rewards = [
     }
 ];
 
-const leaders = [
-    { name: "أبو العز للخردة", points: 15400, avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuAoYZZovVPYDRnfQljfYmeNIOd3CLblzn7gLqTRy_7sElxkOhND5F-ptxeSKYbtDJH7WW37Tmhs7RqGeLdr1tY5l0vQPCHYeVdhH8YMNOxJSeettxF3UQFGdqHVn2dVzBjq2CVpBKSItNGjcy5I-yjMZ0DwishJ7_dhXSCp7mcMbBVtMPvR-5L5oBxgFZ8T3ujcU18WDSmpnsJOyCislXs5huz-9qWMlzonwdL_QFmyVn1ijGXULc5HGYApCENt-Jy1pXp2Wwuk_EE" },
-    { name: "شركة الأمانة", points: 12350, avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuCNVajZNufWI6xpz_m_WhscRy-4QQycKYzFwDTYkhiECwtxbWFTosYEKa5dkdwuaRLbNnEQ2leqK5lyggZcssDopnYTXmWAQA_EitvT6zIcRwYzP55Dt-14OY-y6hu4oX8XvaYrnVnJdfjJ1GzBmEslLBqMSyVHrHla4fa7sxw9w0hUJnD1MX6ofUg7pbNFiyEsbXKIVyATwYUolOvnLhYw79YbcFf6YYv5wfN_eOOwqr-DIi2PcBpZumWZ-QsZ-8GiWULbWtHamGI" },
-    { name: "ماهر للمعادن", points: 9800, avatar: "https://lh3.googleusercontent.com/aida-public/AB6AXuDYzd3TP6a_5GIYhc85geaT78dV_acYhwesxgSRQTm93oN6eoTRBRKldJQfc-hLQVK_ka-_CIMCwhMlU_IrAPt-oBmVpgZtsUofjNc0fa2dp1tGheyoC5ObDXoo8ZMfJxLc7G0LHb31RyUHjLvKUgpaSArj8Cwo4NAUo2hmzDVtlDCp2Wwz0GeXF02LPmfNu3U6vVMD1W3pL-loxcPGQu9BnpijxAz8yz4u0CdRXpOCg7k3-9ONFB5X4bk0D7NbpJjoS8u3z2bDVzs" },
-];
+type Leader = {
+    name: string;
+    points: number;
+};
 
 export default function RewardsPage() {
+    const [points, setPoints] = useState<number>(0);
+    const [leaders, setLeaders] = useState<Leader[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchRewardsData = async () => {
+            try {
+                const res = await fetch("/api/rewards");
+                const data = await res.json();
+                if (data.success) {
+                    setPoints(data.points);
+                    setLeaders(Array.isArray(data.leaders) ? (data.leaders as Leader[]) : []);
+                }
+            } catch (err) {
+                console.error("Error fetching rewards:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRewardsData();
+    }, []);
+
+    const getLevel = (pts: number) => {
+        if (pts > 10000) return "مستوى ذهبي";
+        if (pts > 5000) return "مستوى فضي";
+        return "مستوى برونزي";
+    };
+
     return (
         <div className="flex flex-col min-h-screen bg-bg-light dark:bg-bg-dark font-display pb-24">
             <HeaderWithBack title="نقاط ريسايكل" />
 
             <main className="flex-1 flex flex-col gap-6 p-4">
                 {/* Points Balance Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-700 p-6 text-white shadow-lg">
-                    <div className="absolute top-0 right-0 -mr-8 -mt-8 size-40 rounded-full bg-white/10 blur-2xl"></div>
-                    <div className="absolute bottom-0 left-0 -ml-8 -mb-8 size-40 rounded-full bg-black/10 blur-2xl"></div>
+                <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-primary to-indigo-900 p-8 text-white shadow-2xl">
+                    <div className="absolute top-0 right-0 -mr-8 -mt-8 size-48 rounded-full bg-white/10 blur-3xl"></div>
+                    <div className="absolute bottom-0 left-0 -ml-8 -mb-8 size-48 rounded-full bg-black/20 blur-3xl"></div>
 
                     <div className="relative z-10 flex flex-col items-center">
-                        <span className="text-sm font-medium text-indigo-100 mb-1">رصيدك الحالي</span>
-                        <h2 className="text-4xl font-black mb-2 flex items-baseline gap-1">
-                            2,450
+                        <span className="text-xs font-bold text-white/60 mb-2 uppercase tracking-widest">رصيدك الحالي</span>
+                        <h2 className="text-5xl font-black mb-4 flex items-baseline gap-2">
+                            {loading ? "..." : points.toLocaleString()}
                             <span className="text-lg font-bold">نقطة</span>
                         </h2>
-                        <div className="flex gap-2 mt-2">
-                            <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold border border-white/10">مستوى برونزي</span>
-                            <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold border border-white/10 flex items-center gap-1">
-                                <span className="material-symbols-outlined !text-[12px]">trending_up</span>
-                                +150 هذا الأسبوع
+                        <div className="flex gap-2">
+                            <span className="bg-white/10 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-bold border border-white/10">{getLevel(points)}</span>
+                            <span className="bg-emerald-500/20 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1">
+                                <span className="material-symbols-outlined !text-[12px]">verified</span>
+                                حساب نشط
                             </span>
                         </div>
                     </div>
                 </div>
 
-                {/* Quick Earn Actions */}
-                <section>
-                    <h3 className="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-amber-500 !text-[20px]">bolt</span>
-                        اكسب المزيد
-                    </h3>
-                    <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-                        <button className="shrink-0 flex items-center gap-3 bg-white dark:bg-surface-highlight p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 min-w-[200px] shadow-sm">
-                            <div className="size-10 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center">
-                                <span className="material-symbols-outlined !text-[20px]">person_add</span>
-                            </div>
-                            <div className="text-start">
-                                <div className="text-sm font-bold text-slate-900 dark:text-white">دعوة صديق</div>
-                                <div className="text-xs text-green-600 font-bold">+500 نقطة</div>
-                            </div>
-                        </button>
-
-                        <button className="shrink-0 flex items-center gap-3 bg-white dark:bg-surface-highlight p-3 rounded-xl border border-slate-100 dark:border-slate-700/50 min-w-[200px] shadow-sm">
-                            <div className="size-10 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                                <span className="material-symbols-outlined !text-[20px]">share</span>
-                            </div>
-                            <div className="text-start">
-                                <div className="text-sm font-bold text-slate-900 dark:text-white">مشاركة التطبيق</div>
-                                <div className="text-xs text-blue-600 font-bold">+100 نقطة</div>
-                            </div>
+                {/* Referral Action */}
+                <section className="bg-surface-highlight rounded-3xl p-6 border border-slate-800 shadow-xl overflow-hidden relative group">
+                    <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition"></div>
+                    <div className="relative z-10 flex items-center justify-between">
+                        <div className="flex-1">
+                            <h3 className="font-bold text-white mb-1 flex items-center gap-2">
+                                <span className="material-symbols-outlined text-emerald-400 !text-xl">campaign</span>
+                                نظام الإحالات
+                            </h3>
+                            <p className="text-[10px] text-slate-400 max-w-[200px]">ادعُ أصدقاءك وانضموا لمجتمع ريسايكل24 واكسب 500 نقطة لكل صديق.</p>
+                        </div>
+                        <button 
+                            className="bg-primary hover:bg-primary-dark text-white text-[10px] font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition active:scale-95 shadow-lg shadow-primary/20"
+                            onClick={() => {
+                                navigator.clipboard.writeText(`${window.location.origin}/register?ref=${points}`); // Mocking ref link for now
+                                alert("تم نسخ رابط الإحالة الخاص بك");
+                            }}
+                        >
+                            <span className="material-symbols-outlined !text-sm">share</span>
+                            شارك الرابط
                         </button>
                     </div>
                 </section>
 
                 {/* Leaderboard Teaser */}
                 <section>
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <div className="flex items-center justify-between mb-4 px-2">
+                        <h3 className="font-bold text-white flex items-center gap-2">
                             <span className="material-symbols-outlined text-yellow-500 !text-[20px]">leaderboard</span>
-                            المتصدرون هذا الشهر
+                            أفضل المساهمين
                         </h3>
-                        <Link href="/rewards/leaderboard" className="text-primary text-xs font-bold hover:underline">عرض الكل</Link>
+                        {leaders.length > 5 && <Link href="/rewards/leaderboard" className="text-primary text-[10px] font-bold hover:underline">عرض الكل ({leaders.length})</Link>}
                     </div>
 
-                    <div className="bg-white dark:bg-surface-highlight rounded-xl border border-slate-100 dark:border-slate-700/50 overflow-hidden divide-y divide-slate-100 dark:divide-slate-700/50">
-                        {leaders.map((leader, i) => (
-                            <div key={i} className="flex items-center gap-3 p-3">
-                                <div className={`size-6 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${i === 0 ? 'bg-yellow-500 shadow-yellow-500/50 ring-2 ring-yellow-200 dark:ring-yellow-900' :
-                                        i === 1 ? 'bg-slate-400' : 'bg-orange-700'
-                                    }`}>
+                    <div className="bg-surface-highlight rounded-[2rem] border border-slate-800 overflow-hidden divide-y divide-slate-800 shadow-xl">
+                        {loading ? (
+                            <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div></div>
+                        ) : leaders.length === 0 ? (
+                            <div className="p-10 text-center text-xs text-slate-500 italic">لا يوجد متصدرون حالياً</div>
+                        ) : leaders.map((leader, i) => (
+                            <div key={i} className="flex items-center gap-4 p-4 hover:bg-white/5 transition">
+                                <div className={`size-7 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 ${
+                                    i === 0 ? 'bg-yellow-500' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-orange-700' : 'bg-slate-800'
+                                }`}>
                                     {i + 1}
                                 </div>
-                                <img src={leader.avatar} alt={leader.name} className="size-8 rounded-full object-cover bg-slate-200" />
-                                <div className="flex-1">
-                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">{leader.name}</h4>
+                                <div className="size-10 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center shrink-0">
+                                    <span className="material-symbols-outlined text-slate-400">person</span>
                                 </div>
-                                <span className="text-xs font-bold text-indigo-500">{leader.points.toLocaleString()}</span>
+                                <div className="flex-1">
+                                    <h4 className="text-sm font-bold text-white truncate">{leader.name}</h4>
+                                    <p className="text-[10px] text-slate-500">مساهم نشط</p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-sm font-black text-primary font-english">{leader.points.toLocaleString()}</span>
+                                    <p className="text-[8px] text-slate-600 uppercase font-bold">PTS</p>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -130,20 +163,19 @@ export default function RewardsPage() {
 
                 {/* Rewards Store */}
                 <section>
-                    <h3 className="font-bold text-slate-900 dark:text-white mb-3">متجر المكافآت</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                        {rewards.map((reward) => (
-                            <div key={reward.id} className="bg-white dark:bg-surface-highlight rounded-xl p-3 border border-slate-100 dark:border-slate-700/50 flex flex-col gap-3 shadow-sm hover:shadow-md transition cursor-pointer group">
-                                <div className={`w-full aspect-video rounded-lg ${reward.color}/10 flex items-center justify-center text-3xl mb-1`}>
+                    <h3 className="font-bold text-white mb-4 px-2">استبدال النقاط</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        {rewardsList.map((reward) => (
+                            <div key={reward.id} className="bg-surface-highlight rounded-[2rem] p-4 border border-slate-800 flex flex-col gap-4 shadow-xl hover:border-primary/50 transition cursor-pointer group">
+                                <div className={`w-full aspect-square rounded-2xl ${reward.color}/10 flex items-center justify-center text-4xl group-hover:scale-105 transition`}>
                                     <span className={`material-symbols-outlined ${reward.color.replace('bg-', 'text-')}`}>{reward.icon}</span>
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight mb-1">{reward.title}</h4>
-                                    <p className="text-[10px] text-slate-500 line-clamp-2 mb-2">{reward.description}</p>
-                                    <div className="flex items-center justify-between mt-auto">
-                                        <span className="text-xs font-bold text-indigo-600">{reward.cost} نقطة</span>
-                                        <button className="size-6 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-                                            <span className="material-symbols-outlined !text-[16px]">add</span>
+                                    <h4 className="text-xs font-bold text-white mb-1 line-clamp-1">{reward.title}</h4>
+                                    <div className="flex items-center justify-between">
+                                        <span className={`text-[10px] font-black font-english ${points >= reward.cost ? 'text-primary' : 'text-slate-500'}`}>{reward.cost.toLocaleString()} <span className="text-[8px]">PTS</span></span>
+                                        <button className={`size-7 rounded-xl flex items-center justify-center transition ${points >= reward.cost ? 'bg-primary text-white' : 'bg-slate-800 text-slate-600'}`}>
+                                            <span className="material-symbols-outlined !text-[16px]">shopping_basket</span>
                                         </button>
                                     </div>
                                 </div>

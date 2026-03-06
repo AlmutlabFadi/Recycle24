@@ -3,7 +3,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 import { compare } from "bcryptjs";
-import { findDemoUser, isDemoMode } from "@/lib/demo-data";
 
 interface AuthUser {
     id: string;
@@ -12,6 +11,8 @@ interface AuthUser {
     phone?: string | null;
     role?: string | null;
     userType?: string | null;
+    isLocked?: boolean;
+    lockReason?: string | null;
 }
 
 interface Credentials {
@@ -57,23 +58,6 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 try {
-                    // Demo mode
-                    if (isDemoMode) {
-                        const identifier = email || phone;
-                        const demoUser = findDemoUser(identifier);
-                        if (!demoUser || password !== "123456") {
-                            throw new Error("Invalid credentials");
-                        }
-                        return {
-                            id: demoUser.id,
-                            name: demoUser.name,
-                            email: demoUser.email,
-                            phone: demoUser.phone,
-                            role: demoUser.role || "TRADER",
-                            userType: demoUser.userType,
-                        };
-                    }
-
                     // Real DB mode
                     const user = await db.user.findFirst({
                         where: {
@@ -89,6 +73,8 @@ export const authOptions: NextAuthOptions = {
                             password: true,
                             role: true,
                             userType: true,
+                            status: true,
+                            isVerified: true,
                         }
                     });
 
@@ -109,6 +95,8 @@ export const authOptions: NextAuthOptions = {
                         phone: user.phone,
                         role: user.role,
                         userType: user.userType,
+                        status: user.status,
+                        isVerified: user.isVerified,
                     };
                 } catch (error) {
                     const message = error instanceof Error ? error.message : "Unknown auth error";
@@ -124,22 +112,30 @@ export const authOptions: NextAuthOptions = {
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                const authUser = user as AuthUser;
+                const authUser = user as any;
                 token.id = authUser.id;
                 token.role = authUser.role ?? undefined;
                 token.userType = authUser.userType ?? undefined;
                 token.phone = authUser.phone ?? undefined;
                 token.email = authUser.email ?? undefined;
+                token.status = authUser.status ?? undefined;
+                token.isVerified = authUser.isVerified ?? undefined;
+                token.isLocked = authUser.isLocked ?? undefined;
+                token.lockReason = authUser.lockReason ?? undefined;
             }
             return token;
         },
         async session({ session, token }) {
             if (token && session.user) {
-                session.user.id = token.id;
-                session.user.role = token.role;
-                session.user.userType = token.userType;
-                session.user.phone = token.phone;
-                session.user.email = token.email;
+                (session.user as any).id = token.id;
+                (session.user as any).role = token.role;
+                (session.user as any).userType = token.userType;
+                (session.user as any).phone = token.phone;
+                (session.user as any).email = token.email;
+                (session.user as any).status = token.status;
+                (session.user as any).isVerified = token.isVerified;
+                (session.user as any).isLocked = token.isLocked;
+                (session.user as any).lockReason = token.lockReason;
             }
             return session;
         }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 // GET /api/auctions/[id] - الحصول على تفاصيل مزاد واحد
 export async function GET(
@@ -37,7 +39,21 @@ export async function GET(
             );
         }
 
-        // حساب أعلى مزايدة
+        // Check if current user joined
+        const session = await getServerSession(authOptions);
+        let hasJoined = false;
+        if (session?.user) {
+            const participant = await db.auctionParticipant.findUnique({
+                where: {
+                    auctionId_userId: {
+                        auctionId: id,
+                        userId: session.user.id
+                    }
+                }
+            });
+            hasJoined = !!participant;
+        }
+
         const highestBid = auction.bids[0]?.amount || auction.startingBid;
         const bidsCount = await db.bid.count({ where: { auctionId: id } });
 
@@ -51,6 +67,8 @@ export async function GET(
             location: auction.location,
             startingBid: auction.startingBid,
             buyNowPrice: auction.buyNowPrice,
+            securityDeposit: auction.securityDeposit,
+            entryFee: auction.entryFee,
             currentBid: highestBid,
             status: auction.status,
             duration: auction.duration,
@@ -63,6 +81,7 @@ export async function GET(
             seller: auction.seller,
             images: auction.images,
             bidsCount,
+            hasJoined,
             recentBids: auction.bids.map((bid: { id: string; amount: number; bidder: { id: string; name: string | null }; createdAt: Date }) => ({
                 id: bid.id,
                 amount: bid.amount,

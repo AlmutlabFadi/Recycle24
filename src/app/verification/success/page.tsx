@@ -77,7 +77,7 @@ export default function VerificationSuccessPage() {
                         <span className="text-sm text-slate-400">حالة الطلب</span>
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
                             <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-                            قيد المراجعة
+                            قيد الانتظار
                         </span>
                     </div>
                 </div>

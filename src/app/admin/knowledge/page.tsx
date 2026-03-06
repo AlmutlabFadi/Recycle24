@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import HeaderWithBack from "@/components/HeaderWithBack";
 
 type KnowledgeItem = {
     id: string;
@@ -294,33 +295,7 @@ export default function KnowledgeAdminPage() {
 
     return (
         <div className="min-h-screen bg-bg-dark text-white font-display">
-            <header className="sticky top-0 z-40 backdrop-blur-md bg-bg-dark/80 border-b border-slate-800">
-                <div className="px-4 py-4 flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-lg font-bold">لوحة المحتوى الأكاديمي</h1>
-                            <p className="text-xs text-slate-400">إدارة السلامة، الاستشارات، والأكاديمية بمستوى احترافي</p>
-                        </div>
-                        <Link href="/dashboard" className="text-xs text-emerald-400 font-bold">
-                            العودة للوحة التحكم
-                        </Link>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <span className="text-[11px] bg-emerald-500/10 text-emerald-300 px-3 py-1 rounded-full">
-                            إجمالي العناصر: {stats.total || 0}
-                        </span>
-                        <span className="text-[11px] bg-slate-800 text-slate-300 px-3 py-1 rounded-full">
-                            مقالات: {stats.ARTICLE || 0}
-                        </span>
-                        <span className="text-[11px] bg-slate-800 text-slate-300 px-3 py-1 rounded-full">
-                            تحذيرات: {stats.WARNING || 0}
-                        </span>
-                        <span className="text-[11px] bg-slate-800 text-slate-300 px-3 py-1 rounded-full">
-                            تعليمات: {stats.INSTRUCTION || 0}
-                        </span>
-                    </div>
-                </div>
-            </header>
+            <HeaderWithBack title="لوحة المحتوى الأكاديمي" />
 
             <main className="p-4 pb-20 flex flex-col gap-6">
                 <section className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-900/30 rounded-2xl border border-slate-800 p-4 shadow-lg">

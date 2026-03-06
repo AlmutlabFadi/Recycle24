@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isDemoMode, db } from "@/lib/db";
+import { db } from "@/lib/db";
 
 interface TrackingStep {
     id: string;
@@ -154,14 +154,6 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "رقم الشحنة مطلوب", success: false }, { status: 400 });
         }
 
-        if (isDemoMode) {
-            const demoBooking = getDemoBooking(trackingId);
-            if (!demoBooking) {
-                return NextResponse.json({ error: "لم يتم العثور على الشحنة", success: false }, { status: 404 });
-            }
-            return NextResponse.json({ success: true, tracking: demoBooking });
-        }
-
         const booking = await db.transportBooking.findUnique({
             where: { trackingId },
         });
@@ -208,43 +200,4 @@ export async function GET(request: NextRequest) {
         console.error("Track transport error:", error);
         return NextResponse.json({ error: "حدث خطأ أثناء جلب بيانات الشحنة", success: false }, { status: 500 });
     }
-}
-
-function getDemoBooking(trackingId: string): TrackingResponse | null {
-    const statuses = ["PENDING", "CONFIRMED", "DRIVER_ASSIGNED", "IN_TRANSIT", "DELIVERED"];
-    const randomStatus = statuses[Math.floor(Math.random() * 3)];
-    
-    const createdAt = new Date(Date.now() - 2 * 60 * 60 * 1000);
-    const pickupDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const distance = 385;
-
-    return {
-        trackingId,
-        status: randomStatus,
-        statusAr: statusNames[randomStatus],
-        materialType: "copper",
-        materialName: "نحاس",
-        weight: 0.5,
-        pickupAddress: "المنطقة الصناعية، الشيخ نجار",
-        pickupGovernorate: "حلب",
-        deliveryAddress: "مستودع الأمل",
-        deliveryGovernorate: "دمشق",
-        pickupDate: pickupDate.toISOString(),
-        transportType: "pickup",
-        transportTypeName: "بيك أب",
-        estimatedPrice: 127000,
-        actualPrice: null,
-        estimatedDuration: "~6 ساعات",
-        distance,
-        driver: randomStatus === "DRIVER_ASSIGNED" || randomStatus === "IN_TRANSIT" ? {
-            name: "أحمد محمود",
-            phone: "0991234567",
-            rating: 4.8,
-            vehicleType: "بيك أب تويوتا",
-            plateNumber: "ح س 1234",
-        } : null,
-        trackingSteps: getTrackingSteps(randomStatus, createdAt, pickupDate),
-        createdAt: createdAt.toISOString(),
-        updatedAt: new Date().toISOString(),
-    };
 }

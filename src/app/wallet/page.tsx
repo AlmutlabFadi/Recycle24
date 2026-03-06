@@ -7,7 +7,8 @@ import BottomNavigation from "@/components/BottomNavigation";
 
 export default function WalletPage() {
     const { wallet, isLoading, error, refresh } = useWallet();
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, activeRole } = useAuth();
+    const isTrader = activeRole === "TRADER";
 
     if (!isAuthenticated) {
         return (
@@ -31,6 +32,8 @@ export default function WalletPage() {
         );
     }
 
+    // Block if user is NOT verified (PENDING or REJECTED)
+    // If they are in TRADER role, they MUST be an approved trader.
     if (user?.status !== "APPROVED") {
         return (
             <div className="flex flex-col min-h-screen bg-bg-dark font-display">
@@ -118,22 +121,79 @@ export default function WalletPage() {
             </header>
 
             <main className="flex-1 pb-24">
+                {/* Account Locked Banner */}
+                {wallet?.isLocked && (
+                    <div className="mx-4 mt-4 p-4 rounded-xl bg-slate-900 border border-red-500/50 text-red-500 animate-pulse">
+                        <div className="flex items-center gap-3 mb-2">
+                            <span className="material-symbols-outlined text-red-500">lock</span>
+                            <p className="text-sm font-bold">الحساب مجمد</p>
+                        </div>
+                        <p className="text-xs leading-relaxed">
+                            {wallet.lockReason || "تم تجميد حسابك بسبب عدم تسديد الديون في الوقت المحدد."}
+                        </p>
+                    </div>
+                )}
+
+                {/* Debt Warning Banner */}
+                {!wallet?.isLocked && wallet?.debtDetails && wallet.debtDetails.length > 0 && (
+                    <div className="mx-4 mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400">
+                        <div className="flex items-center gap-3 mb-2">
+                            <span className="material-symbols-outlined">warning</span>
+                            <p className="text-sm font-bold">تنبيه: يوجد رصيد مستحق (دين)</p>
+                        </div>
+                        <p className="text-xs leading-relaxed mb-3 text-red-400/80">
+                            لديك رصيد سالب في محفظتك. يرجى تسديد المبلغ المطلوب خلال المهلة المحددة لتجنب تجميد حسابك تلقائياً.
+                        </p>
+                        <div className="flex flex-col gap-2">
+                            {wallet.debtDetails.map((debt, idx) => (
+                                <div key={idx} className="flex items-center justify-between bg-black/20 p-2 px-3 rounded-lg border border-red-500/10">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] bg-red-500/20 px-1.5 py-0.5 rounded text-red-300 font-english uppercase tracking-tight">
+                                            {debt.slug.split('_').pop()}
+                                        </span>
+                                        <span className="text-sm font-bold font-english dir-ltr">
+                                            {Math.abs(debt.balance).toLocaleString()} ل.س
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-xs font-bold text-white">
+                                        <span className="material-symbols-outlined text-sm">schedule</span>
+                                        باقي {debt.remainingDays} يوم
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
                 {/* Balance Card */}
                 <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-br from-primary to-blue-600 p-6 text-white relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-40 h-40 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
                     <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3"></div>
 
                     <div className="relative z-10">
-                        <p className="text-sm text-white/70 font-medium">الرصيد الإجمالي</p>
-                        <div className="flex items-baseline gap-2 mt-2">
-                            <p className="text-4xl font-bold font-english dir-ltr tracking-tight">
-                                {wallet?.balance?.toLocaleString() || "0"}
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm text-white/70 font-medium font-display">الرصيد القابل للاستخدام</p>
+                            <div className="flex items-baseline gap-2 mt-1">
+                                <p className="text-4xl font-bold font-english dir-ltr tracking-tight">
+                                    {wallet?.availableBalance?.toLocaleString() || "0"}
+                                </p>
+                                <span className="text-lg font-bold text-white/80">ل.س</span>
+                            </div>
+                          </div>
+                          <div className="text-left bg-white/10 rounded-lg p-2 px-3 backdrop-blur-sm border border-white/10">
+                            <p className="text-[10px] text-white/60 mb-1 font-display">رصيد محجوز (تأمينات)</p>
+                            <p className="text-sm font-bold font-english dir-ltr">
+                              {wallet?.heldAmount?.toLocaleString() || "0"} ل.س
                             </p>
-                            <span className="text-lg font-bold text-white/80">ل.س</span>
+                          </div>
                         </div>
-                        <p className="text-sm text-white/60 font-english dir-ltr mt-1">
-                            ≈ ${((wallet?.balance || 0) / 14500).toFixed(0)} USD
-                        </p>
+
+                        <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
+                          <p className="text-xs text-white/60 font-display">إجمالي الرصيد الموثق:</p>
+                          <p className="text-xs font-bold font-english dir-ltr text-white/90">
+                            {wallet?.verifiedBalance?.toLocaleString() || "0"} ل.س
+                          </p>
+                        </div>
 
                         {/* Quick Actions */}
                         <div className="flex gap-3 mt-6">
@@ -169,45 +229,58 @@ export default function WalletPage() {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                        {recentTransactions.length === 0 ? (
+                        {(!wallet?.history || wallet.history.length === 0) ? (
                             <div className="text-center py-8 text-slate-500">
                                 <span className="material-symbols-outlined text-4xl mb-2">receipt_long</span>
                                 <p>لا توجد معاملات حتى الآن</p>
                             </div>
                         ) : (
-                            recentTransactions.map((tx) => (
+                            wallet.history.map((tx) => (
                                 <div
                                     key={tx.id}
                                     className="flex items-center gap-3 p-3 rounded-xl bg-surface-highlight border border-slate-700/50"
                                 >
                                     <div className={`size-10 rounded-full flex items-center justify-center shrink-0 ${
-                                        tx.type === "DEPOSIT" ? "text-green-400 bg-green-400/10" :
-                                        tx.type === "WITHDRAWAL" ? "text-red-400 bg-red-400/10" :
-                                        tx.type === "REFUND" ? "text-blue-400 bg-blue-400/10" :
+                                        tx.amount > 0 ? "text-green-400 bg-green-400/10" :
+                                        tx.metadata?.isExempt ? "text-blue-400 bg-blue-400/10" :
                                         "text-orange-400 bg-orange-400/10"
                                     }`}>
                                         <span className="material-symbols-outlined !text-[20px]">
-                                            {tx.type === "DEPOSIT" ? "arrow_downward" :
-                                             tx.type === "WITHDRAWAL" ? "arrow_upward" :
-                                             tx.type === "REFUND" ? "replay" : "payments"}
+                                            {tx.amount > 0 ? "arrow_downward" :
+                                             tx.metadata?.isExempt ? "verified" : "payments"}
                                         </span>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-white truncate">
-                                            {tx.type === "DEPOSIT" ? "إيداع" :
-                                             tx.type === "WITHDRAWAL" ? "سحب" :
-                                             tx.type === "REFUND" ? "استرداد" : "دفع"}
-                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm font-semibold text-white truncate">
+                                                {tx.description}
+                                            </p>
+                                            {tx.metadata?.isExempt && (
+                                                <span className="text-[10px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-md font-bold">
+                                                    معفى
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className="text-xs text-slate-500">
-                                            {new Date(tx.createdAt).toLocaleDateString("ar-SA")}
+                                            {new Date(tx.date).toLocaleDateString("ar-SA")}
                                         </p>
                                     </div>
-                                    <p className={`text-sm font-bold font-english dir-ltr ${
-                                        tx.type === "DEPOSIT" || tx.type === "REFUND" ? "text-green-400" : "text-red-400"
-                                    }`}>
-                                        {tx.type === "DEPOSIT" || tx.type === "REFUND" ? "+" : "-"}
-                                        {tx.amount.toLocaleString()} ل.س
-                                    </p>
+                                    <div className="text-left">
+                                        <p className={`text-sm font-bold font-english dir-ltr ${
+                                            tx.metadata?.isExempt ? "text-slate-500 line-through" :
+                                            tx.amount > 0 ? "text-green-400" : "text-red-400"
+                                        }`}>
+                                            {tx.amount > 0 ? "+" : ""}
+                                            {tx.metadata?.isExempt 
+                                              ? tx.metadata.originalAmount?.toLocaleString() 
+                                              : (tx.amount).toLocaleString()} ل.س
+                                        </p>
+                                        {tx.metadata?.isExempt && (
+                                            <p className="text-[10px] font-bold text-blue-400 font-english dir-ltr">
+                                                0 ل.س
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
                             ))
                         )}

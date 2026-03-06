@@ -34,7 +34,19 @@ const keys = {
   openai: getKeys("OPENAI_API_KEY"),
 };
 
-let indices = { gemini: 0, kimi: 0, glm: 0, openai: 0 };
+const indices = { gemini: 0, kimi: 0, glm: 0, openai: 0 };
+
+type RateLimitError = { isRateLimit?: boolean; message?: string };
+
+const isRateLimitError = (error: unknown): error is RateLimitError => {
+  if (!error || typeof error !== "object") return false;
+  return (error as { isRateLimit?: unknown }).isRateLimit === true;
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  return String(error);
+};
 
 function getNextKey(provider: "gemini" | "kimi" | "glm" | "openai"): string | null {
   const providerKeys = keys[provider];
@@ -157,8 +169,8 @@ export async function askAI(prompt: string, contextSize: number = 0, agentRole: 
     console.log(`[AI-ROUTER] 🔀 Strategy: Huge Context -> Kimi (1M Context Window)`);
     try { 
       return await callKimi(prompt); 
-    } catch (e: any) { 
-      if (!e.isRateLimit) console.warn(`[KIMI] Failed, falling back...`, e.message); 
+    } catch (e: unknown) { 
+      if (!isRateLimitError(e)) console.warn(`[KIMI] Failed, falling back...`, getErrorMessage(e)); 
       else console.warn(`[KIMI] Rate Limited. Falling back...`);
     }
   }
@@ -168,8 +180,8 @@ export async function askAI(prompt: string, contextSize: number = 0, agentRole: 
     console.log(`[AI-ROUTER] 🔀 Strategy: Critical Task -> OpenAI GPT-4o`);
     try { 
       return await callOpenAI(prompt); 
-    } catch (e: any) { 
-      console.warn(`[OPENAI] Failed, falling back...`, e.message); 
+    } catch (e: unknown) { 
+      console.warn(`[OPENAI] Failed, falling back...`, getErrorMessage(e)); 
     }
   }
 
@@ -178,8 +190,8 @@ export async function askAI(prompt: string, contextSize: number = 0, agentRole: 
     console.log(`[AI-ROUTER] 🔀 Strategy: Routine Task -> Zhipu GLM-4 Free`);
     try { 
       return await callGLM(prompt); 
-    } catch (e: any) { 
-      if (!e.isRateLimit) console.warn(`[GLM] Failed, falling back...`, e.message); 
+    } catch (e: unknown) { 
+      if (!isRateLimitError(e)) console.warn(`[GLM] Failed, falling back...`, getErrorMessage(e)); 
     }
   }
 
@@ -190,8 +202,8 @@ export async function askAI(prompt: string, contextSize: number = 0, agentRole: 
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         return await callGemini(prompt);
-      } catch (err: any) {
-        if (err.isRateLimit) {
+      } catch (err: unknown) {
+        if (isRateLimitError(err)) {
            console.log(`[GEMINI] Trying another key...`);
            continue; 
         }
@@ -205,7 +217,7 @@ export async function askAI(prompt: string, contextSize: number = 0, agentRole: 
     console.log(`[AI-ROUTER] 🔀 Strategy: Final Fallback -> Zhipu GLM-4 Free`);
     try { 
       return await callGLM(prompt); 
-    } catch (e) {}
+    } catch {}
   }
 
   throw new Error("[AI-ROUTER] ❌ All available models failed to process the request.");

@@ -11,9 +11,12 @@ export default function GSOCCLayout({ children }: { children: ReactNode }) {
       {/* Top Command Bar */}
       <header className="fixed top-0 inset-x-0 h-16 border-b border-red-900/40 bg-[#0A0A17]/80 backdrop-blur-md z-50 px-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-3 h-3 rounded-full bg-red-600 animate-pulse shadow-[0_0_15px_rgba(220,38,38,0.7)]" />
+          <a href="/admin/dashboard" className="w-8 h-8 rounded-lg bg-red-900/20 border border-red-900/40 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all group" title="العودة لوحة التحكم">
+            <span className="material-symbols-outlined !text-[20px] group-hover:scale-110 transition">arrow_forward</span>
+          </a>
+          <div className="w-2 h-2 rounded-full bg-red-600 animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.7)]" />
           <h1 className="text-xl font-bold bg-gradient-to-r from-red-500 to-rose-400 bg-clip-text text-transparent uppercase tracking-widest flex items-center gap-2">
-            GSOCC <span className="text-xs text-zinc-500 font-normal">Sovereign Command</span>
+            GSOCC <span className="text-[10px] text-zinc-500 font-normal hidden md:inline">Sovereign Command</span>
           </h1>
         </div>
         

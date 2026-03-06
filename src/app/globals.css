@@ -51,7 +51,7 @@ body {
 
 /* Material Symbols configuration */
 .material-symbols-outlined {
-  font-family: 'Material Symbols Outlined';
+  font-family: var(--font-material-symbols), 'Material Symbols Outlined';
   font-weight: normal;
   font-style: normal;
   font-size: 24px;

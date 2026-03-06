@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { LedgerPostingService } from "@/lib/ledger/service";
+import { TransactionType, LedgerAccountSlug } from "@/lib/ledger/types";
 
 export async function POST(
   request: NextRequest,
@@ -16,12 +18,27 @@ export async function POST(
 
     const userId = session.user.id;
     const auctionId = resolvedParams.id;
+    const body = await request.json();
+    const { 
+      agreedToTerms, 
+      agreedToPrivacy, 
+      agreedToCommission, 
+      agreedToDataSharing,
+      hasInspectedGoods,
+      agreedToInvoice
+    } = body;
+
+    // Validate agreements
+    if (!agreedToTerms || !agreedToPrivacy || !agreedToCommission || !agreedToDataSharing || !hasInspectedGoods || !agreedToInvoice) {
+      return NextResponse.json({ 
+        error: "All policy agreements, goods inspection, and invoice acknowledgment must be accepted before joining an auction." 
+      }, { status: 400 });
+    }
 
     if (!auctionId) {
       return NextResponse.json({ error: "Auction ID is required" }, { status: 400 });
     }
 
-    // Await db first because in this Next.js setup db might be a promise depending on initialization
     const prisma = await db;
 
     // 1. Check if auction exists and is active
@@ -33,7 +50,6 @@ export async function POST(
       return NextResponse.json({ error: "Auction not found" }, { status: 404 });
     }
 
-    // Allow joining scheduled auctions so people can prepare
     if (auction.status !== "LIVE" && auction.status !== "SCHEDULED") {
       return NextResponse.json({ error: "Auction is not open for joining" }, { status: 400 });
     }
@@ -42,13 +58,37 @@ export async function POST(
       return NextResponse.json({ error: "Seller cannot join their own auction" }, { status: 400 });
     }
 
-    // 2. Check if user already joined
+    // 2. Comprehensive User & Trader Verification
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { 
+        trader: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Check if account is locked
+    if (user.isLocked) {
+      return NextResponse.json({ 
+        error: `Your account is currently locked. Reason: ${user.lockReason || "Unpaid debt"}` 
+      }, { status: 403 });
+    }
+
+    // Check if user is an approved trader
+    const isExempt = user.role === "ADMIN" || user.userType === "GOVERNMENT";
+    if (!isExempt && (!user.trader || user.trader.verificationStatus !== "APPROVED")) {
+      return NextResponse.json({ 
+        error: "Non-authorized. You must be an approved trader to join auctions." 
+      }, { status: 403 });
+    }
+
+    // 3. User Already Joined Check
     const existingParticipant = await prisma.auctionParticipant.findUnique({
       where: {
-        auctionId_userId: {
-          auctionId,
-          userId,
-        },
+        auctionId_userId: { auctionId, userId },
       },
     });
 
@@ -56,18 +96,18 @@ export async function POST(
       return NextResponse.json({ message: "Already joined", participant: existingParticipant });
     }
 
-    // 3. User & Wallet Verification
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { wallet: true },
+    // 4. Ledger Balance Verification
+    const userAccountSlug = `USER_${userId}_SYP`;
+    const ledgerAccount = await LedgerPostingService.getOrCreateAccount(userAccountSlug, userId, "SYP");
+    
+    // Calculate current available balance (Balance - Total Holds)
+    const totalHolds = await prisma.ledgerHold.aggregate({
+      where: { accountId: ledgerAccount.id, status: "OPEN" },
+      _sum: { amount: true },
     });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // Check if user is exempt (e.g. government accounts)
-    const isExempt = user.role === "ADMIN" || user.userType === "GOVERNMENT";
+    
+    const heldAmount = totalHolds._sum.amount || 0;
+    const availableBalance = ledgerAccount.balance - heldAmount;
 
     let depositToCharge = auction.securityDeposit;
     let entryFeeToCharge = auction.entryFee;
@@ -77,67 +117,63 @@ export async function POST(
       entryFeeToCharge = 0;
     }
 
-    const totalToDeduct = depositToCharge + entryFeeToCharge;
-
-    // Verify wallet balance if not exempt and fees > 0
-    if (!isExempt && totalToDeduct > 0) {
-      if (!user.wallet) {
-        return NextResponse.json({ error: "Wallet not found. Please setup your wallet." }, { status: 400 });
-      }
-
-      if (user.wallet.balanceSYP < totalToDeduct) {
-        return NextResponse.json({ 
-          error: "Insufficient funds", 
-          required: totalToDeduct, 
-          balance: user.wallet.balanceSYP 
-        }, { status: 402 }); // Payment Required
-      }
+    // HARD BLOCK: Security deposit must be covered by available balance
+    if (!isExempt && depositToCharge > 0 && availableBalance < depositToCharge) {
+      return NextResponse.json({ 
+        error: "Insufficient funds for security deposit", 
+        required: depositToCharge, 
+        available: availableBalance 
+      }, { status: 402 });
     }
 
-    // 4. Execute Transaction
+    // 5. Execute Transaction via Ledger Service
     const participant = await prisma.$transaction(async (tx: any) => {
-      // Deduct from wallet if needed
-      if (!isExempt && totalToDeduct > 0 && user.wallet) {
-        // Decrement balance
-        await tx.wallet.update({
-          where: { id: user.wallet.id },
-          data: {
-            balanceSYP: { decrement: totalToDeduct },
-            // If frozenTotal isn't defined in your schema, we need to map it correctly. Assuming it's tracked in Wallet or we just create TRANSACTIONS.
-          },
-        });
-
-        // Record Transactions
-        // 1. Entry Fee (Non-refundable)
-        if (entryFeeToCharge > 0) {
-          await tx.transaction.create({
-            data: {
-              walletId: user.wallet.id,
-              type: "PAYMENT",
-              amount: entryFeeToCharge,
-              status: "COMPLETED",
-              reference: `AUCTION_FEE_${auctionId}`,
-              description: `Entry fee for auction: ${auction.title}`,
-            },
-          });
+      if (!isExempt) {
+        // 1. Handle Security Deposit (Create Ledger Hold)
+        if (depositToCharge > 0) {
+          await LedgerPostingService.createHold(
+            userAccountSlug,
+            depositToCharge,
+            'AUCTION',
+            auctionId,
+            auction.endsAt || undefined
+          );
         }
 
-        // 2. Security Deposit (Held/Frozen)
-        if (depositToCharge > 0) {
-          await tx.transaction.create({
-            data: {
-              walletId: user.wallet.id,
-              type: "DEPOSIT", // Or a specific type like SECURITY_DEPOSIT
-              amount: depositToCharge,
-              status: "PENDING", // Pending until auction ends
-              reference: `AUCTION_DEPOSIT_${auctionId}`,
-              description: `Security deposit held for auction: ${auction.title}`,
+        // 2. Handle Entry Fee (Non-refundable Ledger Posting)
+        if (entryFeeToCharge > 0) {
+          await LedgerPostingService.postEntry({
+            type: TransactionType.AUCTION_JOIN_FEE,
+            description: `Entry fee for auction: ${auction.title}`,
+            lines: [
+              {
+                accountSlug: userAccountSlug,
+                amount: -entryFeeToCharge, // Debit User
+                description: `Auction entry fee: ${auctionId}`,
+              },
+              {
+                accountSlug: LedgerAccountSlug.SYSTEM_FEE_COLLECTION,
+                amount: entryFeeToCharge, // Credit System
+                description: `Fee from user ${userId} for auction ${auctionId}`,
+              },
+            ],
+            metadata: { 
+              auctionId, 
+              userId,
+              invoiceBreakdown: {
+                securityDeposit: depositToCharge,
+                entryFee: entryFeeToCharge,
+                totalRefundable: depositToCharge,
+                totalNonRefundable: entryFeeToCharge,
+                isExempt
+              },
+              agreedAt: new Date().toISOString()
             },
           });
         }
       }
 
-      // 5. Create Participant Record
+      // 6. Create Participant Record with Agreements
       return await tx.auctionParticipant.create({
         data: {
           auctionId,
@@ -146,6 +182,12 @@ export async function POST(
           entryFeePaid: entryFeeToCharge,
           isExempt,
           depositStatus: depositToCharge > 0 ? "HELD" : "EXEMPT",
+          agreedToTerms: true,
+          agreedToPrivacy: true,
+          agreedToCommission: true,
+          agreedToDataSharing: true,
+          hasInspectedGoods: true,
+          agreedToInvoice: true,
         },
       });
     });

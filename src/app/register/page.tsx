@@ -19,7 +19,7 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    userType: "TRADER" as "TRADER" | "BUYER",
+    userType: "CLIENT" as "TRADER" | "CLIENT",
     gender: "male" as Gender,
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -241,9 +241,9 @@ export default function RegisterPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setFormData({ ...formData, userType: "BUYER" })}
+                onClick={() => setFormData({ ...formData, userType: "CLIENT" })}
                 className={`p-3 rounded-xl border-2 transition-all text-center ${
-                  formData.userType === "BUYER"
+                  formData.userType === "CLIENT"
                     ? "border-primary bg-primary/10"
                     : "border-slate-700 bg-surface-highlight"
                 }`}
@@ -251,8 +251,8 @@ export default function RegisterPage() {
                 <span className="material-symbols-outlined text-xl mb-1 block text-primary">
                   shopping_cart
                 </span>
-                <span className="text-white font-bold text-sm">مشتري</span>
-                <span className="text-slate-400 text-xs block">أشتري الخردة</span>
+                <span className="text-white font-bold text-sm">عميل</span>
+                <span className="text-slate-400 text-xs block">أبيع أو أشتري الخردة</span>
               </button>
             </div>
           </div>

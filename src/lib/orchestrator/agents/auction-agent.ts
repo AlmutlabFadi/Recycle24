@@ -80,8 +80,12 @@ export class AuctionAgent extends BaseAgent {
         },
       });
 
-      // Create a Deal between buyer and seller
-      const platformFee = winningBid.amount * 0.025; // 2.5% platform fee
+      // 🏛️ BANK-GRADE SETTLEMENT (Phase 19)
+      // Handles loser refunds, winner escrow, and commission debt
+      const { AuctionSettlementService } = await import("@/lib/auction/settlement");
+      await AuctionSettlementService.closeAuctionFinancials(auction.id);
+
+      // Create a Deal record for UI visibility
       await prisma.deal.create({
         data: {
           auctionId: auction.id,
@@ -90,7 +94,7 @@ export class AuctionAgent extends BaseAgent {
           materialType: auction.category,
           weight: auction.weight,
           totalAmount: winningBid.amount,
-          platformFee,
+          platformFee: winningBid.amount * 0.01, // 1% commission
           status: "PENDING",
         },
       });
@@ -106,6 +110,7 @@ export class AuctionAgent extends BaseAgent {
             title: auction.title,
             finalPrice: winningBid.amount,
             winnerId: winningBid.bidderId,
+            settlement: "COMPLETED",
           }),
           ip: "ORCHESTRATOR",
         },

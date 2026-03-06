@@ -23,8 +23,8 @@ export interface Auction {
   createdAt: string;
   sellerId: string;
   seller?: { id: string; name: string; phone: string };
-  images?: Array<{ id: string; imageUrl: string; order: number }>;
-  bidsCount?: number;
+  images: { id: string; imageUrl: string }[];
+  bidsCount: number;
   hasJoined?: boolean; // New field to track if current user joined
 }
 
@@ -48,7 +48,17 @@ interface UseAuctionsReturn {
   fetchAuctionById: (id: string) => Promise<Auction | null>;
   createAuction: (auctionData: CreateAuctionData) => Promise<Auction | null>;
   placeBid: (auctionId: string, amount: number) => Promise<boolean>;
-  joinAuction: (auctionId: string) => Promise<{ success: boolean; message?: string }>;
+  joinAuction: (
+    auctionId: string, 
+    agreements: {
+      agreedToTerms: boolean;
+      agreedToPrivacy: boolean;
+      agreedToCommission: boolean;
+      agreedToDataSharing: boolean;
+      hasInspectedGoods: boolean;
+      agreedToInvoice: boolean;
+    }
+  ) => Promise<{ success: boolean; message?: string }>;
   refresh: () => void;
 }
 
@@ -190,7 +200,17 @@ export function useAuctions(): UseAuctionsReturn {
     }
   }, [token, user]);
 
-  const joinAuction = useCallback(async (auctionId: string): Promise<{ success: boolean; message?: string }> => {
+  const joinAuction = useCallback(async (
+    auctionId: string, 
+    agreements: {
+      agreedToTerms: boolean;
+      agreedToPrivacy: boolean;
+      agreedToCommission: boolean;
+      agreedToDataSharing: boolean;
+      hasInspectedGoods: boolean;
+      agreedToInvoice: boolean;
+    }
+  ): Promise<{ success: boolean; message?: string }> => {
     if (!user) {
       setError("يجب تسجيل الدخول للمشاركة");
       return { success: false, message: "يجب تسجيل الدخول للمشاركة" };
@@ -204,7 +224,9 @@ export function useAuctions(): UseAuctionsReturn {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify(agreements),
       });
 
       const data = await response.json();

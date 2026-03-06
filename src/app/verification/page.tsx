@@ -1,16 +1,68 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import HeaderWithBack from "@/components/HeaderWithBack";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function VerificationPage() {
-    const { activeRole } = useAuth();
-    const isTrader = activeRole === "TRADER";
+import { useEffect, useState, Suspense } from "react";
+import { useRouter } from "next/navigation";
+
+function VerificationContent() {
+    const router = useRouter();
+    const { activeRole, user } = useAuth();
+    const searchParams = useSearchParams();
+    const targetRole = searchParams.get("role");
+    const isTrader = targetRole === "TRADER" || activeRole === "TRADER";
+    const isDriver = targetRole === "DRIVER" || activeRole === "DRIVER";
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const checkStatus = async () => {
+            if (!user?.id) return;
+            try {
+                const res = await fetch(`/api/verification?userId=${user.id}`);
+                const data = await res.json();
+                const vStatus = data.verificationStatus || data.status;
+                
+                // Determine the role for the status page
+                const role = targetRole || (data.trader?.isDriver ? "DRIVER" : (isTrader ? "TRADER" : "CLIENT"));
+                
+                // Allow re-submission if status is REJECTED (user clicked re-submit from status page)
+                const isResubmit = searchParams.get("resubmit") === "true";
+                if (vStatus === "REJECTED" && isResubmit) {
+                    setLoading(false);
+                    return; // Allow showing the form
+                }
+                
+                // If user already has ANY verification in progress or completed, redirect to status page
+                // Only show the form if status is NOT_STARTED (no previous submission)
+                if (vStatus && vStatus !== "NOT_STARTED") {
+                    router.replace(`/verification/status?role=${role}`);
+                    return;
+                }
+            } catch (error) {
+                console.error("Error checking verification status:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        checkStatus();
+    }, [user?.id, isTrader, isDriver, targetRole, searchParams, router]);
+
+    if (loading) {
+        return (
+            <div className="flex flex-col min-h-screen bg-bg-dark font-display items-center justify-center">
+                <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+                <p className="text-slate-400">جاري التحميل...</p>
+            </div>
+        );
+    }
 
     return (
         <>
-            <HeaderWithBack title={isTrader ? "تحقق التاجر" : "توثيق حساب العميل"} />
+                <HeaderWithBack title={isTrader ? "تحقق التاجر" : (isDriver ? "توثيق حساب السائق" : "توثيق حساب العميل")} />
 
             <main className="flex-col pb-24">
                 {/* Stepper Progress */}
@@ -68,16 +120,18 @@ export default function VerificationPage() {
                                     verified
                                 </span>
                                 <span className="text-blue-100 text-xs font-bold tracking-wide drop-shadow-sm">
-                                    {isTrader ? "كن شريكاً معتمداً" : "احصل على شارة موثق ومعروف"}
+                                    {isTrader ? "كن شريكاً معتمداً" : (isDriver ? "احصل على شارة سائق موثق" : "احصل على شارة موثق ومعروف")}
                                 </span>
                             </div>
                             <h2 className="text-white text-2xl font-black leading-tight mb-2 tracking-tight drop-shadow-md">
-                                {isTrader ? "افتح صفقات المصانع الحصرية وعزز سمعتك" : "تمتع بمزايا حصرية وموثوقية عالية"}
+                                {isTrader ? "افتح صفقات المصانع الحصرية وعزز سمعتك" : (isDriver ? "فعّل حسابك كسائق وابدأ استقبال طلبات النقل" : "تمتع بمزايا حصرية وموثوقية عالية")}
                             </h2>
                             <p className="text-slate-200 text-sm font-medium leading-relaxed max-w-[95%] drop-shadow-sm">
                                 {isTrader 
                                     ? "أكمل إجراءات التحقق لتصبح تاجراً موثوقاً في السوق السوري."
-                                    : "أكمل إجراءات التحقق لتكون عميلاً موثوقاً ومعروفاً وتتمكن من استخدام المحفظة."}
+                                    : (isDriver 
+                                        ? "أكمل إجراءات التحقق لتفعيل حساب السائق والوصول لطلبات النقل الكبيرة."
+                                        : "أكمل إجراءات التحقق لتكون عميلاً موثوقاً ومعروفاً وتتمكن من استخدام المحفظة.")}
                             </p>
                         </div>
                     </div>
@@ -141,6 +195,54 @@ export default function VerificationPage() {
                                         </h4>
                                         <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
                                             الوصول إلى المزادات المغلقة والعروض الحصرية من كبرى المصانع.
+                                        </p>
+                                    </div>
+                                </div>
+                            </>
+                        ) : isDriver ? (
+                            <>
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/20 text-primary shrink-0">
+                                        <span className="material-symbols-outlined filled !text-[24px]">
+                                            local_shipping
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <h4 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                                            طلبات نقل موثوقة
+                                        </h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                                            الوصول لطلبات نقل أكبر مع إثبات صلاحية السائق.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 shrink-0">
+                                        <span className="material-symbols-outlined filled !text-[24px]">
+                                            verified_user
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <h4 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                                            شارة سائق موثق
+                                        </h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                                            تزيد من ثقة العملاء وتسرع قبول العروض.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-4 p-4 rounded-xl bg-white dark:bg-surface-highlight border border-slate-100 dark:border-slate-800 shadow-sm hover:border-primary/50 transition-colors">
+                                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 shrink-0">
+                                        <span className="material-symbols-outlined filled !text-[24px]">
+                                            safety_check
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <h4 className="text-base font-bold text-slate-900 dark:text-white leading-tight">
+                                            التزام بالسلامة
+                                        </h4>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                                            توثيق الرخص والمركبة يرفع جاهزية العمل ويحمي الجميع.
                                         </p>
                                     </div>
                                 </div>
@@ -216,7 +318,7 @@ export default function VerificationPage() {
             {/* Sticky Action Button */}
             <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-bg-dark/80 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 max-w-md mx-auto">
                 <Link
-                    href="/verification/identity"
+                    href={`/verification/identity${targetRole ? `?role=${targetRole}` : ""}`}
                     className="relative w-full group overflow-hidden bg-primary hover:bg-primary/90 active:bg-primary/95 text-white font-bold text-base py-4 rounded-xl shadow-lg shadow-primary/25 transition-all duration-200 flex items-center justify-center gap-2"
                 >
                     <span className="relative z-10">ابدأ التحقق الآن</span>
@@ -226,5 +328,18 @@ export default function VerificationPage() {
                 </Link>
             </div>
         </>
+    );
+}
+
+export default function VerificationPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col min-h-screen bg-bg-dark font-display items-center justify-center">
+                <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+                <p className="text-slate-400">جاري التحميل...</p>
+            </div>
+        }>
+            <VerificationContent />
+        </Suspense>
     );
 }

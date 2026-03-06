@@ -33,8 +33,9 @@ function OffersContent() {
             const data = await response.json();
             
             if (data.success) {
+                const rawOffers = Array.isArray(data.offers) ? (data.offers as BidOffer[]) : [];
                 // Filter specifically for pending, in case someone previously got rejected
-                setOffers(data.offers.filter((o: any) => o.status === "PENDING" || o.status === "ACCEPTED"));
+                setOffers(rawOffers.filter((o) => o.status === "PENDING" || o.status === "ACCEPTED"));
             } else {
                 addToast(data.error || "حدث خطأ في جلب العروض", "error");
             }

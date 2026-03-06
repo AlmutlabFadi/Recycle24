@@ -4,7 +4,7 @@ import { createContext, useContext, ReactNode, useCallback, useState, useEffect 
 import { useSession, signIn, signOut, SessionProvider } from "next-auth/react";
 import { Gender } from "@/lib/title-system";
 
-export type ActiveRole = "CLIENT" | "TRADER" | "ADMIN";
+export type ActiveRole = "CLIENT" | "TRADER" | "ADMIN" | "DRIVER" | "GOVERNMENT";
 
 interface User {
   id: string;
@@ -15,7 +15,7 @@ interface User {
   lastName?: string;
   titleId?: string;
   gender?: Gender;
-  userType: "TRADER" | "BUYER" | "ADMIN";
+  userType: "TRADER" | "CLIENT" | "ADMIN" | "DRIVER" | "GOVERNMENT";
   status: string;
   role?: string;
 }
@@ -41,19 +41,34 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const isLoading = status === "loading";
   const user = session?.user as unknown as User | null;
-  const [activeRole, setActiveRole] = useState<ActiveRole | null>(null);
+  const [activeRole, setActiveRoleState] = useState<ActiveRole | null>(null);
 
+  // Initialize role from localStorage or default
   useEffect(() => {
-    if (user && !activeRole) {
-      setActiveRole(user.userType === "BUYER" ? "CLIENT" : user.userType as ActiveRole);
+    if (typeof window !== "undefined" && user) {
+      const savedRole = localStorage.getItem(`activeRole_${user.id}`) as ActiveRole;
+      if (savedRole) {
+        setActiveRoleState(savedRole);
+      } else {
+        const defaultRole = user.userType === "ADMIN" ? "ADMIN" : "CLIENT";
+        setActiveRoleState(defaultRole);
+        localStorage.setItem(`activeRole_${user.id}`, defaultRole);
+      }
     } else if (!user) {
-      setActiveRole(null);
+      setActiveRoleState(null);
     }
-  }, [user, activeRole]);
+  }, [user]);
+
+  const setActiveRole = useCallback((role: ActiveRole | null) => {
+    setActiveRoleState(role);
+    if (user && role) {
+      localStorage.setItem(`activeRole_${user.id}`, role);
+    }
+  }, [user]);
 
   const switchRole = useCallback((role: ActiveRole) => {
     setActiveRole(role);
-  }, []);
+  }, [setActiveRole]);
 
   const loginWithPhone = useCallback(async (phone: string, password: string) => {
     const result = await signIn("credentials", {
@@ -64,7 +79,10 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     if (result?.error) {
       throw new Error(result.error);
     }
-    window.location.href = "/";
+    // Check role and redirect ADMIN to dashboard
+    const sessRes = await fetch('/api/auth/session');
+    const sess = sessRes.ok ? await sessRes.json().catch(() => null) : null;
+    window.location.href = sess?.user?.role === 'ADMIN' ? '/dashboard' : '/';
   }, []);
 
   const loginWithEmail = useCallback(async (email: string, password: string) => {
@@ -76,7 +94,10 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     if (result?.error) {
       throw new Error(result.error);
     }
-    window.location.href = "/";
+    // Check role and redirect ADMIN to dashboard
+    const sessRes2 = await fetch('/api/auth/session');
+    const sess = sessRes2.ok ? await sessRes2.json().catch(() => null) : null;
+    window.location.href = sess?.user?.role === 'ADMIN' ? '/dashboard' : '/';
   }, []);
 
   const registerWithPhone = useCallback(async (phone: string, password: string, name: string, userType: string, titleId?: string, gender?: Gender) => {

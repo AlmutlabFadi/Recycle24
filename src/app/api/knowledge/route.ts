@@ -6,9 +6,9 @@ const DEFAULT_LIMIT = 30;
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
-        const center = searchParams.get("center") || undefined;
-        const type = searchParams.get("type") || undefined;
-        const status = searchParams.get("status") || "PUBLISHED";
+        const center = searchParams.get("center")?.toUpperCase() || undefined;
+        const type = searchParams.get("type")?.toUpperCase() || undefined;
+        const status = searchParams.get("status")?.toUpperCase() || "PUBLISHED";
         const parsedLimit = parseInt(searchParams.get("limit") || `${DEFAULT_LIMIT}`, 10);
         const limit = Number.isNaN(parsedLimit) ? DEFAULT_LIMIT : Math.min(parsedLimit, 100);
 

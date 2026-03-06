@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { isDemoMode, db } from "@/lib/db";
+import { db } from "@/lib/db";
 
 interface SessionUser {
     id: string;
@@ -55,71 +55,6 @@ const statusNames: Record<string, string> = {
     CANCELLED: "ملغي",
 };
 
-function getDemoOrders(): TransportOrder[] {
-    return [
-        {
-            id: "demo-1",
-            trackingId: "REQ2402ABC123",
-            status: "HAS_OFFERS",
-            statusAr: "لديه عروض",
-            materialType: "metals",
-            materialName: "معادن",
-            weight: 2.5,
-            pickupGovernorate: "حلب",
-            deliveryGovernorate: "دمشق",
-            pricingType: "per_ton",
-            pricingTypeName: "أجرة الطن",
-            offersCount: 3,
-            createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-            id: "demo-2",
-            trackingId: "REQ2401XYZ789",
-            status: "OPEN",
-            statusAr: "مفتوح للعروض",
-            materialType: "iron",
-            materialName: "حديد",
-            weight: 5,
-            pickupGovernorate: "حمص",
-            deliveryGovernorate: "حلب",
-            pricingType: "full_vehicle",
-            pricingTypeName: "أجرة السيارة",
-            offersCount: 0,
-            createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-            id: "demo-3",
-            trackingId: "REQ2401DEF456",
-            status: "IN_TRANSIT",
-            statusAr: "في الطريق",
-            materialType: "plastic",
-            materialName: "بلاستيك",
-            weight: 3,
-            pickupGovernorate: "دمشق",
-            deliveryGovernorate: "اللاذقية",
-            pricingType: "per_ton",
-            pricingTypeName: "أجرة الطن",
-            offersCount: 2,
-            createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        },
-        {
-            id: "demo-4",
-            trackingId: "REQ2400GHI012",
-            status: "DELIVERED",
-            statusAr: "تم التسليم",
-            materialType: "rebar",
-            materialName: "حديد إنشائات",
-            weight: 8,
-            pickupGovernorate: "حماة",
-            deliveryGovernorate: "طرطوس",
-            pricingType: "full_vehicle",
-            pricingTypeName: "أجرة السيارة",
-            offersCount: 5,
-            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        },
-    ];
-}
-
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
@@ -127,19 +62,6 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get("limit") || "20");
         const offset = parseInt(searchParams.get("offset") || "0");
         const view = searchParams.get("view");
-
-        if (isDemoMode) {
-            let orders = getDemoOrders();
-            if (status && status !== "all") {
-                orders = orders.filter(o => o.status === status);
-            }
-            return NextResponse.json({
-                success: true,
-                orders,
-                total: orders.length,
-                hasMore: false,
-            });
-        }
 
         const session = await getServerSession(authOptions);
         if (!session || !session.user) {

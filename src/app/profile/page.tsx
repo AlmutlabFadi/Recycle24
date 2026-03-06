@@ -2,11 +2,14 @@
 
 import Link from "next/link";
 import BottomNavigation from "@/components/BottomNavigation";
-import { useAuth } from "@/contexts/AuthContext";
-import { useState, useMemo } from "react";
+import { useAuth, ActiveRole } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { TitleSelector } from "@/components/TitleSelector";
 import { TitleBadge } from "@/components/TitleFormatter";
 import { Gender, getTitleDisplay, getTitleById } from "@/lib/title-system";
+import TrustBadge from "@/components/trust/TrustBadge";
 
 
 const companyTypes = [
@@ -61,13 +64,55 @@ interface UserProfile {
     customBusinessType?: string;
 }
 
+interface DriverProfile {
+    id: string;
+    fullName: string;
+    phone: string;
+    city: string | null;
+    status: string;
+    ratingAvg: number;
+    ratingCount: number;
+    vehicles: Array<{ plateNumber: string; make: string | null; color: string | null }>;
+}
+
 export default function ProfilePage() {
+    const router = useRouter();
     const { user, isAuthenticated, isLoading, logout, updateUser, activeRole, switchRole } = useAuth();
+    const { addToast } = useToast();
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [isUpgrading, setIsUpgrading] = useState(false);
+    const [safetyScore, setSafetyScore] = useState<number | null>(null);
     const isTrader = activeRole === "TRADER";
-    const currentMenuItems = [
+    const isAdmin = activeRole === "ADMIN";
+    const dealsCount = Array.isArray((user as { deals?: unknown[] } | null)?.deals)
+        ? (user as { deals?: unknown[] }).deals?.length ?? 0
+        : 0;
+    const driverMenuItems = activeRole === "DRIVER" ? [
+        { icon: "route", label: "طلبات النقل", href: "/driver/bookings" },
+        { icon: "history", label: "سجل التوصيل", href: "/driver/history" },
+        { icon: "verified", label: "توثيق السائق", href: "/verification/status?role=DRIVER" },
+    ] : [];
+
+    const currentMenuItems = isAdmin ? [
+        { icon: "settings", label: "إعدادات الحساب", href: "/settings/account" },
+        { icon: "security", label: "الأمان والخصوصية", href: "/settings/security" },
+        { icon: "rocket_launch", label: "مركز القيادة والتحكم", href: "/admin/dashboard" },
+        { icon: "account_balance", label: "رصيد النظام والمالية", href: "/admin/finance" },
+        { icon: "monitoring", label: "مراقبة الأسواق والمعاملات", href: "/admin/marketplace" },
+        { icon: "person_search", label: "حوكمة المستخدمين والأدوار", href: "/admin/users" },
+        { icon: "verified", label: "التوثيق المستندي", href: "/admin/verification" },
+        { icon: "design_services", label: "مصمم باقات الاشتراك", href: "/admin/subscriptions/packages" },
+        { icon: "loyalty", label: "إعدادات المكافآت", href: "/admin/rewards" },
+        { icon: "security", label: "مركز الأمان (SOC)", href: "/admin/soc" },
+        { icon: "history_edu", label: "سجل التدقيق العام", href: "/gsocc/audit" },
+        { icon: "analytics", label: "أسعار السوق (رقابة)", href: "/market" },
+        { icon: "support_agent", label: "مكتب الدعم والعمليات", href: "/admin/support" },
+        { icon: "help", label: "مركز المساعدة الإداري", href: "/help" },
+    ] : [
         { icon: "settings", label: "إعدادات الحساب", href: "/settings/account" },
         { icon: "security", label: "الأمان والخصوصية", href: "/settings/security" },
         { icon: "dashboard", label: "لوحة التحكم", href: "/dashboard" },
+        ...driverMenuItems,
         { icon: "account_balance_wallet", label: isTrader ? "الرصيد التشغيلي" : "المحفظة", href: "/wallet" },
         { icon: "verified_user", label: "التوثيق", href: "/verification" },
         { icon: "gavel", label: "المزادات", href: "/auctions" },
@@ -81,9 +126,7 @@ export default function ProfilePage() {
         { icon: "workspace_premium", label: isTrader ? "اشتراكات التاجر" : "اشتراكات العميل", href: "/subscription/plans" },
         { icon: "redeem", label: "المكافآت", href: "/rewards/store" },
         { icon: "report", label: "البلاغات", href: "/stolen-reports" },
-        ...(isTrader ? [
-            { icon: "school", label: "أكاديمية التدريب", href: "/academy" }
-        ] : []),
+        ...(isTrader ? [{ icon: "school", label: "أكاديمية التدريب", href: "/academy" }] : []),
         { icon: "support_agent", label: "الدعم الفني", href: "/support/chat" },
         { icon: "help", label: "المساعدة", href: "/help" },
     ];
@@ -104,6 +147,69 @@ export default function ProfilePage() {
 
     const [isEditing, setIsEditing] = useState(false);
     const [profile, setProfile] = useState<UserProfile>(initialProfile);
+    const [trustData, setTrustData] = useState<{trustScore: number, successRate: number, totalReviews: number} | null>(null);
+    const [driverProfile, setDriverProfile] = useState<DriverProfile | null>(null);
+    const [driverProfileLoading, setDriverProfileLoading] = useState(false);
+
+    useEffect(() => {
+        const fetchSafetyScore = async () => {
+            try {
+                const response = await fetch("/api/safety/checklists/summary", { cache: "no-store" });
+                const data = await response.json();
+                if (response.ok) setSafetyScore(data.latestScore ?? null);
+            } catch (error) {
+                console.error("Safety score fetch error:", error);
+            }
+        };
+
+        const fetchTrustData = async () => {
+            if (!user?.id) return;
+            try {
+                const response = await fetch(`/api/profile?userId=${user.id}`);
+                const data = await response.json();
+                if (response.ok && data.user) {
+                    const tData = data.user.trader || data.user.driver;
+                    if (tData) {
+                        setTrustData({
+                            trustScore: tData.trustScore,
+                            successRate: tData.successRate,
+                            totalReviews: tData.totalReviews
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Trust data fetch error:", error);
+            }
+        };
+
+        fetchSafetyScore();
+        if (user?.id) {
+            fetchTrustData();
+        }
+    }, [user?.id]);
+
+    useEffect(() => {
+        const fetchDriverProfile = async () => {
+            if (activeRole !== "DRIVER") return;
+            setDriverProfileLoading(true);
+            try {
+                const response = await fetch("/api/driver/me", { cache: "no-store" });
+                const data = await response.json();
+                if (response.ok && data.driver) {
+                    setDriverProfile(data.driver);
+                } else {
+                    setDriverProfile(null);
+                }
+            } catch (error) {
+                console.error("Driver profile fetch error:", error);
+                setDriverProfile(null);
+            } finally {
+                setDriverProfileLoading(false);
+            }
+        };
+
+        fetchDriverProfile();
+    }, [activeRole]);
 
     const handleTitleChange = (titleId: string, gender: Gender) => {
         setProfile({ ...profile, titleId, gender });
@@ -116,7 +222,10 @@ export default function ProfilePage() {
     const getUserTypeLabel = (type: string) => {
         switch (type) {
             case "TRADER": return "تاجر خردة";
+            case "CLIENT": return "عميل";
             case "BUYER": return "مشتري";
+            case "DRIVER": return "سائق";
+            case "GOVERNMENT": return "جهة حكومية";
             case "ADMIN": return "مدير";
             default: return "مستخدم";
         }
@@ -177,6 +286,48 @@ export default function ProfilePage() {
         });
         setIsEditing(false);
     };
+
+    const handleRequestTraderRole = async () => {
+        setIsUpgrading(true);
+        try {
+            const response = await fetch("/api/profile", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: user?.id,
+                    upgradeToTrader: true
+                }),
+            });
+            const data = await response.json();
+            if (data.success) {
+                addToast("تم إرسال طلب الترقية بنجاح", "success");
+                setShowUpgradeModal(false);
+                // Refresh session or redirect
+                router.push("/verification/status");
+            } else {
+                addToast(data.error || "فشل إرسال الطلب", "error");
+            }
+        } catch (error) {
+            console.error("Trader upgrade error:", error);
+            addToast("حدث خطأ أثناء الاتصال بالخادم", "error");
+        } finally {
+            setIsUpgrading(false);
+        }
+    };
+
+    const handleRoleSwitch = (role: ActiveRole) => {
+        if (role === "TRADER") {
+            // If user is not an approved trader, always go to verification landing page first.
+            // The landing page will handle whether to show instructions or redirect to status.
+            if (user?.userType !== "TRADER" || user?.status !== "APPROVED") {
+                router.push("/verification?role=TRADER");
+                return;
+            }
+        }
+        switchRole(role);
+    };
+
+    const isTraderApproved = user?.userType === "TRADER" && user?.status === "APPROVED";
 
     if (isLoading) {
         return (
@@ -256,7 +407,7 @@ export default function ProfilePage() {
                     <Link href="/notifications" className="flex items-center justify-center size-10 rounded-full hover:bg-surface-highlight transition">
                         <span className="material-symbols-outlined text-white">notifications</span>
                     </Link>
-                    <h1 className="text-base font-bold text-white">حسابي</h1>
+                    <h1 className="text-base font-bold text-white">{isAdmin ? "حساب الإدارة" : "حسابي"}</h1>
                     <button 
                         onClick={() => setIsEditing(!isEditing)}
                         className="flex items-center justify-center size-10 rounded-full hover:bg-surface-highlight transition"
@@ -331,6 +482,7 @@ export default function ProfilePage() {
                                                 value={profile.companyType}
                                                 onChange={(e) => setProfile({ ...profile, companyType: e.target.value })}
                                                 className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
+                                                title="نوع الشركة"
                                             >
                                                 {companyTypes.map((c) => (
                                                     <option key={c.value} value={c.value}>{c.label}</option>
@@ -342,6 +494,7 @@ export default function ProfilePage() {
                                                 value={profile.businessType}
                                                 onChange={(e) => setProfile({ ...profile, businessType: e.target.value })}
                                                 className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
+                                                title="نوع النشاط"
                                             >
                                                 {businessTypes.map((b) => (
                                                     <option key={b.value} value={b.value}>{b.label}</option>
@@ -353,6 +506,7 @@ export default function ProfilePage() {
                                                 value={profile.jobTitle}
                                                 onChange={(e) => setProfile({ ...profile, jobTitle: e.target.value })}
                                                 className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
+                                                title="المسمى الوظيفي"
                                             >
                                                 {jobTitles.map((j) => (
                                                     <option key={j.value} value={j.value}>{j.label}</option>
@@ -366,6 +520,7 @@ export default function ProfilePage() {
                                                 value={profile.businessType}
                                                 onChange={(e) => setProfile({ ...profile, businessType: e.target.value })}
                                                 className="w-full bg-surface-dark border border-slate-600 rounded-lg px-4 py-2 text-white text-center focus:outline-none focus:border-primary"
+                                                title="نوع النشاط التجاري"
                                             >
                                                 {clientBusinessTypes.map((c) => (
                                                     <option key={c.value} value={c.value}>{c.label}</option>
@@ -444,6 +599,21 @@ export default function ProfilePage() {
                                     <span className={`inline-block mt-2 text-xs px-3 py-1 rounded-full ${statusBadge.color} ${statusBadge.bg}`}>
                                         {statusBadge.label}
                                     </span>
+                                    {safetyScore !== null && (
+                                        <span className="inline-block mt-2 mr-2 text-xs px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400">
+                                            جاهزية السلامة: {safetyScore}%
+                                        </span>
+                                    )}
+                                    
+                                    {(isTrader || activeRole === "DRIVER") && (!isEditing) && trustData && (
+                                        <div className="mt-4 flex justify-center">
+                                            <TrustBadge 
+                                                score={trustData.trustScore} 
+                                                successRate={trustData.successRate} 
+                                                totalReviews={trustData.totalReviews} 
+                                            />
+                                        </div>
+                                    )}
 
                                     {/* Bio */}
                                     {profile.bio && (
@@ -473,21 +643,24 @@ export default function ProfilePage() {
 
                         {/* Stats */}
                         {!isEditing && (
-                            <div className="flex justify-around mt-5 pt-4 border-t border-slate-700/50">
+                            <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-slate-700/50">
                                 <div className="text-center">
-                                    <p className="text-xl font-bold text-white font-english">0</p>
-                                    <p className="text-[11px] text-slate-400">صفقة</p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-xl font-bold text-white font-english flex items-center justify-center gap-0.5">
-                                        0
-                                        <span className="material-symbols-outlined text-yellow-500 !text-[16px] filled">star</span>
+                                    <p className="text-xl font-bold text-white font-english">
+                                        {isAdmin ? "👑" : dealsCount}
                                     </p>
-                                    <p className="text-[11px] text-slate-400">التقييم</p>
+                                    <p className="text-[10px] text-slate-500">{isAdmin ? "مدير النظام" : "صفقة"}</p>
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-xl font-bold text-white font-english">0</p>
-                                    <p className="text-[11px] text-slate-400">نقطة</p>
+                                    <p className="text-xl font-bold text-white font-english">
+                                        {isAdmin ? "100%" : "0★"}
+                                    </p>
+                                    <p className="text-[10px] text-slate-500">{isAdmin ? "صلاحيات" : "التقييم"}</p>
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-xl font-bold text-white font-english">
+                                        {isAdmin ? "∞" : "0"}
+                                    </p>
+                                    <p className="text-[10px] text-slate-500">{isAdmin ? "وصول كامل" : "نقطة"}</p>
                                 </div>
                             </div>
                         )}
@@ -497,25 +670,32 @@ export default function ProfilePage() {
                 {/* Role Toggle Switch */}
                 {isAuthenticated && !isEditing && (
                     <div className="px-4 mt-4">
-                        <div className="flex bg-surface-highlight border border-slate-700 rounded-xl p-1 w-full max-w-sm mx-auto shadow-sm">
-                            <button
-                                onClick={() => switchRole("CLIENT")}
-                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${activeRole === "CLIENT" ? "bg-primary text-white shadow" : "text-slate-400 hover:text-slate-200"}`}
-                            >
-                                <div className="flex items-center justify-center gap-2">
-                                    <span className="material-symbols-outlined !text-[18px]">shopping_bag</span>
-                                    حساب العميل
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => switchRole("TRADER")}
-                                className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${activeRole === "TRADER" ? "bg-primary text-white shadow" : "text-slate-400 hover:text-slate-200"}`}
-                            >
-                                <div className="flex items-center justify-center gap-2">
-                                    <span className="material-symbols-outlined !text-[18px]">storefront</span>
-                                    حساب التاجر
-                                </div>
-                            </button>
+                        <div className="flex flex-col gap-3">
+                            <h3 className="text-[10px] font-bold text-slate-500 px-2 uppercase tracking-wider">
+                                {isAdmin ? "تبديل المحاكاة (أدمن)" : "تبديل وضع الحساب"}
+                            </h3>
+                            <div className="flex bg-surface-highlight border border-slate-700 rounded-2xl p-1 w-full shadow-lg overflow-x-auto no-scrollbar">
+                                {[
+                                    { role: "CLIENT", label: "عميل", icon: "shopping_bag" },
+                                    { role: "TRADER", label: "تاجر", icon: "storefront" },
+                                    { role: "DRIVER", label: "سائق", icon: "local_shipping" },
+                                    { role: "GOVERNMENT", label: "حكومي", icon: "account_balance" },
+                                    ...(isAdmin ? [{ role: "ADMIN", label: "أدمن", icon: "admin_panel_settings" }] : [])
+                                ].map((r) => (
+                                    <button
+                                        key={r.role}
+                                        onClick={() => handleRoleSwitch(r.role as ActiveRole)}
+                                        className={`flex-1 min-w-[70px] py-2.5 rounded-xl text-[10px] font-bold transition-all flex flex-col items-center gap-1 ${
+                                            activeRole === r.role 
+                                                ? "bg-primary text-white shadow-lg shadow-orange-500/20 scale-[1.02]" 
+                                                : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+                                        }`}
+                                    >
+                                        <span className="material-symbols-outlined !text-[18px]">{r.icon}</span>
+                                        {r.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 )}
@@ -533,6 +713,60 @@ export default function ProfilePage() {
                                 <span className="material-symbols-outlined text-yellow-500 !text-[20px]">chevron_left</span>
                             </div>
                         </Link>
+                    </div>
+                )}
+
+                {activeRole === "DRIVER" && !isEditing && (
+                    <div className="px-4 mt-4">
+                        <div className="bg-surface-highlight border border-slate-700 rounded-2xl p-5">
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 className="text-sm font-bold text-white">بيانات السائق</h3>
+                                    <p className="text-xs text-slate-500">إدارة معلوماتك الأساسية كسائق</p>
+                                </div>
+                                {driverProfileLoading && (
+                                    <span className="text-xs text-slate-500">جاري التحديث...</span>
+                                )}
+                            </div>
+
+                            {driverProfile ? (
+                                <div className="grid grid-cols-2 gap-3 text-xs text-slate-400">
+                                    <div className="bg-surface-dark rounded-xl p-3 border border-slate-800">
+                                        <p className="text-[10px] text-slate-500 mb-1">الاسم</p>
+                                        <p className="text-sm font-bold text-white">{driverProfile.fullName}</p>
+                                        <p className="text-[10px] text-slate-500 mt-1">{driverProfile.city || "غير محدد"}</p>
+                                    </div>
+                                    <div className="bg-surface-dark rounded-xl p-3 border border-slate-800">
+                                        <p className="text-[10px] text-slate-500 mb-1">الحالة</p>
+                                        <p className="text-sm font-bold text-white">{driverProfile.status}</p>
+                                        <p className="text-[10px] text-slate-500 mt-1">
+                                            {driverProfile.ratingAvg.toFixed(1)} ★ ({driverProfile.ratingCount})
+                                        </p>
+                                    </div>
+                                    <div className="bg-surface-dark rounded-xl p-3 border border-slate-800">
+                                        <p className="text-[10px] text-slate-500 mb-1">رقم الهاتف</p>
+                                        <p className="text-sm font-bold text-white" dir="ltr">{driverProfile.phone}</p>
+                                    </div>
+                                    <div className="bg-surface-dark rounded-xl p-3 border border-slate-800">
+                                        <p className="text-[10px] text-slate-500 mb-1">المركبات</p>
+                                        <p className="text-sm font-bold text-white">
+                                            {driverProfile.vehicles?.length ? driverProfile.vehicles.length : "لا توجد"}
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-xs text-slate-400">
+                                    <p className="mb-3">لا يوجد ملف سائق مفعل لهذا الحساب.</p>
+                                    <Link
+                                        href="/verification?role=DRIVER"
+                                        className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg font-bold"
+                                    >
+                                        <span className="material-symbols-outlined !text-[18px]">verified</span>
+                                        ابدأ توثيق السائق
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 
@@ -572,6 +806,7 @@ export default function ProfilePage() {
                 )}
             </main>
 
+            {/* Upgrade Modal Removed as per user request to go directly to verification landing page */}
             <BottomNavigation />
         </>
     );

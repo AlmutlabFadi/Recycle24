@@ -2,8 +2,12 @@
 
 import Link from "next/link";
 import { Suspense } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 function ResultContent() {
+    const { activeRole } = useAuth();
+    const isClient = activeRole === "CLIENT";
+
     return (
         <main className="flex flex-col items-center justify-center min-h-screen p-6 text-center bg-bg-dark relative overflow-hidden">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full blur-3xl animate-pulse bg-green-500/20"></div>
@@ -20,7 +24,9 @@ function ResultContent() {
 
                 <h1 className="text-2xl font-black text-white mb-2">تم التوثيق بنجاح!</h1>
                 <p className="text-slate-400 text-sm leading-relaxed mb-8 max-w-[280px] mx-auto">
-                    حسابك موثَّق الآن. يمكنك الاستفادة من جميع ميزات المنصة.
+                    {isClient 
+                      ? "حسابك موثَّق الآن. يمكنك الاستفادة من ميزات المحفظة والعروض الحصرية."
+                      : "حسابك موثَّق الآن. يمكنك الاستفادة من جميع ميزات المنصة كتاجر معتمد."}
                 </p>
 
                 <div className="w-full bg-surface-highlight border border-slate-700/50 rounded-2xl p-5 mb-8 shadow-lg text-right">
@@ -40,35 +46,53 @@ function ResultContent() {
                             <span className="material-symbols-outlined !text-[20px] text-green-500">check_circle</span>
                         </div>
 
-                        <div className="flex items-center justify-between p-3 rounded-xl border bg-bg-dark border-slate-700/50">
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 rounded-full flex items-center justify-center bg-green-500/10 text-green-500">
-                                    <span className="material-symbols-outlined !text-[18px]">store</span>
+                        {!isClient && (
+                            <div className="flex items-center justify-between p-3 rounded-xl border bg-bg-dark border-slate-700/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-8 rounded-full flex items-center justify-center bg-green-500/10 text-green-500">
+                                        <span className="material-symbols-outlined !text-[18px]">store</span>
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-200">السجل التجاري</span>
                                 </div>
-                                <span className="text-sm font-medium text-slate-200">السجل التجاري</span>
+                                <span className="material-symbols-outlined !text-[20px] text-green-500">check_circle</span>
                             </div>
-                            <span className="material-symbols-outlined !text-[20px] text-green-500">check_circle</span>
-                        </div>
+                        )}
 
-                        <div className="flex items-center justify-between p-3 rounded-xl border bg-bg-dark border-slate-700/50">
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 rounded-full flex items-center justify-center bg-slate-500/10 text-slate-500">
-                                    <span className="material-symbols-outlined !text-[18px]">factory</span>
+                        {isClient && (
+                            <div className="flex items-center justify-between p-3 rounded-xl border bg-bg-dark border-slate-700/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-8 rounded-full flex items-center justify-center bg-green-500/10 text-green-500">
+                                        <span className="material-symbols-outlined !text-[18px]">directions_car</span>
+                                    </div>
+                                    <span className="text-sm font-medium text-slate-200">معلومات المركبة</span>
                                 </div>
-                                <span className="text-sm font-medium text-slate-400">السجل الصناعي</span>
+                                <span className="material-symbols-outlined !text-[20px] text-green-500">check_circle</span>
                             </div>
-                            <span className="text-xs text-slate-500">اختياري</span>
-                        </div>
+                        )}
 
-                        <div className="flex items-center justify-between p-3 rounded-xl border bg-bg-dark border-slate-700/50">
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 rounded-full flex items-center justify-center bg-green-500/10 text-green-500">
-                                    <span className="material-symbols-outlined !text-[18px]">license</span>
+                        {!isClient && (
+                            <>
+                                <div className="flex items-center justify-between p-3 rounded-xl border bg-bg-dark border-slate-700/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-8 rounded-full flex items-center justify-center bg-slate-500/10 text-slate-500">
+                                            <span className="material-symbols-outlined !text-[18px]">factory</span>
+                                        </div>
+                                        <span className="text-sm font-medium text-slate-400">السجل الصناعي</span>
+                                    </div>
+                                    <span className="text-xs text-slate-500">اختياري</span>
                                 </div>
-                                <span className="text-sm font-medium text-slate-200">رخصة العمل</span>
-                            </div>
-                            <span className="material-symbols-outlined !text-[20px] text-green-500">check_circle</span>
-                        </div>
+
+                                <div className="flex items-center justify-between p-3 rounded-xl border bg-bg-dark border-slate-700/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-8 rounded-full flex items-center justify-center bg-green-500/10 text-green-500">
+                                            <span className="material-symbols-outlined !text-[18px]">license</span>
+                                        </div>
+                                        <span className="text-sm font-medium text-slate-200">رخصة العمل</span>
+                                    </div>
+                                    <span className="material-symbols-outlined !text-[20px] text-green-500">check_circle</span>
+                                </div>
+                            </>
+                        )}
 
                         <div className="flex items-center justify-between p-3 rounded-xl border bg-bg-dark border-slate-700/50">
                             <div className="flex items-center gap-3">
@@ -95,22 +119,45 @@ function ResultContent() {
                 <div className="w-full bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 mb-6 text-right">
                     <h4 className="text-white font-bold text-sm mb-2">مزايا الحساب الموثَّق:</h4>
                     <ul className="space-y-2">
-                        <li className="flex items-center gap-2 text-xs text-slate-300">
-                            <span className="material-symbols-outlined !text-[14px] text-green-500">check</span>
-                            الظهور في أعلى نتائج البحث
-                        </li>
-                        <li className="flex items-center gap-2 text-xs text-slate-300">
-                            <span className="material-symbols-outlined !text-[14px] text-green-500">check</span>
-                            شارة &quot;تاجر موثَّق&quot; على الملف الشخصي
-                        </li>
-                        <li className="flex items-center gap-2 text-xs text-slate-300">
-                            <span className="material-symbols-outlined !text-[14px] text-green-500">check</span>
-                            الوصول إلى المزادات الحصرية
-                        </li>
-                        <li className="flex items-center gap-2 text-xs text-slate-300">
-                            <span className="material-symbols-outlined !text-[14px] text-green-500">check</span>
-                            عمولة مخفضة على الصفقات
-                        </li>
+                        {isClient ? (
+                            <>
+                                <li className="flex items-center gap-2 text-xs text-slate-300">
+                                    <span className="material-symbols-outlined !text-[14px] text-green-500">check</span>
+                                    تفعيل كامل للمحفظة الرقمية
+                                </li>
+                                <li className="flex items-center gap-2 text-xs text-slate-300">
+                                    <span className="material-symbols-outlined !text-[14px] text-green-500">check</span>
+                                    شارة &quot;عميل موثَّق&quot; على ملفك
+                                </li>
+                                <li className="flex items-center gap-2 text-xs text-slate-300">
+                                    <span className="material-symbols-outlined !text-[14px] text-green-500">check</span>
+                                    عروض تفضيلية من كبار التجار
+                                </li>
+                                <li className="flex items-center gap-2 text-xs text-slate-300">
+                                    <span className="material-symbols-outlined !text-[14px] text-green-500">check</span>
+                                    أولوية في الدعم الفني والمساعدة
+                                </li>
+                            </>
+                        ) : (
+                            <>
+                                <li className="flex items-center gap-2 text-xs text-slate-300">
+                                    <span className="material-symbols-outlined !text-[14px] text-green-500">check</span>
+                                    الظهور في أعلى نتائج البحث
+                                </li>
+                                <li className="flex items-center gap-2 text-xs text-slate-300">
+                                    <span className="material-symbols-outlined !text-[14px] text-green-500">check</span>
+                                    شارة &quot;تاجر موثَّق&quot; على الملف الشخصي
+                                </li>
+                                <li className="flex items-center gap-2 text-xs text-slate-300">
+                                    <span className="material-symbols-outlined !text-[14px] text-green-500">check</span>
+                                    الوصول إلى المزادات الحصرية
+                                </li>
+                                <li className="flex items-center gap-2 text-xs text-slate-300">
+                                    <span className="material-symbols-outlined !text-[14px] text-green-500">check</span>
+                                    عمولة مخفضة على الصفقات
+                                </li>
+                            </>
+                        )}
                     </ul>
                 </div>
 

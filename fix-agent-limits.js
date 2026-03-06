@@ -4,22 +4,26 @@
  * Free tier: 1500 RPD. 42 calls/cycle = ~35 cycles/day (3h).
  * With 2 files each: 16 calls/cycle = ~93 cycles/day (8+ hours).
  */
-const fs = require('fs');
-const path = require('path');
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const agentsDir = path.join(__dirname, 'src', 'lib', 'orchestrator', 'agents');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const agentsDir = path.join(__dirname, "src", "lib", "orchestrator", "agents");
 
 // Which files to update and what their current vs desired limits are
 const targets = [
-  { file: 'code-review-agent.ts',  from: '.slice(0, 5)',  to: '.slice(0, 2)' },
-  { file: 'ai-review-agent.ts',    from: '.slice(0, 5)',  to: '.slice(0, 2)' },
-  { file: 'api-agent.ts',          from: '.slice(0, 6)',  to: '.slice(0, 2)' },
-  { file: 'backend-agent.ts',      from: '.slice(0, 5)',  to: '.slice(0, 2)' },
-  { file: 'dashboard-agent.ts',    from: '.slice(0, 4)',  to: '.slice(0, 2)' },
-  { file: 'frontend-agent.ts',     from: '.slice(0, 4)',  to: '.slice(0, 2)' },
-  { file: 'uiux-agent.ts',         from: '.slice(0, 5)',  to: '.slice(0, 2)' },
+  { file: "code-review-agent.ts", from: ".slice(0, 5)", to: ".slice(0, 2)" },
+  { file: "ai-review-agent.ts", from: ".slice(0, 5)", to: ".slice(0, 2)" },
+  { file: "api-agent.ts", from: ".slice(0, 6)", to: ".slice(0, 2)" },
+  { file: "backend-agent.ts", from: ".slice(0, 5)", to: ".slice(0, 2)" },
+  { file: "dashboard-agent.ts", from: ".slice(0, 4)", to: ".slice(0, 2)" },
+  { file: "frontend-agent.ts", from: ".slice(0, 4)", to: ".slice(0, 2)" },
+  { file: "uiux-agent.ts", from: ".slice(0, 5)", to: ".slice(0, 2)" },
   // qa-agent is already at 3, bring to 2
-  { file: 'qa-agent.ts',           from: '.slice(0, 3)',  to: '.slice(0, 2)' },
+  { file: "qa-agent.ts", from: ".slice(0, 3)", to: ".slice(0, 2)" },
 ];
 
 let totalFixed = 0;
@@ -30,14 +34,14 @@ for (const { file, from, to } of targets) {
     console.log(`⏭️  Not found: ${file}`);
     continue;
   }
-  let content = fs.readFileSync(filepath, 'utf-8');
+  let content = fs.readFileSync(filepath, "utf-8");
   const original = content;
 
   // Only replace the FIRST occurrence (the file-list slice, not content slices)
   content = content.replace(from, to);
 
   if (content !== original) {
-    fs.writeFileSync(filepath, content, 'utf-8');
+    fs.writeFileSync(filepath, content, "utf-8");
     console.log(`✅ ${file}: changed ${from} → ${to}`);
     totalFixed++;
   } else {
@@ -47,5 +51,5 @@ for (const { file, from, to } of targets) {
 
 console.log(`\n🎉 Done! Updated ${totalFixed}/${targets.length} agents.`);
 console.log(`📊 Estimated API calls per cycle: ~${totalFixed * 2 + 4} calls`);
-console.log(`⏱️  Cycle time: ~${((totalFixed * 2 + 4) * 4)}s`);
+console.log(`⏱️  Cycle time: ~${(totalFixed * 2 + 4) * 4}s`);
 console.log(`📅 Daily capacity: ~${Math.floor(1500 / (totalFixed * 2 + 4))} cycles/day`);

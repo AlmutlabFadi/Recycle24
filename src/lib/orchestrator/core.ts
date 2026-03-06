@@ -29,8 +29,9 @@ async function withRetry<T>(operation: () => Promise<T>, maxRetries = 5, baseDel
   while (attempt < maxRetries) {
     try {
       return await operation();
-    } catch (error: any) {
-      if (error?.code === "P1008" || error?.message?.includes("timed out")) {
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
+      if (err?.code === "P1008" || err?.message?.includes("timed out")) {
         attempt++;
         const delay = baseDelay * Math.pow(1.5, attempt) + Math.random() * 500;
         console.warn(`[CORE] ⏳ SQLite busy (attempt ${attempt}/${maxRetries}). Retrying in ${Math.round(delay)}ms...`);
