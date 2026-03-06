@@ -1,7 +1,7 @@
-﻿import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
+import { withAuth } from "next-auth/middleware";
+import { NextRequest, NextResponse } from "next/server";
 
-const protectedRoutes = [
+const authOnlyPrefixes = [
   "/wallet",
   "/deals",
   "/auctions/create",
@@ -18,51 +18,71 @@ const protectedRoutes = [
   "/support/tickets",
 ];
 
-const blockedIPs = new Set<string>([]);
+const adminPrefixes = ["/admin"];
+const publicOnlyPrefixes = ["/login", "/register"];
+
+function startsWithAny(pathname: string, prefixes: string[]) {
+  return prefixes.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
+
+function getClientIp(req: NextRequest) {
+  const xForwardedFor = req.headers.get("x-forwarded-for");
+  if (xForwardedFor) {
+    return xForwardedFor.split(",")[0].trim();
+  }
+  return req.headers.get("x-real-ip") || "unknown";
+}
 
 export default withAuth(
   async function proxy(req) {
-    const xForwardedFor = req.headers.get("x-forwarded-for");
-    const clientIp = xForwardedFor
-      ? xForwardedFor.split(",")[0].trim()
-      : req.headers.get("x-real-ip") || "unknown";
-
-    if (clientIp !== "unknown" && blockedIPs.has(clientIp)) {
-      console.warn(`[GSOCC SHIELD] Blocked request from isolated IP: ${clientIp}`);
-      return new NextResponse(
-        JSON.stringify({ error: "Access Denied by GSOCC Sovereign Control." }),
-        { status: 403, headers: { "content-type": "application/json" } }
-      );
-    }
-
+    const pathname = req.nextUrl.pathname;
     const token = req.nextauth.token;
     const isAuth = !!token;
-    const isAuthPage =
-      req.nextUrl.pathname.startsWith("/login") ||
-      req.nextUrl.pathname.startsWith("/register");
+    const clientIp = getClientIp(req);
 
-    if (isAuth && token?.status === "BANNED") {
-      return new NextResponse(
-        JSON.stringify({ error: "Your account has been suspended by GSOCC Governance." }),
-        { status: 403, headers: { "content-type": "application/json" } }
-      );
+    // Placeholder only — not a persistent distributed blocklist
+    const blockedIPs = new Set<string>();
+
+    if (clientIp !== "unknown" && blockedIPs.has(clientIp)) {
+      return NextResponse.redirect(new URL("/login?error=ip_blocked", req.url));
     }
 
-    if (isAuthPage) {
+    if (isAuth && token?.status === "BANNED") {
+      return NextResponse.redirect(new URL("/login?error=account_suspended", req.url));
+    }
+
+    if (startsWithAny(pathname, publicOnlyPrefixes)) {
       if (isAuth) {
         return NextResponse.redirect(new URL("/", req.url));
       }
       return NextResponse.next();
     }
 
-    const isProtectedRoute = protectedRoutes.some(
-      (route) =>
-        req.nextUrl.pathname === route ||
-        req.nextUrl.pathname.startsWith(`${route}/`)
-    );
+    if (startsWithAny(pathname, adminPrefixes)) {
+      if (!isAuth) {
+        return NextResponse.redirect(
+          new URL(`/login?redirect=${encodeURIComponent(pathname)}`, req.url)
+        );
+      }
 
-    if (isProtectedRoute && !isAuth) {
-      let from = req.nextUrl.pathname;
+      const role = String(token?.role || "");
+      const userType = String(token?.userType || "");
+      const isAdmin =
+        role === "ADMIN" ||
+        role === "SUPER_ADMIN" ||
+        userType === "ADMIN";
+
+      if (!isAdmin) {
+        return NextResponse.redirect(new URL("/", req.url));
+      }
+
+      return NextResponse.next();
+    }
+
+    if (startsWithAny(pathname, authOnlyPrefixes) && !isAuth) {
+      let from = pathname;
       if (req.nextUrl.search) {
         from += req.nextUrl.search;
       }
