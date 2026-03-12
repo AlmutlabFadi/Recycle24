@@ -140,6 +140,9 @@ export async function GET(request: NextRequest) {
           reviewNote: true,
           reviewedById: true,
           reviewedAt: true,
+          approvalStage: true,
+          approvedById: true,
+          approvedAt: true,
           processedAt: true,
           completedAt: true,
           failedAt: true,
@@ -170,7 +173,7 @@ export async function GET(request: NextRequest) {
       }),
       db.payoutRequest.count({ where }),
       db.payoutRequest.groupBy({
-        by: ["status"],
+        by: ["status", "approvalStage"],
         _count: {
           _all: true,
         },
@@ -189,6 +192,7 @@ export async function GET(request: NextRequest) {
         totalCount,
         byStatus: statusGroups.map((group) => ({
           status: group.status,
+          approvalStage: group.approvalStage,
           count: group._count._all,
         })),
       },

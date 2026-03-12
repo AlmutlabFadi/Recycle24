@@ -6,7 +6,7 @@ import { requirePermission } from "@/lib/rbac";
 function parsePositiveInt(value: string | null, fallback: number, max: number) {
   const parsed = Number(value);
 
-  if (!Number.isFinite(parsed) || parsed <= 0) {
+  if (!Number.isFinite(parsed) || parsed < 0) {
     return fallback;
   }
 
@@ -128,6 +128,9 @@ export async function GET(request: NextRequest) {
           status: true,
           reviewedById: true,
           reviewedAt: true,
+          approvalStage: true,
+          approvedById: true,
+          approvedAt: true,
           completedAt: true,
           createdAt: true,
           updatedAt: true,
@@ -154,7 +157,7 @@ export async function GET(request: NextRequest) {
       }),
       db.depositRequest.count({ where }),
       db.depositRequest.groupBy({
-        by: ["status"],
+        by: ["status", "approvalStage"],
         _count: {
           _all: true,
         },
@@ -173,6 +176,7 @@ export async function GET(request: NextRequest) {
         totalCount,
         byStatus: statusGroups.map((group) => ({
           status: group.status,
+          approvalStage: group.approvalStage,
           count: group._count._all,
         })),
       },
