@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { z } from "zod";
+
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -14,9 +15,9 @@ interface SessionUser {
 const bookingSchema = z.object({
   materialType: z.string().min(1, "نوع المادة مطلوب"),
   weight: z.string().min(1, "الوزن مطلوب"),
-  pickupAddress: z.string().min(3, "عنوان الاستلام قصير جداً"),
+  pickupAddress: z.string().min(3, "عنوان الاستلام قصير جدا"),
   pickupGovernorate: z.string().min(1, "محافظة الاستلام مطلوبة"),
-  deliveryAddress: z.string().min(3, "عنوان التسليم قصير جداً"),
+  deliveryAddress: z.string().min(3, "عنوان التسليم قصير جدا"),
   deliveryGovernorate: z.string().min(1, "محافظة التسليم مطلوبة"),
   pickupDate: z.string().optional(),
   notes: z.string().optional(),
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     if (!Number.isFinite(weight) || weight <= 0) {
       return NextResponse.json(
-        { error: "الوزن يجب أن يكون رقماً موجباً", success: false },
+        { error: "الوزن يجب أن يكون رقما موجبا", success: false },
         { status: 400 },
       );
     }
