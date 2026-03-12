@@ -41,8 +41,8 @@ interface Wallet {
   verifiedBalance: number;
   availableBalance: number;
   heldAmount: number;
-  transactions: Transaction[]; // Kept for backward compat if needed
-  history: LedgerHistory[];    // New ledger-based history
+  transactions: Transaction[];
+  history: LedgerHistory[];
   debtDetails?: DebtDetails[] | null;
   isLocked?: boolean;
   lockReason?: string | null;
@@ -52,8 +52,16 @@ interface UseWalletReturn {
   wallet: Wallet | null;
   isLoading: boolean;
   error: string | null;
-  deposit: (amount: number, method: string, referenceNumber: string) => Promise<boolean>;
-  withdraw: (amount: number, method: string, accountNumber: string) => Promise<boolean>;
+  deposit: (
+    amount: number,
+    method: string,
+    referenceNumber: string
+  ) => Promise<boolean>;
+  withdraw: (
+    amount: number,
+    method: string,
+    accountNumber: string
+  ) => Promise<boolean>;
   refresh: () => void;
 }
 
@@ -64,7 +72,9 @@ export function useWallet(): UseWalletReturn {
   const { token, user } = useAuth();
 
   const fetchWallet = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -79,111 +89,131 @@ export function useWallet(): UseWalletReturn {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "فشل جلب المحفظة");
+        throw new Error(data.error || "Failed to fetch wallet");
       }
 
       setWallet(data.wallet);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "حدث خطأ";
+      const errorMessage =
+        err instanceof Error ? err.message : "Unknown wallet error";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   }, [token, user]);
 
-  const deposit = useCallback(async (
-    amount: number,
-    method: string,
-    referenceNumber: string
-  ): Promise<boolean> => {
-    if (!user) return false;
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch("/api/wallet", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          amount,
-          method,
-          referenceNumber,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "فشل الإيداع");
+  const deposit = useCallback(
+    async (
+      amount: number,
+      method: string,
+      referenceNumber: string
+    ): Promise<boolean> => {
+      if (!user) {
+        return false;
       }
 
-      await fetchWallet();
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "حدث خطأ";
-      setError(errorMessage);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [token, user, fetchWallet]);
+      try {
+        setIsLoading(true);
+        setError(null);
 
-  const withdraw = useCallback(async (
-    amount: number,
-    method: string,
-    accountNumber: string
-  ): Promise<boolean> => {
-    if (!user) return false;
+        const response = await fetch("/api/wallet", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            amount,
+            method,
+            proofUrl: referenceNumber,
+            currency: "SYP",
+          }),
+        });
 
-    try {
-      setIsLoading(true);
-      setError(null);
+        const data = await response.json();
 
-      const response = await fetch("/api/wallet", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          amount,
-          method,
-          accountNumber,
-        }),
-      });
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to create deposit request");
+        }
 
-      const data = await response.json();
+        await fetchWallet();
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown deposit error";
+        setError(errorMessage);
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [token, user, fetchWallet]
+  );
 
-      if (!response.ok) {
-        throw new Error(data.error || "فشل السحب");
+  const withdraw = useCallback(
+    async (
+      amount: number,
+      method: string,
+      accountNumber: string
+    ): Promise<boolean> => {
+      if (!user) {
+        return false;
       }
 
-      await fetchWallet();
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "حدث خطأ";
-      setError(errorMessage);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [token, user, fetchWallet]);
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const response = await fetch("/api/wallet", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            amount,
+            method,
+            destination: accountNumber,
+            currency: "SYP",
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to create payout request");
+        }
+
+        await fetchWallet();
+        return true;
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown withdrawal error";
+        setError(errorMessage);
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [token, user, fetchWallet]
+  );
 
   const refresh = useCallback(() => {
-    fetchWallet();
+    void fetchWallet();
   }, [fetchWallet]);
 
   useEffect(() => {
     if (user) {
-      fetchWallet();
+      void fetchWallet();
     }
   }, [user, fetchWallet]);
 
-  return { wallet, isLoading, error, deposit, withdraw, refresh };
+  return {
+    wallet,
+    isLoading,
+    error,
+    deposit,
+    withdraw,
+    refresh,
+  };
 }
