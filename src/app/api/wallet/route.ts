@@ -3,10 +3,19 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  findRecentDuplicateDepositRequest,
+  findRecentDuplicatePayoutRequest,
+} from "@/lib/finance/request-dedupe";
+import {
+  normalizeCurrency,
+  validateWalletAmount,
+} from "@/lib/finance/policy";
 import { LedgerEnforcementService } from "@/lib/ledger/enforcement";
 import { LedgerPostingService } from "@/lib/ledger/service";
-import { HoldStatus } from "@/lib/ledger/types";
+import { Currency, HoldStatus } from "@/lib/ledger/types";
 import { elapsedMs, logPerf, nowMs } from "@/lib/server/perf";
+import { enforceInMemoryRateLimit } from "@/lib/security/request-rate-limit";
 
 interface SessionUser {
   id: string;
@@ -58,10 +67,42 @@ function parseNonEmptyString(value: unknown): string | null {
   return normalized.length > 0 ? normalized : null;
 }
 
+function getClientIp(request: NextRequest) {
+  const forwardedFor = request.headers.get("x-forwarded-for");
+
+  if (forwardedFor) {
+    const first = forwardedFor.split(",")[0]?.trim();
+
+    if (first) {
+      return first;
+    }
+  }
+
+  const realIp = request.headers.get("x-real-ip");
+
+  return realIp?.trim() || "unknown";
+}
+
+function enforceWalletActionRateLimit(
+  request: NextRequest,
+  userId: string,
+  action: "deposit" | "payout"
+) {
+  const ip = getClientIp(request);
+  const key = `wallet:${action}:${userId}:${ip}`;
+
+  return enforceInMemoryRateLimit(
+    key,
+    action === "deposit" ? 6 : 4,
+    60 * 1000
+  );
+}
+
 async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
   const ledgerAccount = await LedgerPostingService.getOrCreateAccount(
     `USER_${userId}_SYP`,
-    userId
+    userId,
+    Currency.SYP
   );
 
   const activeHolds = await db.ledgerHold.aggregate({
@@ -215,30 +256,86 @@ export async function POST(request: NextRequest) {
       return auth.error;
     }
 
+    const rateLimit = enforceWalletActionRateLimit(
+      request,
+      auth.userId,
+      "deposit"
+    );
+
+    if (!rateLimit.ok) {
+      return NextResponse.json(
+        {
+          error: "Too many deposit requests. Please try again later.",
+          retryAfterSeconds: rateLimit.retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const amount = parsePositiveAmount(body?.amount);
     const method = parseNonEmptyString(body?.method);
     const proofUrl = parseNonEmptyString(body?.proofUrl);
     const requestNote = parseNonEmptyString(body?.requestNote);
+    const currency =
+      normalizeCurrency(body?.currency ?? Currency.SYP) ?? null;
 
-    if (!amount || !method) {
+    if (!amount || !method || !currency) {
       return NextResponse.json(
-        { error: "Amount and method are required" },
+        { error: "Amount, method, and valid currency are required" },
+        { status: 400 }
+      );
+    }
+
+    try {
+      validateWalletAmount(currency, "deposit", amount);
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error:
+            error instanceof Error ? error.message : "Invalid deposit amount",
+        },
         { status: 400 }
       );
     }
 
     const account = await LedgerPostingService.getOrCreateAccount(
-      `USER_${auth.userId}_SYP`,
-      auth.userId
+      `USER_${auth.userId}_${currency}`,
+      auth.userId,
+      currency
     );
+
+    const duplicateRequest = await findRecentDuplicateDepositRequest({
+      userId: auth.userId,
+      accountId: account.id,
+      amount,
+      currency,
+      method,
+      proofUrl,
+      requestNote,
+    });
+
+    if (duplicateRequest) {
+      return NextResponse.json(
+        {
+          error: "Duplicate deposit request detected",
+          duplicateRequest,
+        },
+        { status: 409 }
+      );
+    }
 
     const createdRequest = await db.depositRequest.create({
       data: {
         accountId: account.id,
         userId: auth.userId,
         amount,
-        currency: "SYP",
+        currency,
         method,
         proofUrl: proofUrl ?? undefined,
         requestNote: requestNote ?? undefined,
@@ -269,6 +366,7 @@ export async function POST(request: NextRequest) {
       userId: auth.userId,
       amount,
       method,
+      currency,
       requestId: createdRequest.id,
     });
 
@@ -304,15 +402,50 @@ export async function PUT(request: NextRequest) {
       return auth.error;
     }
 
+    const rateLimit = enforceWalletActionRateLimit(
+      request,
+      auth.userId,
+      "payout"
+    );
+
+    if (!rateLimit.ok) {
+      return NextResponse.json(
+        {
+          error: "Too many payout requests. Please try again later.",
+          retryAfterSeconds: rateLimit.retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const amount = parsePositiveAmount(body?.amount);
     const method = parseNonEmptyString(body?.method);
     const destination = parseNonEmptyString(body?.destination);
     const requestNote = parseNonEmptyString(body?.requestNote);
+    const currency =
+      normalizeCurrency(body?.currency ?? Currency.SYP) ?? null;
 
-    if (!amount || !method || !destination) {
+    if (!amount || !method || !destination || !currency) {
       return NextResponse.json(
-        { error: "Amount, method, and destination are required" },
+        { error: "Amount, method, destination, and valid currency are required" },
+        { status: 400 }
+      );
+    }
+
+    try {
+      validateWalletAmount(currency, "payout", amount);
+    } catch (error) {
+      return NextResponse.json(
+        {
+          error:
+            error instanceof Error ? error.message : "Invalid payout amount",
+        },
         { status: 400 }
       );
     }
@@ -335,12 +468,32 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    const duplicateRequest = await findRecentDuplicatePayoutRequest({
+      userId: auth.userId,
+      accountId: snapshot.ledgerAccount.id,
+      amount,
+      currency,
+      method,
+      destination,
+      requestNote,
+    });
+
+    if (duplicateRequest) {
+      return NextResponse.json(
+        {
+          error: "Duplicate payout request detected",
+          duplicateRequest,
+        },
+        { status: 409 }
+      );
+    }
+
     const createdRequest = await db.payoutRequest.create({
       data: {
         accountId: snapshot.ledgerAccount.id,
         userId: auth.userId,
         amount,
-        currency: "SYP",
+        currency,
         method,
         destination,
         requestNote: requestNote ?? undefined,
@@ -374,6 +527,7 @@ export async function PUT(request: NextRequest) {
       userId: auth.userId,
       amount,
       method,
+      currency,
       requestId: createdRequest.id,
       availableBalance: snapshot.availableBalance,
     });
