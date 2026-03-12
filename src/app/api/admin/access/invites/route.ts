@@ -1,11 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { bootstrapAccessControl, requirePermission, PERMISSIONS } from "@/lib/rbac";
+import { requirePermission, PERMISSIONS } from "@/lib/rbac";
 import { randomUUID } from "crypto";
 
 export async function GET() {
     try {
-        await bootstrapAccessControl();
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
         if (!access.ok) {
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
@@ -19,13 +18,12 @@ export async function GET() {
         return NextResponse.json({ success: true, invites });
     } catch (error) {
         console.error("Invites GET error:", error);
-        return NextResponse.json({ success: false, error: "تعذر تحميل الدعوات" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "ØªØ¹Ø°Ø± ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ø¯Ø¹ÙˆØ§Øª" }, { status: 500 });
     }
 }
 
 export async function POST(request: NextRequest) {
     try {
-        await bootstrapAccessControl();
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
         if (!access.ok) {
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
@@ -35,12 +33,12 @@ export async function POST(request: NextRequest) {
         const { email, phone, roleId, expiresAt } = body;
 
         if (!roleId || (!email && !phone)) {
-            return NextResponse.json({ success: false, error: "بيانات الدعوة غير مكتملة" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„Ø¯Ø¹ÙˆØ© ØºÙŠØ± Ù…ÙƒØªÙ…Ù„Ø©" }, { status: 400 });
         }
 
         const role = await db.role.findUnique({ where: { id: roleId } });
         if (!role) {
-            return NextResponse.json({ success: false, error: "الدور غير موجود" }, { status: 404 });
+            return NextResponse.json({ success: false, error: "Ø§Ù„Ø¯ÙˆØ± ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯" }, { status: 404 });
         }
 
         const invite = await db.staffInvite.create({
@@ -58,6 +56,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, invite });
     } catch (error) {
         console.error("Invite POST error:", error);
-        return NextResponse.json({ success: false, error: "تعذر إنشاء الدعوة" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "ØªØ¹Ø°Ø± Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ø¯Ø¹ÙˆØ©" }, { status: 500 });
     }
 }
+

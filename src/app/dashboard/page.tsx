@@ -82,11 +82,19 @@ export default function UnifiedDashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [activeAuctions, setActiveAuctions] = useState<ActiveAuction[]>([]);
     const [recentDeals, setRecentDeals] = useState<RecentDeal[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [driverOffers, setDriverOffers] = useState<DriverOffer[]>([]);
+    const [isLoading, setIsLoading] = useState(true);    const [driverOffers, setDriverOffers] = useState<DriverOffer[]>([]);
     const [driverDeliveries, setDriverDeliveries] = useState<DriverDelivery[]>([]);
     const [driverProfile, setDriverProfile] = useState<DriverProfileSummary | null>(null);
     const [driverLoading, setDriverLoading] = useState(false);
+
+    const safeStats: DashboardStats = stats ?? {
+        totalSales: 0,
+        activeAuctions: 0,
+        activeDeals: 0,
+        walletBalance: 0,
+        loyaltyPoints: 0,
+        monthlyRevenue: 0,
+    };
 
     const isAdmin = activeRole === "ADMIN";
     const canManageContent = permissions.includes("MANAGE_KNOWLEDGE");
@@ -243,7 +251,7 @@ export default function UnifiedDashboardPage() {
             </header>
 
             <main className="flex-1 pb-24 p-4">
-                {(activeRole === "DRIVER" || stats) && (
+                {(activeRole === "DRIVER" || !!stats) && (
                     <>
                         {(activeRole as string) === "DRIVER" ? (
                             <div className="mb-6">
@@ -279,12 +287,12 @@ export default function UnifiedDashboardPage() {
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="bg-gradient-to-br from-green-600/20 to-emerald-600/20 rounded-2xl p-4 border border-green-500/30">
                                         <p className="text-xs text-green-400 mb-1">إجمالي المشتريات والمبيعات</p>
-                                        <p className="text-2xl font-bold text-white font-english">{formatNumber(stats.totalSales)}</p>
+                                        <p className="text-2xl font-bold text-white font-english">         {formatNumber(safeStats.totalSales)}</p>
                                         <p className="text-xs text-green-400 mt-1">ل.س</p>
                                     </div>
                                     <div className="bg-gradient-to-br from-blue-600/20 to-indigo-600/20 rounded-2xl p-4 border border-blue-500/30">
                                         <p className="text-xs text-blue-400 mb-1">الرصيد التشغيلي</p>
-                                        <p className="text-2xl font-bold text-white font-english">{formatNumber(stats.walletBalance)}</p>
+                                        <p className="text-2xl font-bold text-white font-english">{formatNumber(safeStats.walletBalance)}</p>
                                         <p className="text-xs text-blue-400 mt-1">ل.س</p>
                                     </div>
                                     <div className="bg-surface-highlight rounded-2xl p-4 border border-slate-700/50">
@@ -327,12 +335,12 @@ export default function UnifiedDashboardPage() {
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="bg-gradient-to-br from-green-600/20 to-emerald-600/20 rounded-2xl p-4 border border-green-500/30">
                                         <p className="text-xs text-green-400 mb-1">إجمالي الأرباح والمبيعات</p>
-                                        <p className="text-2xl font-bold text-white font-english">{formatNumber(stats.totalSales)}</p>
+                                        <p className="text-2xl font-bold text-white font-english">         {formatNumber(safeStats.totalSales)}</p>
                                         <p className="text-xs text-green-400 mt-1">ل.س</p>
                                     </div>
                                     <div className="bg-surface-highlight rounded-2xl p-4 border border-slate-700/50">
                                         <p className="text-xs text-slate-500 mb-1">الرصيد المتاح</p>
-                                        <p className="text-2xl font-bold text-white font-english">{formatNumber(stats.walletBalance)}</p>
+                                        <p className="text-2xl font-bold text-white font-english">{formatNumber(safeStats.walletBalance)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -342,11 +350,11 @@ export default function UnifiedDashboardPage() {
                             <div className="grid grid-cols-2 gap-3 mb-6">
                             <div className="bg-surface-highlight rounded-2xl p-4 border border-slate-700/50">
                                 <p className="text-xs text-slate-500 mb-1">المزادات/العروض النشطة</p>
-                                <p className="text-2xl font-bold text-white font-english">{stats.activeAuctions}</p>
+                                <p className="text-2xl font-bold text-white font-english">{safeStats.activeAuctions}</p>
                             </div>
                             <div className="bg-surface-highlight rounded-2xl p-4 border border-slate-700/50">
                                 <p className="text-xs text-slate-500 mb-1">الصفقات الجارية</p>
-                                <p className="text-2xl font-bold text-white font-english">{stats.activeDeals}</p>
+                                <p className="text-2xl font-bold text-white font-english">{safeStats.activeDeals}</p>
                             </div>
                             </div>
                         )}

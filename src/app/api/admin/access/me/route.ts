@@ -1,15 +1,14 @@
-import { NextResponse } from "next/server";
-import { bootstrapAccessControl, getSessionUserId, getUserPermissions } from "@/lib/rbac";
+﻿import { NextResponse } from "next/server";
+import { PERMISSIONS, getSessionPermissions, requirePermission } from "@/lib/rbac";
 
 export async function GET() {
     try {
-        await bootstrapAccessControl();
-        const userId = await getSessionUserId();
-        if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
+        if (!access.ok) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
         }
 
-        const permissions = await getUserPermissions(userId);
+        const permissions = (await getSessionPermissions()) ?? [];
         return NextResponse.json({ success: true, permissions });
     } catch (error) {
         console.error("Access me error:", error);

@@ -1,10 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { bootstrapAccessControl, requirePermission, PERMISSIONS } from "@/lib/rbac";
+import { requirePermission, PERMISSIONS } from "@/lib/rbac";
 
 export async function GET() {
     try {
-        await bootstrapAccessControl();
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
         if (!access.ok) {
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
@@ -23,13 +22,12 @@ export async function GET() {
         return NextResponse.json({ success: true, roles });
     } catch (error) {
         console.error("Roles GET error:", error);
-        return NextResponse.json({ success: false, error: "تعذر تحميل الأدوار" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "ØªØ¹Ø°Ø± ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ø£Ø¯ÙˆØ§Ø±" }, { status: 500 });
     }
 }
 
 export async function POST(request: NextRequest) {
     try {
-        await bootstrapAccessControl();
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
         if (!access.ok) {
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
@@ -39,7 +37,7 @@ export async function POST(request: NextRequest) {
         const { name, description, permissionIds } = body;
 
         if (!name || !Array.isArray(permissionIds)) {
-            return NextResponse.json({ success: false, error: "البيانات غير مكتملة" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ØºÙŠØ± Ù…ÙƒØªÙ…Ù„Ø©" }, { status: 400 });
         }
 
         const role = await db.role.create({
@@ -58,6 +56,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, role });
     } catch (error) {
         console.error("Roles POST error:", error);
-        return NextResponse.json({ success: false, error: "تعذر إنشاء الدور" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "ØªØ¹Ø°Ø± Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ø¯ÙˆØ±" }, { status: 500 });
     }
 }
+

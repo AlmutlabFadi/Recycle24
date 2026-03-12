@@ -1,10 +1,9 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { bootstrapAccessControl, requirePermission, PERMISSIONS } from "@/lib/rbac";
+import { requirePermission, PERMISSIONS } from "@/lib/rbac";
 
 export async function GET() {
     try {
-        await bootstrapAccessControl();
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
         if (!access.ok) {
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
@@ -17,6 +16,7 @@ export async function GET() {
         return NextResponse.json({ success: true, permissions });
     } catch (error) {
         console.error("Access permissions GET error:", error);
-        return NextResponse.json({ success: false, error: "تعذر تحميل الصلاحيات" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "ØªØ¹Ø°Ø± ØªØ­Ù…ÙŠÙ„ Ø§Ù„ØµÙ„Ø§Ø­ÙŠØ§Øª" }, { status: 500 });
     }
 }
+

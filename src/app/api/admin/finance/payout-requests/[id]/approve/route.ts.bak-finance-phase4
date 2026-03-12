@@ -1,0 +1,243 @@
+import { TransactionType } from "@/lib/ledger/types";
+
+import { db } from "@/lib/db";
+import { LedgerPostingService } from "@/lib/ledger/service";
+import { requirePermission } from "@/lib/rbac";
+import { TransactionType } from "@/lib/ledger/types";
+
+interface RouteContext {
+  params: {
+    id: string;
+  };
+}
+
+function parseNonEmptyString(value: unknown) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const normalized = value.trim();
+
+  return normalized.length > 0 ? normalized : null;
+}
+
+export async function POST(request: NextRequest, context: RouteContext) {
+  try {
+    const auth = await requirePermission("MANAGE_FINANCE");
+
+    if (!auth.ok) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: auth.status }
+      );
+    }
+
+    const requestId = context.params?.id;
+
+    if (!requestId) {
+      return NextResponse.json(
+        { error: "Payout request id is required" },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const reviewNote = parseNonEmptyString(body?.reviewNote);
+
+    const payoutRequest = await db.payoutRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        id: true,
+        accountId: true,
+        userId: true,
+        amount: true,
+        currency: true,
+        method: true,
+        destination: true,
+        status: true,
+        requestNote: true,
+        reviewNote: true,
+        createdAt: true,
+        account: {
+          select: {
+            id: true,
+            slug: true,
+            balance: true,
+            currency: true,
+            debtStatus: true,
+            lockedByDebt: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            isLocked: true,
+            lockReason: true,
+          },
+        },
+      },
+    });
+
+    if (!payoutRequest) {
+      return NextResponse.json(
+        { error: "Payout request not found" },
+        { status: 404 }
+      );
+    }
+
+    if (payoutRequest.status === "COMPLETED") {
+      return NextResponse.json({
+        success: true,
+        message: "Payout request already completed",
+        payoutRequest,
+      });
+    }
+
+    if (!["PENDING", "UNDER_REVIEW"].includes(payoutRequest.status)) {
+      return NextResponse.json(
+        {
+          error: `Payout request cannot be approved from status ${payoutRequest.status}`,
+        },
+        { status: 409 }
+      );
+    }
+
+    if (payoutRequest.currency !== "SYP") {
+      return NextResponse.json(
+        { error: "Only SYP payout approvals are supported حاليا" },
+        { status: 400 }
+      );
+    }
+
+    if (payoutRequest.account.lockedByDebt) {
+      return NextResponse.json(
+        { error: "Account is locked by debt rules" },
+        { status: 423 }
+      );
+    }
+
+    if (payoutRequest.account.balance < payoutRequest.amount) {
+      return NextResponse.json(
+        { error: "Insufficient ledger balance for payout approval" },
+        { status: 409 }
+      );
+    }
+
+    await LedgerPostingService.postEntry({
+   type: TransactionType.WALLET_PAYOUT,
+      description: `Approved payout request ${payoutRequest.id}`,
+      lines: [
+        {
+          accountSlug: payoutRequest.account.slug,
+          amount: -payoutRequest.amount,
+          description: `Payout request ${payoutRequest.id} debited`,
+        },
+      ],
+      metadata: {
+        payoutRequestId: payoutRequest.id,
+        accountId: payoutRequest.accountId,
+        userId: payoutRequest.userId,
+        method: payoutRequest.method,
+        destination: payoutRequest.destination,
+        requestNote: payoutRequest.requestNote,
+        approvedByUserId: auth.userId,
+      },
+    });
+
+    const updatedAccount = await db.ledgerAccount.findUnique({
+      where: { id: payoutRequest.accountId },
+      select: {
+        id: true,
+        slug: true,
+        balance: true,
+      },
+    });
+
+    await db.wallet.upsert({
+      where: {
+        userId: payoutRequest.userId,
+      },
+      update: {
+        balanceSYP: updatedAccount?.balance ?? payoutRequest.account.balance,
+      },
+      create: {
+        userId: payoutRequest.userId,
+        balanceSYP: updatedAccount?.balance ?? payoutRequest.account.balance,
+        balanceUSD: 0,
+      },
+    });
+
+    const completedRequest = await db.payoutRequest.update({
+      where: { id: payoutRequest.id },
+      data: {
+        status: "COMPLETED",
+        reviewedById: auth.userId,
+        reviewedAt: new Date(),
+        processedAt: new Date(),
+        completedAt: new Date(),
+        reviewNote: reviewNote ?? payoutRequest.reviewNote ?? undefined,
+      },
+      select: {
+        id: true,
+        accountId: true,
+        userId: true,
+        amount: true,
+        currency: true,
+        method: true,
+        destination: true,
+        status: true,
+        requestNote: true,
+        reviewNote: true,
+        reviewedById: true,
+        reviewedAt: true,
+        processedAt: true,
+        completedAt: true,
+        failedAt: true,
+        failureReason: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    await db.auditLog.create({
+      data: {
+        actorRole: "ADMIN",
+        actorId: auth.userId,
+        action: "FINANCE_PAYOUT_REQUEST_APPROVED",
+        entityType: "PayoutRequest",
+        entityId: completedRequest.id,
+        beforeJson: {
+          status: payoutRequest.status,
+        },
+        afterJson: {
+          status: completedRequest.status,
+          reviewedById: completedRequest.reviewedById,
+          reviewedAt: completedRequest.reviewedAt,
+          processedAt: completedRequest.processedAt,
+          completedAt: completedRequest.completedAt,
+          ledgerBalanceAfter: updatedAccount?.balance ?? null,
+        },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Payout request approved successfully",
+      payoutRequest: completedRequest,
+      ledgerAccount: updatedAccount,
+    });
+  } catch (error) {
+    console.error("Admin payout request approve error:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to approve payout request",
+      },
+      { status: 500 }
+    );
+  }
+}

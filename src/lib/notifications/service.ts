@@ -1,12 +1,9 @@
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { JsonValue } from "@prisma/client/runtime/library";
 
 export type NotificationType = "INFO" | "URGENT" | "SUCCESS" | "WARNING";
 
 export class NotificationService {
-  /**
-   * Create a notification for a user.
-   */
   static async create({
     userId,
     title,
@@ -20,7 +17,7 @@ export class NotificationService {
     message: string;
     type?: NotificationType;
     link?: string;
-    metadata?: any;
+    metadata?: Prisma.InputJsonValue;
   }) {
     const notification = await db.notification.create({
       data: {
@@ -29,23 +26,19 @@ export class NotificationService {
         message,
         type,
         link,
-        metadata: metadata as JsonValue,
+        metadata: metadata ?? undefined,
       },
     });
 
-    // Trigger Real-time event (SSE)
     const { sseManager } = await import("@/lib/realtime/sse-server");
     sseManager.sendToUser(userId, {
       type: "NOTIFICATION",
       notification,
     });
-    
+
     return notification;
   }
 
-  /**
-   * Get notifications for a specific user.
-   */
   static async getForUser(userId: string, limit: number = 20) {
     return await db.notification.findMany({
       where: { userId },
@@ -54,9 +47,6 @@ export class NotificationService {
     });
   }
 
-  /**
-   * Mark a specific notification as read.
-   */
   static async markAsRead(notificationId: string, userId: string) {
     return await db.notification.updateMany({
       where: {
@@ -67,9 +57,6 @@ export class NotificationService {
     });
   }
 
-  /**
-   * Mark all notifications for a user as read.
-   */
   static async markAllAsRead(userId: string) {
     return await db.notification.updateMany({
       where: { userId },
@@ -77,9 +64,6 @@ export class NotificationService {
     });
   }
 
-  /**
-   * Get unread notification count for a user.
-   */
   static async getUnreadCount(userId: string) {
     return await db.notification.count({
       where: {

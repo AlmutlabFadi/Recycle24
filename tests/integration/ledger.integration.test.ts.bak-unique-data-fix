@@ -1,0 +1,410 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { NextRequest } from "next/server";
+
+import { db } from "@/lib/db";
+import { LedgerPostingService } from "@/lib/ledger/service";
+import { POST as approveDepositRoute } from "@/app/api/admin/finance/deposit-requests/[id]/approve/route";
+import { POST as approvePayoutRoute } from "@/app/api/admin/finance/payout-requests/[id]/approve/route";
+import { requirePermission } from "@/lib/rbac";
+
+vi.mock("@/lib/rbac", () => ({
+  requirePermission: vi.fn(),
+}));
+
+const mockedRequirePermission = vi.mocked(requirePermission);
+
+const TEST_USER_EMAIL = "ledger-test-user@example.com";
+const TEST_ADMIN_ID = "ledger-test-admin";
+const TEST_PREFIX = "ledger-test";
+
+function makeJsonRequest(body: Record<string, unknown> = {}) {
+  return new NextRequest("http://localhost/api/test", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+async function createTestUser(email: string = TEST_USER_EMAIL) {
+  return await db.user.create({
+    data: {
+      email,
+      password: "test-password",
+      name: "Ledger Test User",
+    },
+  });
+}
+
+async function createLedgerAccount(params: {
+  ownerId?: string;
+  slug: string;
+  balance?: number;
+  currency?: string;
+}) {
+  return await db.ledgerAccount.create({
+    data: {
+      ownerId: params.ownerId,
+      slug: params.slug,
+      balance: params.balance ?? 0,
+      currency: params.currency ?? "SYP",
+      status: "ACTIVE",
+    },
+  });
+}
+
+async function createWallet(userId: string, balanceSYP = 0) {
+  return await db.wallet.create({
+    data: {
+      userId,
+      balanceSYP,
+      balanceUSD: 0,
+    },
+  });
+}
+
+beforeEach(() => {
+  mockedRequirePermission.mockResolvedValue({
+    ok: true,
+    status: 200,
+    userId: TEST_ADMIN_ID,
+  } as never);
+});
+
+describe("Ledger integration", () => {
+  it("approves a deposit request and updates ledger, wallet, request status, and audit log", async () => {
+    const user = await createTestUser();
+    const account = await createLedgerAccount({
+      ownerId: user.id,
+      slug: `${TEST_PREFIX}-deposit-account`,
+      balance: 0,
+    });
+
+    await createWallet(user.id, 0);
+
+    const depositRequest = await db.depositRequest.create({
+      data: {
+        accountId: account.id,
+        userId: user.id,
+        amount: 500,
+        currency: "SYP",
+        method: "BANK_TRANSFER",
+        status: "PENDING",
+        proofUrl: "https://example.com/proof.png",
+      },
+    });
+
+    const response = await approveDepositRoute(
+      makeJsonRequest({ reviewNote: "Approved in integration test" }),
+      { params: { id: depositRequest.id } } as never
+    );
+
+    expect(response.status).toBe(200);
+
+    const payload = await response.json();
+    expect(payload.success).toBe(true);
+
+    const updatedRequest = await db.depositRequest.findUniqueOrThrow({
+      where: { id: depositRequest.id },
+    });
+
+    expect(updatedRequest.status).toBe("COMPLETED");
+    expect(updatedRequest.reviewedById).toBe(TEST_ADMIN_ID);
+    expect(updatedRequest.completedAt).not.toBeNull();
+
+    const updatedAccount = await db.ledgerAccount.findUniqueOrThrow({
+      where: { id: account.id },
+    });
+
+    expect(updatedAccount.balance).toBe(500);
+
+    const updatedWallet = await db.wallet.findUniqueOrThrow({
+      where: { userId: user.id },
+    });
+
+    expect(updatedWallet.balanceSYP).toBe(500);
+
+    const journalEntry = await db.journalEntry.findUniqueOrThrow({
+      where: {
+        idempotencyKey: `deposit-approve:${depositRequest.id}`,
+      },
+      include: { lines: true },
+    });
+
+    expect(journalEntry.type).toBe("WALLET_DEPOSIT");
+    expect(journalEntry.lines).toHaveLength(2);
+
+    const auditLog = await db.auditLog.findFirst({
+      where: {
+        action: "FINANCE_DEPOSIT_REQUEST_APPROVED",
+        entityId: depositRequest.id,
+      },
+    });
+
+    expect(auditLog).not.toBeNull();
+  });
+
+  it("approves a payout request and updates ledger, wallet, request status, and audit log", async () => {
+    const user = await createTestUser("ledger-test-payout@example.com");
+    const account = await createLedgerAccount({
+      ownerId: user.id,
+      slug: `${TEST_PREFIX}-payout-account`,
+      balance: 700,
+    });
+
+    await createWallet(user.id, 700);
+
+    const payoutRequest = await db.payoutRequest.create({
+      data: {
+        accountId: account.id,
+        userId: user.id,
+        amount: 300,
+        currency: "SYP",
+        method: "BANK_TRANSFER",
+        destination: "ACC-123",
+        status: "PENDING",
+      },
+    });
+
+    const response = await approvePayoutRoute(
+      makeJsonRequest({ reviewNote: "Approved in integration test" }),
+      { params: { id: payoutRequest.id } } as never
+    );
+
+    expect(response.status).toBe(200);
+
+    const payload = await response.json();
+    expect(payload.success).toBe(true);
+
+    const updatedRequest = await db.payoutRequest.findUniqueOrThrow({
+      where: { id: payoutRequest.id },
+    });
+
+    expect(updatedRequest.status).toBe("COMPLETED");
+    expect(updatedRequest.reviewedById).toBe(TEST_ADMIN_ID);
+    expect(updatedRequest.processedAt).not.toBeNull();
+    expect(updatedRequest.completedAt).not.toBeNull();
+
+    const updatedAccount = await db.ledgerAccount.findUniqueOrThrow({
+      where: { id: account.id },
+    });
+
+    expect(updatedAccount.balance).toBe(400);
+
+    const updatedWallet = await db.wallet.findUniqueOrThrow({
+      where: { userId: user.id },
+    });
+
+    expect(updatedWallet.balanceSYP).toBe(400);
+
+    const journalEntry = await db.journalEntry.findUniqueOrThrow({
+      where: {
+        idempotencyKey: `payout-approve:${payoutRequest.id}`,
+      },
+      include: { lines: true },
+    });
+
+    expect(journalEntry.type).toBe("WALLET_WITHDRAWAL");
+    expect(journalEntry.lines).toHaveLength(2);
+
+    const auditLog = await db.auditLog.findFirst({
+      where: {
+        action: "FINANCE_PAYOUT_REQUEST_APPROVED",
+        entityId: payoutRequest.id,
+      },
+    });
+
+    expect(auditLog).not.toBeNull();
+  });
+
+  it("does not create a duplicate ledger entry when deposit approval is retried", async () => {
+    const user = await createTestUser("ledger-test-duplicate@example.com");
+    const account = await createLedgerAccount({
+      ownerId: user.id,
+      slug: `${TEST_PREFIX}-duplicate-account`,
+      balance: 0,
+    });
+
+    await createWallet(user.id, 0);
+
+    const depositRequest = await db.depositRequest.create({
+      data: {
+        accountId: account.id,
+        userId: user.id,
+        amount: 250,
+        currency: "SYP",
+        method: "BANK_TRANSFER",
+        status: "PENDING",
+      },
+    });
+
+    const firstResponse = await approveDepositRoute(
+      makeJsonRequest({ reviewNote: "First approval" }),
+      { params: { id: depositRequest.id } } as never
+    );
+
+    expect(firstResponse.status).toBe(200);
+
+    const secondResponse = await approveDepositRoute(
+      makeJsonRequest({ reviewNote: "Second approval" }),
+      { params: { id: depositRequest.id } } as never
+    );
+
+    expect(secondResponse.status).toBe(200);
+
+    const secondPayload = await secondResponse.json();
+    expect(secondPayload.message).toBe("Deposit request already completed");
+
+    const journalEntries = await db.journalEntry.findMany({
+      where: {
+        idempotencyKey: `deposit-approve:${depositRequest.id}`,
+      },
+    });
+
+    expect(journalEntries).toHaveLength(1);
+  });
+
+  it("rejects payout approval when ledger balance is insufficient", async () => {
+    const user = await createTestUser("ledger-test-insufficient@example.com");
+    const account = await createLedgerAccount({
+      ownerId: user.id,
+      slug: `${TEST_PREFIX}-insufficient-account`,
+      balance: 100,
+    });
+
+    await createWallet(user.id, 100);
+
+    const payoutRequest = await db.payoutRequest.create({
+      data: {
+        accountId: account.id,
+        userId: user.id,
+        amount: 200,
+        currency: "SYP",
+        method: "BANK_TRANSFER",
+        destination: "ACC-LOW-BALANCE",
+        status: "PENDING",
+      },
+    });
+
+    const response = await approvePayoutRoute(
+      makeJsonRequest({ reviewNote: "Should fail" }),
+      { params: { id: payoutRequest.id } } as never
+    );
+
+    expect(response.status).toBe(409);
+
+    const payload = await response.json();
+    expect(payload.error).toContain("Insufficient ledger balance");
+
+    const updatedRequest = await db.payoutRequest.findUniqueOrThrow({
+      where: { id: payoutRequest.id },
+    });
+
+    expect(updatedRequest.status).toBe("PENDING");
+
+    const journalEntries = await db.journalEntry.findMany({
+      where: {
+        idempotencyKey: `payout-approve:${payoutRequest.id}`,
+      },
+    });
+
+    expect(journalEntries).toHaveLength(0);
+  });
+
+  it("prevents over-holding funds on the same account", async () => {
+    const user = await createTestUser("ledger-test-hold@example.com");
+    const account = await createLedgerAccount({
+      ownerId: user.id,
+      slug: `${TEST_PREFIX}-hold-account`,
+      balance: 100,
+    });
+
+    const firstHold = await LedgerPostingService.createHold(
+      account.slug,
+      60,
+      "TEST",
+      "hold-1"
+    );
+
+    expect(firstHold.status).toBe("OPEN");
+
+    await expect(
+      LedgerPostingService.createHold(account.slug, 50, "TEST", "hold-2")
+    ).rejects.toThrow("Insufficient funds for hold");
+
+    const openHolds = await db.ledgerHold.findMany({
+      where: {
+        accountId: account.id,
+        status: "OPEN",
+      },
+    });
+
+    expect(openHolds).toHaveLength(1);
+    expect(openHolds[0]?.amount).toBe(60);
+  });
+
+  it("captures a hold atomically and prevents double capture", async () => {
+    const user = await createTestUser("ledger-test-capture@example.com");
+    const sourceAccount = await createLedgerAccount({
+      ownerId: user.id,
+      slug: `${TEST_PREFIX}-capture-source`,
+      balance: 100,
+    });
+
+    const hold = await LedgerPostingService.createHold(
+      sourceAccount.slug,
+      40,
+      "TEST",
+      "capture-1"
+    );
+
+    const entry = await LedgerPostingService.captureHold(
+      hold.id,
+      `${TEST_PREFIX}-capture-destination`,
+      "WALLET_WITHDRAWAL" as never,
+      "Capture hold in integration test"
+    );
+
+    expect(entry.type).toBe("WALLET_WITHDRAWAL");
+
+    const updatedHold = await db.ledgerHold.findUniqueOrThrow({
+      where: { id: hold.id },
+    });
+
+    expect(updatedHold.status).toBe("CAPTURED");
+
+    const updatedSource = await db.ledgerAccount.findUniqueOrThrow({
+      where: { id: sourceAccount.id },
+    });
+
+    expect(updatedSource.balance).toBe(60);
+
+    const destination = await db.ledgerAccount.findUniqueOrThrow({
+      where: { slug: `${TEST_PREFIX}-capture-destination` },
+    });
+
+    expect(destination.balance).toBe(40);
+
+    const entryCountAfterFirstCapture = await db.journalEntry.count();
+    await expect(
+      LedgerPostingService.captureHold(
+        hold.id,
+        `${TEST_PREFIX}-capture-destination`,
+        "WALLET_WITHDRAWAL" as never,
+        "Capture hold second time"
+      )
+    ).rejects.toThrow("Valid open hold required for capture.");
+
+    const sourceAfterSecondAttempt = await db.ledgerAccount.findUniqueOrThrow({
+      where: { id: sourceAccount.id },
+    });
+
+    const destinationAfterSecondAttempt = await db.ledgerAccount.findUniqueOrThrow({
+      where: { slug: `${TEST_PREFIX}-capture-destination` },
+    });
+
+    expect(sourceAfterSecondAttempt.balance).toBe(60);
+    expect(destinationAfterSecondAttempt.balance).toBe(40);
+  });
+});

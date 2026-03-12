@@ -1,10 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { bootstrapAccessControl, requirePermission, PERMISSIONS } from "@/lib/rbac";
+import { requirePermission, PERMISSIONS } from "@/lib/rbac";
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
     try {
-        await bootstrapAccessControl();
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
         if (!access.ok) {
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
@@ -15,11 +14,11 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
         const role = await db.role.findUnique({ where: { id: (await context.params).id } });
         if (!role) {
-            return NextResponse.json({ success: false, error: "الدور غير موجود" }, { status: 404 });
+            return NextResponse.json({ success: false, error: "Ø§Ù„Ø¯ÙˆØ± ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯" }, { status: 404 });
         }
 
         if (role.isSystem && name) {
-            return NextResponse.json({ success: false, error: "لا يمكن تغيير اسم الدور النظامي" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Ù„Ø§ ÙŠÙ…ÙƒÙ† ØªØºÙŠÙŠØ± Ø§Ø³Ù… Ø§Ù„Ø¯ÙˆØ± Ø§Ù„Ù†Ø¸Ø§Ù…ÙŠ" }, { status: 400 });
         }
 
         await db.$transaction(async (tx) => {
@@ -44,13 +43,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Role PATCH error:", error);
-        return NextResponse.json({ success: false, error: "تعذر تحديث الدور" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø§Ù„Ø¯ÙˆØ±" }, { status: 500 });
     }
 }
 
 export async function DELETE(_: NextRequest, context: { params: Promise<{ id: string }> }) {
     try {
-        await bootstrapAccessControl();
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
         if (!access.ok) {
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
@@ -58,17 +56,18 @@ export async function DELETE(_: NextRequest, context: { params: Promise<{ id: st
 
         const role = await db.role.findUnique({ where: { id: (await context.params).id } });
         if (!role) {
-            return NextResponse.json({ success: false, error: "الدور غير موجود" }, { status: 404 });
+            return NextResponse.json({ success: false, error: "Ø§Ù„Ø¯ÙˆØ± ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯" }, { status: 404 });
         }
 
         if (role.isSystem) {
-            return NextResponse.json({ success: false, error: "لا يمكن حذف دور نظامي" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø­Ø°Ù Ø¯ÙˆØ± Ù†Ø¸Ø§Ù…ÙŠ" }, { status: 400 });
         }
 
         await db.role.delete({ where: { id: role.id } });
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("Role DELETE error:", error);
-        return NextResponse.json({ success: false, error: "تعذر حذف الدور" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "ØªØ¹Ø°Ø± Ø­Ø°Ù Ø§Ù„Ø¯ÙˆØ±" }, { status: 500 });
     }
 }
+

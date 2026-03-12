@@ -1,259 +1,400 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
+
 import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { LedgerEnforcementService } from "@/lib/ledger/enforcement";
+import { LedgerPostingService } from "@/lib/ledger/service";
+import { HoldStatus } from "@/lib/ledger/types";
+import { elapsedMs, logPerf, nowMs } from "@/lib/server/perf";
 
 interface SessionUser {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  role?: string;
+}
+
+interface WalletSnapshot {
+  wallet: {
     id: string;
-    name?: string | null;
-    email?: string | null;
-    role?: string;
+    userId: string;
+    balanceSYP: number;
+    balanceUSD: number;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  ledgerAccount: {
+    id: string;
+    slug: string;
+    balance: number;
+  };
+  totalHeld: number;
+  availableBalance: number;
+  debtSnapshot: Awaited<
+    ReturnType<typeof LedgerEnforcementService.getDebtSnapshot>
+  >;
 }
 
-import { LedgerPostingService } from "@/lib/ledger/service";
-import { LedgerEnforcementService } from "@/lib/ledger/enforcement";
-import { HoldStatus, TransactionType, LedgerAccountSlug } from "@/lib/ledger/types";
+function parsePositiveAmount(value: unknown): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return null;
+  }
 
-// GET /api/wallet - الحصول على معلومات المحفظة
-export async function GET(request: NextRequest) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
-            return NextResponse.json({ error: "غير مصرح لك" }, { status: 401 });
-        }
-        
-        const sessionUser = session.user as SessionUser;
-        const userId = sessionUser.id;
+  if (value <= 0) {
+    return null;
+  }
 
-        // 1. Get/Sync Ledger Account
-        const ledgerAccount = await LedgerPostingService.getOrCreateAccount(`USER_${userId}_SYP`, userId);
-        
-        // 2. Calculate Held Amounts
-        const activeHolds = await db.ledgerHold.aggregate({
-          where: { accountId: ledgerAccount.id, status: HoldStatus.OPEN },
-          _sum: { amount: true },
-        });
-        const totalHeld = activeHolds._sum.amount || 0;
+  return Number(value);
+}
 
-        // 3. Get Old Wallet Model
-        let wallet = await db.wallet.findUnique({
-            where: { userId },
-            include: {
-                transactions: {
-                    orderBy: { createdAt: "desc" },
-                    take: 10,
-                },
-            },
-        });
+function parseNonEmptyString(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
 
-        // 4. Migration: If wallet has balance but ledger is zero, initialize ledger
-        if (wallet && wallet.balanceSYP > 0 && ledgerAccount.balance === 0) {
-          await LedgerPostingService.postEntry({
-            type: TransactionType.WALLET_DEPOSIT, // Or a specific OPENING_BALANCE type
-            description: 'Migration to Bank-Grade Ledger',
-            lines: [
-              {
-                accountSlug: LedgerAccountSlug.SYSTEM_LIQUIDITY_POOL,
-                amount: -wallet.balanceSYP,
-                description: `Initial balance for user ${userId}`,
-              },
-              {
-                accountSlug: ledgerAccount.slug,
-                amount: wallet.balanceSYP,
-                description: `Initial balance migration`,
-              }
-            ],
-            metadata: { migration: true }
-          });
-          // Refresh ledger account after migration
-          const updatedLedger = await db.ledgerAccount.findUnique({ where: { id: ledgerAccount.id } });
-          if (updatedLedger) {
-            ledgerAccount.balance = updatedLedger.balance;
-          }
-        }
+  const normalized = value.trim();
 
-        if (!wallet) {
-            wallet = await db.wallet.create({
-                data: {
-                    userId,
-                    balanceSYP: ledgerAccount.balance,
-                    balanceUSD: 0,
-                },
-                include: {
-                    transactions: {
-                        orderBy: { createdAt: "desc" },
-                        take: 10,
-                    },
-                },
-            });
-        } else if (wallet.balanceSYP !== ledgerAccount.balance) {
-          // Sync wallet cache if needed
-          await db.wallet.update({
-            where: { id: wallet.id },
-            data: { balanceSYP: ledgerAccount.balance }
-          });
-          wallet.balanceSYP = ledgerAccount.balance;
-        }
+  return normalized.length > 0 ? normalized : null;
+}
 
-        // 5. Check for Debt & Grace Period (Phase 18)
-        const debtDetails = await LedgerEnforcementService.getDebtDetails(userId);
-        const debtStatus = await LedgerEnforcementService.verifyDebtStatus(userId);
+async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
+  const ledgerAccount = await LedgerPostingService.getOrCreateAccount(
+    `USER_${userId}_SYP`,
+    userId
+  );
 
-        // 6. Get Recent Ledger History (Phase 20)
-        // Fetch journal lines for this account to move away from the old transaction model
-        const ledgerHistory = await db.journalLine.findMany({
-            where: { accountId: ledgerAccount.id },
-            include: {
-                entry: true
-            },
-            orderBy: { createdAt: "desc" },
-            take: 20
-        });
+  const activeHolds = await db.ledgerHold.aggregate({
+    where: {
+      accountId: ledgerAccount.id,
+      status: HoldStatus.OPEN,
+    },
+    _sum: {
+      amount: true,
+    },
+  });
 
-        const formattedHistory = ledgerHistory.map(line => ({
-            id: line.id,
-            amount: line.amount,
-            description: line.description || line.entry.description,
-            type: line.entry.type,
-            date: line.createdAt,
-            metadata: line.metadata as any || line.entry.metadata as any
-        }));
+  const totalHeld = activeHolds._sum.amount ?? 0;
+  const availableBalance = ledgerAccount.balance - totalHeld;
 
-        return NextResponse.json({
-            success: true,
-            wallet: {
-              ...wallet,
-              verifiedBalance: ledgerAccount.balance,
-              availableBalance: ledgerAccount.balance - totalHeld,
-              heldAmount: totalHeld,
-              debtDetails,
-              history: formattedHistory, // Use ledger history instead of old transactions
-              isLocked: debtStatus.isLocked,
-              lockReason: debtStatus.reason,
-            },
-        });
-    } catch (error) {
-        console.error("Get wallet error:", error);
-        return NextResponse.json(
-            { error: "حدث خطأ أثناء جلب المحفظة" },
-            { status: 500 }
-        );
+  let wallet = await db.wallet.findUnique({
+    where: {
+      userId,
+    },
+  });
+
+  if (!wallet) {
+    wallet = await db.wallet.create({
+      data: {
+        userId,
+        balanceSYP: ledgerAccount.balance,
+        balanceUSD: 0,
+      },
+    });
+  } else if (wallet.balanceSYP !== ledgerAccount.balance) {
+    wallet = await db.wallet.update({
+      where: {
+        id: wallet.id,
+      },
+      data: {
+        balanceSYP: ledgerAccount.balance,
+      },
+    });
+  }
+
+  const debtSnapshot = await LedgerEnforcementService.getDebtSnapshot(userId);
+
+  return {
+    wallet,
+    ledgerAccount,
+    totalHeld,
+    availableBalance,
+    debtSnapshot,
+  };
+}
+
+async function getAuthenticatedUser(): Promise<
+  { userId: string } | { error: NextResponse }
+> {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    return {
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+
+  const sessionUser = session.user as SessionUser;
+
+  if (!sessionUser.id) {
+    return {
+      error: NextResponse.json({ error: "Invalid session" }, { status: 401 }),
+    };
+  }
+
+  return { userId: sessionUser.id };
+}
+
+// GET /api/wallet - wallet snapshot only
+export async function GET(_request: NextRequest) {
+  const startedAt = nowMs();
+
+  try {
+    const sessionStartedAt = nowMs();
+    const auth = await getAuthenticatedUser();
+    const sessionMs = elapsedMs(sessionStartedAt);
+
+    if ("error" in auth) {
+      logPerf("api.wallet.get", {
+        ok: false,
+        stage: "auth",
+        totalMs: elapsedMs(startedAt),
+        sessionMs,
+        status: 401,
+      });
+
+      return auth.error;
     }
+
+    const snapshotStartedAt = nowMs();
+    const snapshot = await getWalletSnapshot(auth.userId);
+    const snapshotMs = elapsedMs(snapshotStartedAt);
+
+    logPerf("api.wallet.get", {
+      ok: true,
+      totalMs: elapsedMs(startedAt),
+      userId: auth.userId,
+      sessionMs,
+      snapshotMs,
+      ledgerBalance: snapshot.ledgerAccount.balance,
+      heldAmount: snapshot.totalHeld,
+      availableBalance: snapshot.availableBalance,
+      locked: snapshot.debtSnapshot.isLocked,
+      debtCount: snapshot.debtSnapshot.details.length,
+    });
+
+    return NextResponse.json({
+      success: true,
+      wallet: {
+        ...snapshot.wallet,
+        verifiedBalance: snapshot.ledgerAccount.balance,
+        availableBalance: snapshot.availableBalance,
+        heldAmount: snapshot.totalHeld,
+        debtDetails:
+          snapshot.debtSnapshot.details.length > 0
+            ? snapshot.debtSnapshot.details
+            : null,
+        isLocked: snapshot.debtSnapshot.isLocked,
+        lockReason: snapshot.debtSnapshot.reason,
+      },
+    });
+  } catch (error) {
+    logPerf("api.wallet.get", {
+      ok: false,
+      totalMs: elapsedMs(startedAt),
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+
+    console.error("Get wallet error:", error);
+
+    return NextResponse.json(
+      { error: "Failed to fetch wallet" },
+      { status: 500 }
+    );
+  }
 }
 
-// POST /api/wallet/deposit - إيداع مبلغ
+// POST /api/wallet - create deposit request
 export async function POST(request: NextRequest) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
-            return NextResponse.json({ error: "غير مصرح لك" }, { status: 401 });
-        }
-        
-        const sessionUser = session.user as SessionUser;
-        const userId = sessionUser.id;
+  const startedAt = nowMs();
 
-        const body = await request.json();
-        const { amount, method } = body;
+  try {
+    const auth = await getAuthenticatedUser();
 
-        if (!amount || !method) {
-            return NextResponse.json(
-                { error: "جميع الحقول مطلوبة" },
-                { status: 400 }
-            );
-        }
-
-        const wallet = await db.wallet.findUnique({ where: { userId } });
-        if (!wallet) {
-            return NextResponse.json({ error: "المحفظة غير موجودة" }, { status: 404 });
-        }
-
-        // إنشاء العملية
-        const transaction = await db.transaction.create({
-            data: {
-                walletId: wallet.id,
-                type: "DEPOSIT",
-                amount,
-                currency: "SYP", // Defaulting to SYP as currency wasn't provided in old mock API
-                description: method, // Using method as description since method field doesn't exist on Transaction
-                status: "PENDING",
-            },
-        });
-
-        return NextResponse.json({
-            success: true,
-            transaction,
-            message: "تم إنشاء طلب الإيداع بنجاح، سيتم التحقق منه خلال 24 ساعة",
-        });
-    } catch (error) {
-        console.error("Deposit error:", error);
-        return NextResponse.json(
-            { error: "حدث خطأ أثناء الإيداع" },
-            { status: 500 }
-        );
+    if ("error" in auth) {
+      return auth.error;
     }
+
+    const body = await request.json();
+    const amount = parsePositiveAmount(body?.amount);
+    const method = parseNonEmptyString(body?.method);
+    const proofUrl = parseNonEmptyString(body?.proofUrl);
+    const requestNote = parseNonEmptyString(body?.requestNote);
+
+    if (!amount || !method) {
+      return NextResponse.json(
+        { error: "Amount and method are required" },
+        { status: 400 }
+      );
+    }
+
+    const account = await LedgerPostingService.getOrCreateAccount(
+      `USER_${auth.userId}_SYP`,
+      auth.userId
+    );
+
+    const createdRequest = await db.depositRequest.create({
+      data: {
+        accountId: account.id,
+        userId: auth.userId,
+        amount,
+        currency: "SYP",
+        method,
+        proofUrl: proofUrl ?? undefined,
+        requestNote: requestNote ?? undefined,
+        status: "PENDING",
+      },
+      select: {
+        id: true,
+        accountId: true,
+        userId: true,
+        amount: true,
+        currency: true,
+        method: true,
+        proofUrl: true,
+        requestNote: true,
+        reviewNote: true,
+        status: true,
+        reviewedById: true,
+        reviewedAt: true,
+        completedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    logPerf("api.wallet.post", {
+      ok: true,
+      totalMs: elapsedMs(startedAt),
+      userId: auth.userId,
+      amount,
+      method,
+      requestId: createdRequest.id,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Deposit request created successfully",
+      depositRequest: createdRequest,
+    });
+  } catch (error) {
+    logPerf("api.wallet.post", {
+      ok: false,
+      totalMs: elapsedMs(startedAt),
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+
+    console.error("Create deposit request error:", error);
+
+    return NextResponse.json(
+      { error: "Failed to create deposit request" },
+      { status: 500 }
+    );
+  }
 }
 
-// PUT /api/wallet/withdraw - سحب مبلغ
+// PUT /api/wallet - create payout request
 export async function PUT(request: NextRequest) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session || !session.user) {
-            return NextResponse.json({ error: "غير مصرح لك" }, { status: 401 });
-        }
-        
-        const sessionUser = session.user as SessionUser;
-        const userId = sessionUser.id;
+  const startedAt = nowMs();
 
-        const body = await request.json();
-        const { amount, method, accountNumber } = body;
+  try {
+    const auth = await getAuthenticatedUser();
 
-        if (!amount || !method || !accountNumber) {
-            return NextResponse.json(
-                { error: "جميع الحقول مطلوبة" },
-                { status: 400 }
-            );
-        }
-
-        // التحقق من الرصيد
-        const wallet = await db.wallet.findUnique({
-            where: { userId },
-        });
-
-        if (!wallet || wallet.balanceSYP < amount) {
-            return NextResponse.json(
-                { error: "رصيد غير كافٍ" },
-                { status: 400 }
-            );
-        }
-
-        // إنشاء عملية السحب
-        const transaction = await db.transaction.create({
-            data: {
-                walletId: wallet.id,
-                type: "WITHDRAWAL",
-                amount,
-                currency: "SYP",
-                description: `Withdrawing via ${method} to ${accountNumber}`,
-                status: "PENDING",
-            },
-        });
-
-        // خصم المبلغ من الرصيد
-        await db.wallet.update({
-            where: { userId },
-            data: { balanceSYP: { decrement: amount } },
-        });
-
-        return NextResponse.json({
-            success: true,
-            transaction,
-            message: "تم إنشاء طلب السحب بنجاح، سيتم معالجته خلال 24 ساعة",
-        });
-    } catch (error) {
-        console.error("Withdrawal error:", error);
-        return NextResponse.json(
-            { error: "حدث خطأ أثناء السحب" },
-            { status: 500 }
-        );
+    if ("error" in auth) {
+      return auth.error;
     }
+
+    const body = await request.json();
+    const amount = parsePositiveAmount(body?.amount);
+    const method = parseNonEmptyString(body?.method);
+    const destination = parseNonEmptyString(body?.destination);
+    const requestNote = parseNonEmptyString(body?.requestNote);
+
+    if (!amount || !method || !destination) {
+      return NextResponse.json(
+        { error: "Amount, method, and destination are required" },
+        { status: 400 }
+      );
+    }
+
+    const snapshot = await getWalletSnapshot(auth.userId);
+
+    if (snapshot.debtSnapshot.isLocked) {
+      return NextResponse.json(
+        {
+          error: snapshot.debtSnapshot.reason ?? "Wallet is locked",
+        },
+        { status: 423 }
+      );
+    }
+
+    if (snapshot.availableBalance < amount) {
+      return NextResponse.json(
+        { error: "Insufficient available balance" },
+        { status: 400 }
+      );
+    }
+
+    const createdRequest = await db.payoutRequest.create({
+      data: {
+        accountId: snapshot.ledgerAccount.id,
+        userId: auth.userId,
+        amount,
+        currency: "SYP",
+        method,
+        destination,
+        requestNote: requestNote ?? undefined,
+        status: "PENDING",
+      },
+      select: {
+        id: true,
+        accountId: true,
+        userId: true,
+        amount: true,
+        currency: true,
+        method: true,
+        destination: true,
+        requestNote: true,
+        reviewNote: true,
+        status: true,
+        reviewedById: true,
+        reviewedAt: true,
+        processedAt: true,
+        completedAt: true,
+        failedAt: true,
+        failureReason: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    logPerf("api.wallet.put", {
+      ok: true,
+      totalMs: elapsedMs(startedAt),
+      userId: auth.userId,
+      amount,
+      method,
+      requestId: createdRequest.id,
+      availableBalance: snapshot.availableBalance,
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Payout request created successfully",
+      payoutRequest: createdRequest,
+    });
+  } catch (error) {
+    logPerf("api.wallet.put", {
+      ok: false,
+      totalMs: elapsedMs(startedAt),
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+
+    console.error("Create payout request error:", error);
+
+    return NextResponse.json(
+      { error: "Failed to create payout request" },
+      { status: 500 }
+    );
+  }
 }

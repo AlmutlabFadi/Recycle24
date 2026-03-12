@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getUserPermissions, hasCenterAccess, requirePermission } from "@/lib/rbac";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSessionPermissions, hasCenterAccess, requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -15,12 +15,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         });
 
         if (!existing) {
-            return NextResponse.json({ success: false, error: "المحتوى غير موجود" }, { status: 404 });
+            return NextResponse.json({ success: false, error: "Ø§Ù„Ù…Ø­ØªÙˆÙ‰ ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯" }, { status: 404 });
         }
 
-        const permissions = await getUserPermissions(access.userId!);
+        const permissions = (await getSessionPermissions()) ?? [];
         if (!hasCenterAccess(permissions, existing.center)) {
-            return NextResponse.json({ success: false, error: "لا تملك صلاحية لهذا المركز" }, { status: 403 });
+            return NextResponse.json({ success: false, error: "Ù„Ø§ ØªÙ…Ù„Ùƒ ØµÙ„Ø§Ø­ÙŠØ© Ù„Ù‡Ø°Ø§ Ø§Ù„Ù…Ø±ÙƒØ²" }, { status: 403 });
         }
 
         const body = await request.json();
@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
         } = body;
 
         if (center && !hasCenterAccess(permissions, center)) {
-            return NextResponse.json({ success: false, error: "لا تملك صلاحية لنقل المحتوى لهذا المركز" }, { status: 403 });
+            return NextResponse.json({ success: false, error: "Ù„Ø§ ØªÙ…Ù„Ùƒ ØµÙ„Ø§Ø­ÙŠØ© Ù„Ù†Ù‚Ù„ Ø§Ù„Ù…Ø­ØªÙˆÙ‰ Ù„Ù‡Ø°Ø§ Ø§Ù„Ù…Ø±ÙƒØ²" }, { status: 403 });
         }
 
         const cleanedTags = Array.isArray(tags) ? tags.filter((tag) => typeof tag === "string") : undefined;
@@ -67,7 +67,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     } catch (error) {
         console.error("Admin knowledge PATCH error:", error);
         return NextResponse.json(
-            { success: false, error: "تعذر تحديث المحتوى" },
+            { success: false, error: "ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø§Ù„Ù…Ø­ØªÙˆÙ‰" },
             { status: 500 }
         );
     }
@@ -86,12 +86,12 @@ export async function DELETE(_: NextRequest, context: { params: Promise<{ id: st
         });
 
         if (!existing) {
-            return NextResponse.json({ success: false, error: "المحتوى غير موجود" }, { status: 404 });
+            return NextResponse.json({ success: false, error: "Ø§Ù„Ù…Ø­ØªÙˆÙ‰ ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯" }, { status: 404 });
         }
 
-        const permissions = await getUserPermissions(access.userId!);
+        const permissions = (await getSessionPermissions()) ?? [];
         if (!hasCenterAccess(permissions, existing.center)) {
-            return NextResponse.json({ success: false, error: "لا تملك صلاحية لهذا المركز" }, { status: 403 });
+            return NextResponse.json({ success: false, error: "Ù„Ø§ ØªÙ…Ù„Ùƒ ØµÙ„Ø§Ø­ÙŠØ© Ù„Ù‡Ø°Ø§ Ø§Ù„Ù…Ø±ÙƒØ²" }, { status: 403 });
         }
 
         await db.knowledgeItem.delete({ where: { id: (await context.params).id } });
@@ -99,8 +99,9 @@ export async function DELETE(_: NextRequest, context: { params: Promise<{ id: st
     } catch (error) {
         console.error("Admin knowledge DELETE error:", error);
         return NextResponse.json(
-            { success: false, error: "تعذر حذف المحتوى" },
+            { success: false, error: "ØªØ¹Ø°Ø± Ø­Ø°Ù Ø§Ù„Ù…Ø­ØªÙˆÙ‰" },
             { status: 500 }
         );
     }
 }
+

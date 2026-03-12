@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getUserPermissions, hasCenterAccess, requirePermission } from "@/lib/rbac";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSessionPermissions, hasCenterAccess, requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
 
 const ALLOWED_STATUSES = ["PENDING", "CONFIRMED", "REJECTED"];
@@ -11,7 +11,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
         }
 
-        const permissions = await getUserPermissions(access.userId!);
+        const permissions = (await getSessionPermissions()) ?? [];
         if (!hasCenterAccess(permissions, "SAFETY")) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
@@ -22,7 +22,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
         if (!status || !ALLOWED_STATUSES.includes(status)) {
             return NextResponse.json(
-                { success: false, error: "حالة غير صالحة" },
+                { success: false, error: "Ø­Ø§Ù„Ø© ØºÙŠØ± ØµØ§Ù„Ø­Ø©" },
                 { status: 400 }
             );
         }
@@ -36,8 +36,9 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     } catch (error) {
         console.error("Admin training request PATCH error:", error);
         return NextResponse.json(
-            { success: false, error: "تعذر تحديث الطلب" },
+            { success: false, error: "ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø§Ù„Ø·Ù„Ø¨" },
             { status: 500 }
         );
     }
 }
+

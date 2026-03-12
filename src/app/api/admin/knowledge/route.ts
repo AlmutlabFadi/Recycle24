@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getUserPermissions, hasCenterAccess, requirePermission } from "@/lib/rbac";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSessionPermissions, hasCenterAccess, requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         const parsedLimit = parseInt(searchParams.get("limit") || "60", 10);
         const limit = Number.isNaN(parsedLimit) ? 60 : Math.min(parsedLimit, 200);
 
-        const permissions = await getUserPermissions(access.userId!);
+        const permissions = (await getSessionPermissions()) ?? [];
         const allowedCenters = [
             "SAFETY",
             "CONSULTATIONS",
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error("Admin knowledge GET error:", error);
         return NextResponse.json(
-            { success: false, error: "تعذر تحميل محتوى الإدارة" },
+            { success: false, error: "ØªØ¹Ø°Ø± ØªØ­Ù…ÙŠÙ„ Ù…Ø­ØªÙˆÙ‰ Ø§Ù„Ø¥Ø¯Ø§Ø±Ø©" },
             { status: 500 }
         );
     }
@@ -74,15 +74,15 @@ export async function POST(request: NextRequest) {
 
         if (!center || !type || !title) {
             return NextResponse.json(
-                { success: false, error: "الحقول الأساسية مطلوبة" },
+                { success: false, error: "Ø§Ù„Ø­Ù‚ÙˆÙ„ Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ© Ù…Ø·Ù„ÙˆØ¨Ø©" },
                 { status: 400 }
             );
         }
 
-        const permissions = await getUserPermissions(access.userId!);
+        const permissions = (await getSessionPermissions()) ?? [];
         if (!hasCenterAccess(permissions, center)) {
             return NextResponse.json(
-                { success: false, error: "لا تملك صلاحية لهذا المركز" },
+                { success: false, error: "Ù„Ø§ ØªÙ…Ù„Ùƒ ØµÙ„Ø§Ø­ÙŠØ© Ù„Ù‡Ø°Ø§ Ø§Ù„Ù…Ø±ÙƒØ²" },
                 { status: 403 }
             );
         }
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
         if (type === "VIDEO" || type === "IMAGE") {
             if (!mediaUrl) {
                 return NextResponse.json(
-                    { success: false, error: "رابط الوسائط مطلوب لهذا النوع" },
+                    { success: false, error: "Ø±Ø§Ø¨Ø· Ø§Ù„ÙˆØ³Ø§Ø¦Ø· Ù…Ø·Ù„ÙˆØ¨ Ù„Ù‡Ø°Ø§ Ø§Ù„Ù†ÙˆØ¹" },
                     { status: 400 }
                 );
             }
@@ -120,8 +120,9 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Admin knowledge POST error:", error);
         return NextResponse.json(
-            { success: false, error: "تعذر حفظ المحتوى" },
+            { success: false, error: "ØªØ¹Ø°Ø± Ø­ÙØ¸ Ø§Ù„Ù…Ø­ØªÙˆÙ‰" },
             { status: 500 }
         );
     }
 }
+

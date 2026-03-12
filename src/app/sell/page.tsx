@@ -117,7 +117,7 @@ export default function SellPage() {
                                             <p className="font-bold text-sm text-white leading-tight">{material.name}</p>
                                             {material.basePrice && (
                                                 <p className="text-xs text-primary font-semibold dir-ltr text-right mt-0.5">
-                                                    ~{material.basePrice.toLocaleString()} ل.س/{material.unit}
+                                                    ~{material.basePrice.toLocaleString('en-US')} ل.س/{material.unit}
                                                 </p>
                                             )}
                                         </div>

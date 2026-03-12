@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getUserPermissions, hasCenterAccess, requirePermission } from "@/lib/rbac";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSessionPermissions, hasCenterAccess, requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -9,7 +9,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
         }
 
-        const permissions = await getUserPermissions(access.userId!);
+        const permissions = (await getSessionPermissions()) ?? [];
         if (!hasCenterAccess(permissions, "SAFETY")) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
@@ -53,7 +53,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     } catch (error) {
         console.error("Admin safety sessions PATCH error:", error);
         return NextResponse.json(
-            { success: false, error: "تعذر تحديث الجلسة" },
+            { success: false, error: "ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø§Ù„Ø¬Ù„Ø³Ø©" },
             { status: 500 }
         );
     }
@@ -66,7 +66,7 @@ export async function DELETE(_: NextRequest, context: { params: Promise<{ id: st
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
         }
 
-        const permissions = await getUserPermissions(access.userId!);
+        const permissions = (await getSessionPermissions()) ?? [];
         if (!hasCenterAccess(permissions, "SAFETY")) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
@@ -77,8 +77,9 @@ export async function DELETE(_: NextRequest, context: { params: Promise<{ id: st
     } catch (error) {
         console.error("Admin safety sessions DELETE error:", error);
         return NextResponse.json(
-            { success: false, error: "تعذر حذف الجلسة" },
+            { success: false, error: "ØªØ¹Ø°Ø± Ø­Ø°Ù Ø§Ù„Ø¬Ù„Ø³Ø©" },
             { status: 500 }
         );
     }
 }
+

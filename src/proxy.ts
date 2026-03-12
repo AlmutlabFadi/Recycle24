@@ -1,4 +1,4 @@
-import { withAuth } from "next-auth/middleware";
+﻿import { withAuth } from "next-auth/middleware";
 import { NextRequest, NextResponse } from "next/server";
 
 const authOnlyPrefixes = [
@@ -38,11 +38,14 @@ function getClientIp(req: NextRequest) {
 export default withAuth(
   async function proxy(req) {
     const pathname = req.nextUrl.pathname;
-    const token = req.nextauth.token;
+    const token = req.nextauth.token as (typeof req.nextauth.token & {
+      permissions?: string[];
+      status?: string;
+    }) | null;
+
     const isAuth = !!token;
     const clientIp = getClientIp(req);
 
-    // Placeholder only — not a persistent distributed blocklist
     const blockedIPs = new Set<string>();
 
     if (clientIp !== "unknown" && blockedIPs.has(clientIp)) {
@@ -67,14 +70,8 @@ export default withAuth(
         );
       }
 
-      const role = String(token?.role || "");
-      const userType = String(token?.userType || "");
-      const isAdmin =
-        role === "ADMIN" ||
-        role === "SUPER_ADMIN" ||
-        userType === "ADMIN";
-
-      if (!isAdmin) {
+      const permissions = token?.permissions ?? [];
+      if (!permissions.includes("MANAGE_ACCESS")) {
         return NextResponse.redirect(new URL("/", req.url));
       }
 

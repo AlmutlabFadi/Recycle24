@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { db } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// Create a new Prisma instance since db.ts exports a Promise in this project version
-const prisma = new PrismaClient();
 
 interface SessionUser {
     id: string;
@@ -26,7 +24,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "auctionId is required" }, { status: 400 });
         }
 
-        const bids = await prisma.bid.findMany({
+        const bids = await db.bid.findMany({
             where: { auctionId },
             include: {
                 bidder: { select: { id: true, name: true, firstName: true, lastName: true } }
@@ -35,7 +33,7 @@ export async function GET(request: NextRequest) {
             take: 20,
         });
 
-        const auction = await prisma.auction.findUnique({
+        const auction = await db.auction.findUnique({
             where: { id: auctionId },
             select: { currentBid: true, endsAt: true, status: true, startingBid: true, buyNowPrice: true }
         });
@@ -72,7 +70,7 @@ export async function POST(request: NextRequest) {
         // GATEKEEPER VALIDATION (Pre-Transaction check)
         // Ensure user is Verified, Gold Tier (or Admin/Gov), and has Trader profile
         // =========================================================================
-        const userProfile = await prisma.user.findUnique({
+        const userProfile = await db.user.findUnique({
             where: { id: bidderId },
             include: { trader: true, wallet: true }
         });
@@ -98,7 +96,7 @@ export async function POST(request: NextRequest) {
         // =========================================================================
         // SECURITY DEPOSIT ENGINE & BIDDING LOGIC
         // =========================================================================
-        const result = await prisma.$transaction(async (tx) => {
+        const result = await db.$transaction(async (tx) => {
             // STEP 1: Lock the auction row and get latest state
             const auction = await tx.auction.findUnique({ 
                 where: { id: auctionId }

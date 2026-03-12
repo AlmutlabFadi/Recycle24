@@ -147,6 +147,8 @@ model User {
   userRoles                  UserRole[]
   subscription               UserSubscription?
   wallet                     Wallet?
+  depositRequests            DepositRequest[]
+  payoutRequests             PayoutRequest[]
   reviewsReceived            Review[]                    @relation("reviewee")
   reviewsGiven               Review[]                    @relation("reviewer")
 }
@@ -228,6 +230,7 @@ model TraderDocument {
 
   @@index([traderId])
   @@index([status])
+  @@index([traderId, createdAt])
 }
 
 model Auction {
@@ -528,7 +531,7 @@ model SupportTicket {
   userId    String
   ticketId  String                 @unique
   subject   String
-  category  String                 @default("Ø¹Ø§Ù…")
+  category  String                 @default("عام")
   priority  String                 @default("MEDIUM")
   status    String                 @default("OPEN")
   createdAt DateTime               @default(now())
@@ -847,22 +850,32 @@ model StaffInvite {
 }
 
 model LedgerAccount {
-  id            String        @id @default(cuid())
-  ownerId       String?
-  slug          String        @unique
-  currency      String        @default("SYP")
-  balance       Float         @default(0)
-  metadata      Json?
-  status        String        @default("ACTIVE")
-  debtStartedAt DateTime?
-  creditLimit   Float         @default(0)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  lines         JournalLine[]
-  holds         LedgerHold[]
+  id                String               @id @default(cuid())
+  ownerId           String?
+  slug              String               @unique
+  currency          String               @default("SYP")
+  balance           Float                @default(0)
+  metadata          Json?
+  status            String               @default("ACTIVE")
+  debtStartedAt     DateTime?
+  debtDueAt         DateTime?
+  debtStatus        String               @default("CLEAR")
+  lockedByDebt      Boolean              @default(false)
+  debtLockReason    String?
+  creditLimit       Float                @default(0)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  lines             JournalLine[]
+  holds             LedgerHold[]
+  depositRequests   DepositRequest[]
+  payoutRequests    PayoutRequest[]
+  waiverPolicies    AccountWaiverPolicy[]
 
   @@index([ownerId])
   @@index([slug])
+  @@index([status])
+  @@index([debtStatus])
+  @@index([lockedByDebt])
 }
 
 model JournalEntry {
@@ -892,6 +905,7 @@ model JournalLine {
   @@index([entryId])
   @@index([accountId])
   @@index([createdAt])
+  @@index([accountId, createdAt])
 }
 
 model LedgerHold {
@@ -910,17 +924,88 @@ model LedgerHold {
   @@index([accountId])
   @@index([status])
   @@index([referenceId])
+  @@index([accountId, status])
+}
+
+model DepositRequest {
+  id           String        @id @default(cuid())
+  accountId    String
+  userId       String
+  amount       Float
+  currency     String        @default("SYP")
+  method       String
+  status       String        @default("PENDING")
+  proofUrl     String?
+  requestNote  String?
+  reviewNote   String?
+  reviewedById String?
+  reviewedAt   DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  account      LedgerAccount @relation(fields: [accountId], references: [id])
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PayoutRequest {
+  id            String        @id @default(cuid())
+  accountId     String
+  userId        String
+  amount        Float
+  currency      String        @default("SYP")
+  method        String
+  destination   String
+  status        String        @default("PENDING")
+  requestNote   String?
+  reviewNote    String?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  processedAt   DateTime?
+  completedAt   DateTime?
+  failedAt      DateTime?
+  failureReason String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  account       LedgerAccount @relation(fields: [accountId], references: [id])
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AccountWaiverPolicy {
+  id                   String        @id @default(cuid())
+  accountId            String
+  waiveCommissions     Boolean       @default(false)
+  waiveAuctionDeposits Boolean       @default(false)
+  waiveServiceFees     Boolean       @default(false)
+  isActive             Boolean       @default(true)
+  reason               String
+  approvedById         String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  account              LedgerAccount @relation(fields: [accountId], references: [id])
+
+  @@index([accountId])
+  @@index([isActive])
 }
 
 model Driver {
-  id           String        @id @default(cuid())
-  userId       String        @unique
+  id           String               @id @default(cuid())
+  userId       String               @unique
   fullName     String
   phone        String
   city         String?
-  status       DriverStatus  @default(PENDING)
-  ratingAvg    Float         @default(0)
-  ratingCount  Int           @default(0)
+  status       DriverStatus         @default(PENDING)
+  ratingAvg    Float                @default(0)
+  ratingCount  Int                  @default(0)
   vehicles     Vehicle[]
   documents    DriverDocument[]
   sessions     DriverSession[]
@@ -928,12 +1013,12 @@ model Driver {
   deliveries   Delivery[]
   rewards      DriverReward[]
   ratings      DriverRating[]
-  trustScore   Float         @default(0.0)
-  totalReviews Int           @default(0)
-  successRate  Float         @default(100.0)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trustScore   Float                @default(0.0)
+  totalReviews Int                  @default(0)
+  successRate  Float                @default(100.0)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([status])
@@ -973,19 +1058,20 @@ model DriverDocument {
   @@index([driverId])
   @@index([status])
   @@index([type])
+  @@index([driverId, createdAt])
 }
 
 model DriverSession {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   driverId   String
   deviceId   String
   pushToken  String?
   lastLat    Float?
   lastLng    Float?
   lastSeenAt DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  driver     Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  driver     Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
 
   @@index([driverId])
   @@index([deviceId])
@@ -993,16 +1079,16 @@ model DriverSession {
 }
 
 model Order {
-  id             String      @id @default(cuid())
-  status         OrderStatus @default(CREATED)
+  id             String               @id @default(cuid())
+  status         OrderStatus          @default(CREATED)
   pickupAddress  String
   dropoffAddress String
   recipientName  String?
   recipientPhone String?
   offers         DeliveryAssignment[]
   deliveries     Delivery[]
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@index([status])
   @@index([createdAt])
@@ -1031,20 +1117,20 @@ model DeliveryAssignment {
 }
 
 model Delivery {
-  id               String      @id @default(cuid())
+  id               String           @id @default(cuid())
   orderId          String
   driverId         String
-  status           OrderStatus @default(ASSIGNED)
+  status           OrderStatus      @default(ASSIGNED)
   pickedUpAt       DateTime?
   outForDeliveryAt DateTime?
   deliveredAt      DateTime?
   failedAt         DateTime?
   failReason       String?
   pod              ProofOfDelivery?
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
-  order            Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  driver           Driver      @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  order            Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driver           Driver           @relation(fields: [driverId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([driverId])
@@ -1123,18 +1209,18 @@ model AuditLog {
 }
 
 model Review {
-  id          String   @id @default(cuid())
-  reviewerId  String
-  revieweeId  String
-  dealId      String?
-  rating      Int
-  comment     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  reviewerId String
+  revieweeId String
+  dealId     String?
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  reviewer    User     @relation("reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
-  reviewee    User     @relation("reviewee", fields: [revieweeId], references: [id], onDelete: Cascade)
-  deal        Deal?    @relation(fields: [dealId], references: [id])
+  reviewer User  @relation("reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee User  @relation("reviewee", fields: [revieweeId], references: [id], onDelete: Cascade)
+  deal     Deal? @relation(fields: [dealId], references: [id])
 
   @@index([revieweeId])
   @@index([reviewerId])
@@ -1147,34 +1233,34 @@ model Review {
 
 /// مكونات النظام المراقبة (مزاد، دفع، WAF، Ledger، لوجستيات)
 model SystemComponent {
-  id              String    @id @default(cuid())
-  key             String    @unique             // "auction", "ledger", "payments", "waf", "logistics"
-  name            String                        // اسم عربي للعرض
-  criticality     String    @default("medium")  // low | medium | high | critical
-  status          String    @default("healthy") // healthy | degraded | down | maintenance
+  id              String   @id @default(cuid())
+  key             String   @unique
+  name            String
+  criticality     String   @default("medium")
+  status          String   @default("healthy")
   lastHeartbeatAt DateTime?
-  meta            Json      @default("{}")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  meta            Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([status])
   @@index([criticality])
 }
 
-/// تيار الأحداث — القلب النابض للمنظومة (Event Sourcing light)
+/// تيار الأحداث — القلب النابض للمنظومة
 model ControlEvent {
-  id                  String   @id @default(cuid())
-  ts                  DateTime @default(now())
-  sourceComponentKey  String                       // FK منطقي → SystemComponent.key
-  eventType           String                       // "AUCTION.BID_PLACED" / "LEDGER.TRANSFER_POSTED"
-  severity            String   @default("info")    // info | warn | critical
-  tenantCountry       String?                      // سوريا / ألمانيا
-  actorUserId         String?                      // المستخدم المسبب (إن وجد)
-  entityType          String?                      // "auction" | "bid" | "ledger_txn" | "shipment"
-  entityId            String?                      // معرف الكيان المرتبط
-  traceId             String?                      // correlation id
-  ip                  String?
-  payload             Json     @default("{}")
+  id                 String   @id @default(cuid())
+  ts                 DateTime @default(now())
+  sourceComponentKey String
+  eventType          String
+  severity           String   @default("info")
+  tenantCountry      String?
+  actorUserId        String?
+  entityType         String?
+  entityId           String?
+  traceId            String?
+  ip                 String?
+  payload            Json     @default("{}")
 
   @@index([ts(sort: Desc)])
   @@index([eventType, ts(sort: Desc)])
@@ -1183,24 +1269,24 @@ model ControlEvent {
   @@index([severity])
 }
 
-/// تنبيهات ناتجة عن قواعد الكشف (Detection Rules)
+/// تنبيهات ناتجة عن قواعد الكشف
 model CtAlert {
-  id                  String    @id @default(cuid())
-  createdAt           DateTime  @default(now())
-  status              String    @default("open")    // open | ack | snoozed | resolved | false_positive
-  severity            String    @default("medium")  // low | medium | high | critical
-  ruleKey             String                        // "API_ABUSE_500RPS" / "BID_COLLUSION"
-  title               String
-  description         String?
-  primaryEntityType   String?
-  primaryEntityId     String?
-  relatedEntities     Json      @default("[]")
-  evidence            Json      @default("{}")      // event_ids, metrics, samples
-  assignedToUserId    String?
+  id                   String   @id @default(cuid())
+  createdAt            DateTime @default(now())
+  status               String   @default("open")
+  severity             String   @default("medium")
+  ruleKey              String
+  title                String
+  description          String?
+  primaryEntityType    String?
+  primaryEntityId      String?
+  relatedEntities      Json     @default("[]")
+  evidence             Json     @default("{}")
+  assignedToUserId     String?
   acknowledgedByUserId String?
-  acknowledgedAt      DateTime?
-  resolvedByUserId    String?
-  resolvedAt          DateTime?
+  acknowledgedAt       DateTime?
+  resolvedByUserId     String?
+  resolvedAt           DateTime?
 
   @@index([status, severity, createdAt(sort: Desc)])
   @@index([ruleKey, createdAt(sort: Desc)])
@@ -1209,32 +1295,32 @@ model CtAlert {
 
 /// حوادث — تجميع عدة تنبيهات/أحداث للتحقيق
 model Incident {
-  id          String         @id @default(cuid())
-  createdAt   DateTime       @default(now())
-  status      String         @default("open")     // open | investigating | contained | closed
-  severity    String         @default("medium")   // low | medium | high | critical
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  status      String   @default("open")
+  severity    String   @default("medium")
   title       String
   summary     String?
   ownerUserId String?
-  tags        String[]       @default([])
-  timeline    Json           @default("[]")        // نقاط زمنية مختصرة
-  updatedAt   DateTime       @updatedAt
+  tags        String[] @default([])
+  timeline    Json     @default("[]")
+  updatedAt   DateTime @updatedAt
 
-  links       IncidentLink[]
+  links IncidentLink[]
 
   @@index([status, severity])
   @@index([ownerUserId])
 }
 
-/// روابط الحوادث (ربط alert/event بحادث)
+/// روابط الحوادث
 model IncidentLink {
-  id          String   @id @default(cuid())
-  incidentId  String
-  linkType    String                                // "alert" | "event"
-  linkId      String                                // id of the alert or event
-  createdAt   DateTime @default(now())
+  id         String   @id @default(cuid())
+  incidentId String
+  linkType   String
+  linkId     String
+  createdAt  DateTime @default(now())
 
-  incident    Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
 
   @@unique([incidentId, linkType, linkId])
   @@index([linkType, linkId])
@@ -1242,19 +1328,18 @@ model IncidentLink {
 
 /// إجراءات الاحتواء/التصعيد/الموافقة
 model ControlAction {
-  id                String    @id @default(cuid())
-  createdAt         DateTime  @default(now())
-  type              String                          // "FREEZE_USER" | "PAUSE_AUCTION" | "BLOCK_IP"
-  status            String    @default("pending")   // pending | approved | rejected | executed | failed | rolled_back
+  id                String   @id @default(cuid())
+  createdAt         DateTime @default(now())
+  type              String
+  status            String   @default("pending")
   requestedByUserId String
-  approvedByUserId  String?
   approvedAt        DateTime?
   executedAt        DateTime?
-  reason            String                          // إلزامي — لماذا هذا الإجراء
-  scope             Json      @default("{}")        // { userId, auctionId, ip, componentKey... }
+  reason            String
+  scope             Json     @default("{}")
   incidentId        String?
-  result            Json      @default("{}")
-  updatedAt         DateTime  @updatedAt
+  result            Json     @default("{}")
+  updatedAt         DateTime @updatedAt
 
   @@index([status, createdAt(sort: Desc)])
   @@index([type])
@@ -1262,16 +1347,16 @@ model ControlAction {
   @@index([incidentId])
 }
 
-/// مفاتيح الإيقاف الطارئ — Kill Switch
+/// مفاتيح الإيقاف الطارئ
 model KillSwitch {
   id              String   @id @default(cuid())
-  key             String   @unique                 // "AUCTIONS_GLOBAL" | "PAYMENTS_GLOBAL" | "PAYMENTS_SYRIA"
-  name            String                           // اسم عربي للعرض
+  key             String   @unique
+  name            String
   description     String?
-  state           String   @default("off")         // on | off
+  state           String   @default("off")
   updatedAt       DateTime @updatedAt
   updatedByUserId String
-  reason          String                           // سبب آخر تغيير
+  reason          String
 
   @@index([state])
 }

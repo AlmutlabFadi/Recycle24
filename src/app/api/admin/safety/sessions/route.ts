@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getUserPermissions, hasCenterAccess, requirePermission } from "@/lib/rbac";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { getSessionPermissions, hasCenterAccess, requirePermission } from "@/lib/rbac";
 import { db } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
         }
 
-        const permissions = await getUserPermissions(access.userId!);
+        const permissions = (await getSessionPermissions()) ?? [];
         if (!hasCenterAccess(permissions, "SAFETY")) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     } catch (error) {
         console.error("Admin safety sessions GET error:", error);
         return NextResponse.json(
-            { success: false, error: "تعذر تحميل الجلسات" },
+            { success: false, error: "ØªØ¹Ø°Ø± ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ø¬Ù„Ø³Ø§Øª" },
             { status: 500 }
         );
     }
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
         }
 
-        const permissions = await getUserPermissions(access.userId!);
+        const permissions = (await getSessionPermissions()) ?? [];
         if (!hasCenterAccess(permissions, "SAFETY")) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
 
         if (!title || !location || !startDate || !durationHours || !capacity) {
             return NextResponse.json(
-                { success: false, error: "الحقول الأساسية مطلوبة" },
+                { success: false, error: "Ø§Ù„Ø­Ù‚ÙˆÙ„ Ø§Ù„Ø£Ø³Ø§Ø³ÙŠØ© Ù…Ø·Ù„ÙˆØ¨Ø©" },
                 { status: 400 }
             );
         }
@@ -104,8 +104,9 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error("Admin safety sessions POST error:", error);
         return NextResponse.json(
-            { success: false, error: "تعذر حفظ الجلسة" },
+            { success: false, error: "ØªØ¹Ø°Ø± Ø­ÙØ¸ Ø§Ù„Ø¬Ù„Ø³Ø©" },
             { status: 500 }
         );
     }
 }
+

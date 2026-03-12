@@ -1,44 +1,31 @@
-import '@testing-library/jest-dom'
-import { cleanup } from '@testing-library/react'
-import { afterEach, vi } from 'vitest'
+import "@testing-library/jest-dom/vitest";
+import React from "react";
+import { cleanup } from "@testing-library/react";
+import { afterEach, vi } from "vitest";
 
-// Cleanup after each test
 afterEach(() => {
-  cleanup()
-})
+  cleanup();
+});
 
-// Mock Next.js router
-vi.mock('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),
     refresh: vi.fn(),
-    back: vi.fn(),
     forward: vi.fn(),
+    back: vi.fn(),
     prefetch: vi.fn(),
   }),
   useSearchParams: () => ({
     get: vi.fn(),
     getAll: vi.fn(),
     has: vi.fn(),
+    toString: vi.fn(),
   }),
-  usePathname: () => '',
-}))
+  usePathname: () => "",
+}));
 
-// Mock Next.js image
-interface ImageProps {
-  src: string;
-  alt: string;
-  width?: number;
-  height?: number;
-  fill?: boolean;
-  className?: string;
-  priority?: boolean;
-}
-
-vi.mock('next/image', () => ({
-  default: (props: ImageProps) => {
-     
-    return `<img {...props} />`
-  },
-}))
+vi.mock("next/image", () => ({
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) =>
+    React.createElement("img", props),
+}));

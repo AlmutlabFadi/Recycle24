@@ -1,10 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { bootstrapAccessControl, requirePermission, PERMISSIONS } from "@/lib/rbac";
+import { requirePermission, PERMISSIONS } from "@/lib/rbac";
 
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
     try {
-        await bootstrapAccessControl();
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
         if (!access.ok) {
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
@@ -14,7 +13,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         const { roleIds } = body;
 
         if (!Array.isArray(roleIds)) {
-            return NextResponse.json({ success: false, error: "قائمة الأدوار مطلوبة" }, { status: 400 });
+            return NextResponse.json({ success: false, error: "Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„Ø£Ø¯ÙˆØ§Ø± Ù…Ø·Ù„ÙˆØ¨Ø©" }, { status: 400 });
         }
 
         await db.$transaction(async (tx) => {
@@ -30,6 +29,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error("User roles update error:", error);
-        return NextResponse.json({ success: false, error: "تعذر تحديث أدوار المستخدم" }, { status: 500 });
+        return NextResponse.json({ success: false, error: "ØªØ¹Ø°Ø± ØªØ­Ø¯ÙŠØ« Ø£Ø¯ÙˆØ§Ø± Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…" }, { status: 500 });
     }
 }
+

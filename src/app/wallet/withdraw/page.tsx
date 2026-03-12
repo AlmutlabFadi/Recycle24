@@ -1,340 +1,311 @@
 "use client";
 
 import { useState } from "react";
-
 import { useRouter } from "next/navigation";
+
 import HeaderWithBack from "@/components/HeaderWithBack";
-import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/contexts/ToastContext";
+import { useWallet } from "@/hooks/useWallet";
 
 const withdrawalMethods = [
-    { id: "haram", name: "حريم", icon: "🏦", minAmount: 50000 },
-    { id: "syriatel", name: "سيرياتيل كاش", icon: "📱", minAmount: 10000 },
-    { id: "mtn", name: "MTN كاش", icon: "📲", minAmount: 10000 },
-    { id: "al_fouad", name: "الفؤاد", icon: "🏛️", minAmount: 50000 },
-];
+  { id: "haram", name: "Haram", icon: "🏦", minAmount: 50000 },
+  { id: "syriatel", name: "Syriatel Cash", icon: "📱", minAmount: 10000 },
+  { id: "mtn", name: "MTN Cash", icon: "📲", minAmount: 10000 },
+  { id: "al_fouad", name: "Al Fouad", icon: "🏪", minAmount: 50000 },
+] as const;
 
 export default function WalletWithdrawPage() {
-    const [amount, setAmount] = useState<string>("");
-    const [selectedMethod, setSelectedMethod] = useState<string>("");
-    const [accountNumber, setAccountNumber] = useState<string>("");
-    const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    const { wallet, withdraw } = useWallet();
-    const { addToast } = useToast();
-    const router = useRouter();
+  const [amount, setAmount] = useState<string>("");
+  const [selectedMethod, setSelectedMethod] = useState<string>("");
+  const [accountNumber, setAccountNumber] = useState<string>("");
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const balance = wallet?.balance || 0;
-    const fee = parseInt(amount || "0") * 0.01; // 1% fee
-    const total = parseInt(amount || "0") + fee;
+  const { wallet, withdraw } = useWallet();
+  const { addToast } = useToast();
+  const router = useRouter();
 
-    const isAmountValid = parseInt(amount) >= (withdrawalMethods.find(m => m.id === selectedMethod)?.minAmount || 0);
-    const hasEnoughBalance = balance >= total;
+  const walletAny = wallet as Record<string, unknown> | null | undefined;
+  const balance = Number(
+    walletAny?.availableBalance ??
+      walletAny?.balance ??
+      walletAny?.balanceSYP ??
+      walletAny?.currentBalance ??
+      walletAny?.amount ??
+      0
+  );
 
-    const handleNext = () => {
-        if (step === 1 && amount && hasEnoughBalance) {
-            setStep(2);
-        } else if (step === 2 && selectedMethod && accountNumber && isAmountValid) {
-            setStep(3);
-        }
-    };
+  const numericAmount = Number.parseInt(amount || "0", 10) || 0;
+  const selectedMethodMeta = withdrawalMethods.find((method) => method.id === selectedMethod);
 
-    const handleSubmit = async () => {
-        if (!amount || !selectedMethod || !accountNumber) {
-            addToast("يرجى ملء جميع الحقول", "error");
-            return;
-        }
+  const isAmountValid = numericAmount >= (selectedMethodMeta?.minAmount ?? 0);
+  const hasEnoughBalance = balance >= numericAmount;
 
-        setIsSubmitting(true);
-        
-        try {
-            const success = await withdraw(
-                parseInt(amount),
-                selectedMethod,
-                accountNumber
-            );
+  const canGoFromStep1 = numericAmount > 0 && hasEnoughBalance;
+  const canGoFromStep2 =
+    selectedMethod.length > 0 &&
+    accountNumber.trim().length > 0 &&
+    isAmountValid;
+  const canSubmit =
+    numericAmount > 0 &&
+    selectedMethod.length > 0 &&
+    accountNumber.trim().length > 0 &&
+    isAmountValid &&
+    hasEnoughBalance &&
+    !isSubmitting;
 
-            if (success) {
-                addToast("تم إنشاء طلب السحب بنجاح! سيتم معالجته خلال 24 ساعة", "success");
-                setStep(4); // Success step
-                setTimeout(() => {
-                    router.push("/wallet");
-                }, 3000);
-            } else {
-                addToast("فشل إنشاء طلب السحب", "error");
-            }
-        } catch (error) {
-            addToast("حدث خطأ أثناء السحب", "error");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+  const handleNext = () => {
+    if (step === 1 && canGoFromStep1) {
+      setStep(2);
+      return;
+    }
 
-    return (
-        <div className="flex flex-col min-h-screen bg-bg-dark font-display">
-            <HeaderWithBack title="سحب من المحفظة" />
+    if (step === 2 && canGoFromStep2) {
+      setStep(3);
+    }
+  };
 
-            {/* Progress */}
-            <div className="px-4 py-4 bg-surface-dark border-b border-slate-800">
-                <div className="flex items-center justify-center gap-2">
-                    {[1, 2, 3].map((s) => (
-                        <div
-                            key={s}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                                s < step || (step === 4 && s === 3)
-                                    ? "bg-green-500 text-white"
-                                    : s === step
-                                    ? "bg-primary text-white"
-                                    : "bg-slate-700 text-slate-500"
-                            }`}
-                        >
-                            {s < step || (step === 4 && s === 3) ? (
-                                <span className="material-symbols-outlined">check</span>
-                            ) : (
-                                s
-                            )}
-                        </div>
-                    ))}
-                </div>
-                <div className="text-center mt-2 text-xs text-slate-400">
-                    {step === 1 && "المبلغ"}
-                    {step === 2 && "طريقة السحب"}
-                    {step === 3 && "تأكيد"}
-                    {step === 4 && "تم بنجاح!"}
-                </div>
+  const handleSubmit = async () => {
+    if (!canSubmit) {
+      addToast("Please complete all required fields.", "error");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const success = await withdraw(numericAmount, selectedMethod, accountNumber);
+
+      if (!success) {
+        addToast("Failed to post withdrawal.", "error");
+        return;
+      }
+
+      addToast("Withdrawal posted successfully.", "success");
+      setStep(4);
+
+      setTimeout(() => {
+        router.push("/wallet");
+      }, 1500);
+    } catch (error) {
+      console.error("Withdrawal submission error:", error);
+      addToast("An error occurred while posting the withdrawal.", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col bg-bg-dark font-display">
+      <HeaderWithBack title="Wallet Withdrawal" />
+
+      <div className="border-b border-slate-800 bg-surface-dark px-4 py-4">
+        <div className="flex items-center justify-center gap-2">
+          {[1, 2, 3].map((s) => (
+            <div
+              key={s}
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-all ${
+                s < step || (step === 4 && s === 3)
+                  ? "bg-green-500 text-white"
+                  : s === step
+                  ? "bg-primary text-white"
+                  : "bg-slate-700 text-slate-500"
+              }`}
+            >
+              {s < step || (step === 4 && s === 3) ? (
+                <span className="material-symbols-outlined">check</span>
+              ) : (
+                s
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-2 text-center text-xs text-slate-400">
+          {step === 1 && "Amount"}
+          {step === 2 && "Method"}
+          {step === 3 && "Confirmation"}
+          {step === 4 && "Completed"}
+        </div>
+      </div>
+
+      <main className="flex-1 p-4 pb-24">
+        <div className="mb-6 rounded-xl border border-slate-700 bg-surface-highlight p-4">
+          <span className="text-sm text-slate-400">Available balance</span>
+          <div className="text-2xl font-bold text-white">
+            {balance.toLocaleString()} <span className="text-sm">SYP</span>
+          </div>
+        </div>
+
+        {step === 1 && (
+          <section className="mb-6">
+            <h2 className="mb-4 text-lg font-bold text-white">Withdrawal amount</h2>
+
+            <div className="rounded-xl border border-slate-700 bg-surface-highlight p-4">
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Enter amount"
+                className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-center text-lg text-white transition-colors focus:border-primary focus:outline-none"
+              />
+
+              <div className="mt-3 flex gap-2">
+                {[50000, 100000, 250000].map((preset) => (
+                  <button
+                    key={preset}
+                    onClick={() => setAmount(String(preset))}
+                    className="flex-1 rounded-lg bg-slate-700 px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-600"
+                  >
+                    {preset.toLocaleString()}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <main className="flex-1 p-4 pb-24">
-                {/* Balance */}
-                <div className="bg-surface-highlight rounded-xl p-4 border border-slate-700 mb-6">
-                    <span className="text-slate-400 text-sm">الرصيد المتاح</span>
-                    <div className="text-2xl font-bold text-white">
-                        {balance.toLocaleString()} <span className="text-sm">ل.س</span>
+            {numericAmount > 0 && (
+              <div className="mt-4 rounded-xl border border-slate-700 bg-surface-highlight p-4">
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Amount</span>
+                    <span className="text-white">
+                      {numericAmount.toLocaleString()} SYP
+                    </span>
+                  </div>
+
+                  <div className="border-t border-slate-700 pt-2">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Ledger deduction</span>
+                      <span className="font-bold text-primary">
+                        {numericAmount.toLocaleString()} SYP
+                      </span>
                     </div>
+                  </div>
                 </div>
 
-                {step === 1 && (
-                    <>
-                        <section className="mb-6">
-                            <h2 className="text-lg font-bold text-white mb-4">المبلغ</h2>
-                            <div className="bg-surface-highlight rounded-xl p-4 border border-slate-700 mb-4">
-                                <input
-                                    type="number"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="أدخل المبلغ..."
-                                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white text-lg text-center focus:border-primary focus:outline-none transition-colors"
-                                />
-                                <div className="flex gap-2 mt-3">
-                                    {[50000, 100000, 250000].map((amt) => (
-                                        <button
-                                            key={amt}
-                                            onClick={() => setAmount(amt.toString())}
-                                            className="flex-1 py-2 px-3 rounded-lg bg-slate-700 text-slate-300 text-sm hover:bg-slate-600 transition-colors"
-                                        >
-                                            {amt.toLocaleString()}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {amount && (
-                                <div className="bg-surface-highlight rounded-xl p-4 border border-slate-700">
-                                    <div className="space-y-2 text-sm">
-                                        <div className="flex justify-between">
-                                            <span className="text-slate-400">المبلغ:</span>
-                                            <span className="text-white">{parseInt(amount).toLocaleString()} ل.س</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-slate-400">الرسوم (1%):</span>
-                                            <span className="text-orange-400">{fee.toLocaleString()} ل.س</span>
-                                        </div>
-                                        <div className="border-t border-slate-700 pt-2">
-                                            <div className="flex justify-between">
-                                                <span className="text-slate-400">الإجمالي:</span>
-                                                <span className="text-primary font-bold">{total.toLocaleString()} ل.س</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {!hasEnoughBalance && (
-                                        <p className="text-red-400 text-sm mt-2 text-center">
-                                            الرصيد غير كافٍ
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-                        </section>
-                    </>
+                {!hasEnoughBalance && (
+                  <p className="mt-2 text-center text-sm text-red-400">
+                    Insufficient available balance.
+                  </p>
                 )}
-
-                {step === 2 && (
-                    <>
-                        <section className="mb-6">
-                            <h2 className="text-lg font-bold text-white mb-4">اختر طريقة السحب</h2>
-                            <div className="space-y-3 mb-6">
-                                {withdrawalMethods.map((method) => (
-                                    <button
-                                        key={method.id}
-                                        onClick={() => setSelectedMethod(method.id)}
-                                        className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-right ${
-                                            selectedMethod === method.id
-                                                ? "border-primary bg-primary/10"
-                                                : "border-slate-700 bg-surface-highlight hover:border-slate-600"
-                                        }`}
-                                    >
-                                        <span className="text-3xl">{method.icon}</span>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-white">{method.name}</h3>
-                                            <p className="text-sm text-slate-400">
-                                                الحد الأدنى: {method.minAmount.toLocaleString()} ل.س
-                                            </p>
-                                        </div>
-                                        {selectedMethod === method.id && (
-                                            <span className="material-symbols-outlined text-primary">
-                                                check_circle
-                                            </span>
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {selectedMethod && (
-                                <div className="bg-surface-highlight rounded-xl p-4 border border-slate-700">
-                                    <label className="block text-sm text-slate-400 mb-2">
-                                        رقم الحساب / رقم الهاتف
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={accountNumber}
-                                        onChange={(e) => setAccountNumber(e.target.value)}
-                                        placeholder="أدخل رقم الحساب..."
-                                        className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white text-center focus:border-primary focus:outline-none transition-colors"
-                                    />
-                                    {!isAmountValid && amount && (
-                                        <p className="text-red-400 text-sm mt-2">
-                                            المبلغ أقل من الحد الأدنى ({withdrawalMethods.find(m => m.id === selectedMethod)?.minAmount.toLocaleString()} ل.س)
-                                        </p>
-                                    )}
-                                </div>
-                            )}
-                        </section>
-                    </>
-                )}
-
-                {step === 3 && (
-                    <>
-                        <section className="mb-6">
-                            <div className="text-center mb-6">
-                                <div className="w-20 h-20 rounded-full bg-orange-500/20 flex items-center justify-center mx-auto mb-4">
-                                    <span className="material-symbols-outlined text-4xl text-orange-400">warning</span>
-                                </div>
-                                <h2 className="text-xl font-bold text-white mb-2">تأكيد السحب</h2>
-                                <p className="text-slate-400">يرجى مراجعة البيانات قبل التأكيد</p>
-                            </div>
-
-                            <div className="bg-surface-highlight rounded-xl p-4 border border-slate-700">
-                                <h3 className="font-bold text-white mb-3">ملخص العملية:</h3>
-                                <div className="space-y-3 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-400">المبلغ:</span>
-                                        <span className="text-white font-bold">{parseInt(amount).toLocaleString()} ل.س</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-400">طريقة السحب:</span>
-                                        <span className="text-white">
-                                            {withdrawalMethods.find(m => m.id === selectedMethod)?.name}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-400">الحساب:</span>
-                                        <span className="text-white font-mono">{accountNumber}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-400">الرسوم:</span>
-                                        <span className="text-orange-400">{fee.toLocaleString()} ل.س</span>
-                                    </div>
-                                    <div className="border-t border-slate-700 pt-2">
-                                        <div className="flex justify-between">
-                                            <span className="text-slate-400">سيتم خصم:</span>
-                                            <span className="text-red-400 font-bold text-lg">{total.toLocaleString()} ل.س</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mt-4">
-                                <div className="flex items-start gap-3">
-                                    <span className="material-symbols-outlined text-red-400">warning</span>
-                                    <div>
-                                        <h3 className="font-bold text-white mb-1">تنبيه</h3>
-                                        <p className="text-sm text-slate-400">
-                                            العملية نهائية ولا يمكن التراجع عنها. تأكد من صحة رقم الحساب.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                    </>
-                )}
-
-                {step === 4 && (
-                    <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                        <div className="w-24 h-24 rounded-full bg-green-500/20 flex items-center justify-center mb-6">
-                            <span className="material-symbols-outlined text-5xl text-green-500">check_circle</span>
-                        </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">تم إرسال الطلب!</h2>
-                        <p className="text-slate-400 mb-4">
-                            سيتم معالجة طلبك خلال 24 ساعة
-                        </p>
-                        <div className="bg-surface-highlight rounded-xl p-4 border border-slate-700 w-full max-w-xs">
-                            <p className="text-sm text-slate-400">المبلغ:</p>
-                            <p className="text-white font-bold">{parseInt(amount).toLocaleString()} ل.س</p>
-                        </div>
-                    </div>
-                )}
-            </main>
-
-            {/* Bottom Actions */}
-            {step !== 4 && (
-                <div className="fixed bottom-0 left-0 right-0 bg-surface-dark border-t border-slate-800 p-4 pb-safe">
-                    <div className="max-w-md mx-auto flex gap-3">
-                        {step > 1 && (
-                            <button
-                                onClick={() => setStep((s) => (s - 1) as typeof step)}
-                                className="flex-1 py-3 px-4 rounded-xl font-bold text-slate-300 bg-slate-700 hover:bg-slate-600 transition-all"
-                            >
-                                السابق
-                            </button>
-                        )}
-                        <button
-                            onClick={step === 3 ? handleSubmit : handleNext}
-                            disabled={
-                                (step === 1 && (!amount || !hasEnoughBalance)) ||
-                                (step === 2 && (!selectedMethod || !accountNumber || !isAmountValid)) ||
-                                isSubmitting
-                            }
-                            className={`flex-[2] py-3 px-4 rounded-xl font-bold transition-all ${
-                                ((step === 1 && amount && hasEnoughBalance) ||
-                                (step === 2 && selectedMethod && accountNumber && isAmountValid)) && !isSubmitting
-                                    ? "bg-primary text-white hover:bg-primary-dark"
-                                    : step === 3
-                                    ? "bg-red-600 text-white hover:bg-red-700"
-                                    : "bg-slate-700 text-slate-500 cursor-not-allowed"
-                            }`}
-                        >
-                            {isSubmitting ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                    جاري الإرسال...
-                                </span>
-                            ) : (
-                                step === 3 ? "تأكيد السحب" : "متابعة"
-                            )}
-                        </button>
-                    </div>
-                </div>
+              </div>
             )}
+          </section>
+        )}
+
+        {step === 2 && (
+          <section className="mb-6">
+            <div className="mb-6 space-y-3">
+              {withdrawalMethods.map((method) => (
+                <button
+                  key={method.id}
+                  onClick={() => setSelectedMethod(method.id)}
+                  className={`w-full rounded-xl border-2 p-4 text-right transition-all ${
+                    selectedMethod === method.id
+                      ? "border-primary bg-primary/10"
+                      : "border-slate-700 bg-surface-highlight hover:border-slate-600"
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="text-3xl">{method.icon}</span>
+
+                    <div className="flex-1">
+                      <h3 className="font-bold text-white">{method.name}</h3>
+                      <p className="text-sm text-slate-400">
+                        Minimum: {method.minAmount.toLocaleString()} SYP
+                      </p>
+                    </div>
+
+                    {selectedMethod === method.id && (
+                      <span className="material-symbols-outlined text-primary">
+                        check_circle
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <input
+              type="text"
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value)}
+              placeholder="Account number / wallet number"
+              className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-white focus:border-primary focus:outline-none"
+            />
+
+            {selectedMethod && !isAmountValid && (
+              <p className="mt-3 text-sm text-red-400">
+                The amount is below the minimum for the selected method.
+              </p>
+            )}
+          </section>
+        )}
+
+        {step === 3 && (
+          <section className="space-y-3 rounded-xl border border-slate-700 bg-surface-highlight p-4">
+            <h2 className="text-lg font-bold text-white">Confirm withdrawal</h2>
+
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-400">Amount</span>
+              <span className="text-white">{numericAmount.toLocaleString()} SYP</span>
+            </div>
+
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-400">Method</span>
+              <span className="text-white">{selectedMethodMeta?.name || "-"}</span>
+            </div>
+
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-400">Destination</span>
+              <span className="text-white">{accountNumber}</span>
+            </div>
+
+            <div className="border-t border-slate-700 pt-3">
+              <div className="flex justify-between text-sm font-bold">
+                <span className="text-slate-300">Posted withdrawal</span>
+                <span className="text-primary">{numericAmount.toLocaleString()} SYP</span>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {step === 4 && (
+          <section className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-6 text-center">
+            <h2 className="mb-2 text-xl font-bold text-emerald-400">
+              Withdrawal posted
+            </h2>
+            <p className="text-sm text-slate-300">
+              The wallet balance was updated immediately.
+            </p>
+          </section>
+        )}
+      </main>
+
+      {step !== 4 && (
+        <div className="border-t border-slate-800 bg-bg-dark p-4">
+          {step < 3 ? (
+            <button
+              onClick={handleNext}
+              disabled={
+                (step === 1 && !canGoFromStep1) ||
+                (step === 2 && !canGoFromStep2)
+              }
+              className="w-full rounded-2xl bg-primary py-4 font-bold text-white disabled:opacity-50"
+            >
+              Continue
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className="w-full rounded-2xl bg-primary py-4 font-bold text-white disabled:opacity-50"
+            >
+              {isSubmitting ? "Posting..." : "Confirm withdrawal"}
+            </button>
+          )}
         </div>
-    );
+      )}
+    </div>
+  );
 }

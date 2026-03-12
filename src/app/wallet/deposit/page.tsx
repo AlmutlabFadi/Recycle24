@@ -1,284 +1,316 @@
 "use client";
 
 import { useState } from "react";
-
 import { useRouter } from "next/navigation";
+
 import HeaderWithBack from "@/components/HeaderWithBack";
-import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/contexts/ToastContext";
+import { useWallet } from "@/hooks/useWallet";
 
 const paymentMethods = [
-    { id: "haram", name: "حريم", icon: "🏦", description: "عبر فروع حريم" },
-    { id: "syriatel", name: "سيرياتيل كاش", icon: "📱", description: "عبر تطبيق سيرياتيل" },
-    { id: "mtn", name: "MTN كاش", icon: "📲", description: "عبر تطبيق MTN" },
-    { id: "al_fouad", name: "الفؤاد", icon: "🏛️", description: "عبر فروع الفؤاد" },
-];
+  { id: "haram", name: "Haram", icon: "🏦", description: "Cash branch transfer" },
+  { id: "syriatel", name: "Syriatel Cash", icon: "📱", description: "Syriatel wallet transfer" },
+  { id: "mtn", name: "MTN Cash", icon: "📲", description: "MTN wallet transfer" },
+  { id: "al_fouad", name: "Al Fouad", icon: "🏪", description: "Branch transfer" },
+] as const;
 
-const amounts = [50000, 100000, 250000, 500000, 1000000];
+const presetAmounts = [50000, 100000, 250000, 500000, 1000000];
 
 export default function WalletDepositPage() {
-    const [selectedMethod, setSelectedMethod] = useState<string>("");
-    const [amount, setAmount] = useState<string>("");
-    const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-    const [referenceNumber, setReferenceNumber] = useState<string>("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    const { deposit } = useWallet();
-    const { addToast } = useToast();
-    const router = useRouter();
+  const [selectedMethod, setSelectedMethod] = useState<string>("");
+  const [amount, setAmount] = useState<string>("");
+  const [referenceNumber, setReferenceNumber] = useState<string>("");
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleNext = () => {
-        if (step === 1 && amount) {
-            setStep(2);
-        } else if (step === 2 && selectedMethod) {
-            setStep(3);
-        }
-    };
+  const { deposit } = useWallet();
+  const { addToast } = useToast();
+  const router = useRouter();
 
-    const handleSubmit = async () => {
-        if (!amount || !selectedMethod || !referenceNumber) {
-            addToast("يرجى ملء جميع الحقول", "error");
-            return;
-        }
+  const numericAmount = Number.parseInt(amount || "0", 10) || 0;
+  const selectedMethodMeta = paymentMethods.find((method) => method.id === selectedMethod);
 
-        setIsSubmitting(true);
-        
-        try {
-            const success = await deposit(
-                parseInt(amount),
-                selectedMethod,
-                referenceNumber
-            );
+  const canGoFromStep1 = numericAmount > 0;
+  const canGoFromStep2 = selectedMethod.length > 0;
+  const canSubmit =
+    numericAmount > 0 &&
+    selectedMethod.length > 0 &&
+    referenceNumber.trim().length > 0 &&
+    !isSubmitting;
 
-            if (success) {
-                addToast("تم إنشاء طلب الإيداع بنجاح! سيتم التحقق منه خلال 24 ساعة", "success");
-                setStep(4); // Success step
-                setTimeout(() => {
-                    router.push("/wallet");
-                }, 3000);
-            } else {
-                addToast("فشل إنشاء طلب الإيداع", "error");
-            }
-        } catch (error) {
-            addToast("حدث خطأ أثناء الإيداع", "error");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+  const handleNext = () => {
+    if (step === 1 && canGoFromStep1) {
+      setStep(2);
+      return;
+    }
 
-    return (
-        <div className="flex flex-col min-h-screen bg-bg-dark font-display">
-            <HeaderWithBack title="إيداع في المحفظة" />
+    if (step === 2 && canGoFromStep2) {
+      setStep(3);
+    }
+  };
 
-            {/* Progress */}
-            <div className="px-4 py-4 bg-surface-dark border-b border-slate-800">
-                <div className="flex items-center justify-center gap-2">
-                    {[1, 2, 3].map((s) => (
-                        <div
-                            key={s}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                                s < step || (step === 4 && s === 3)
-                                    ? "bg-green-500 text-white"
-                                    : s === step
-                                    ? "bg-primary text-white"
-                                    : "bg-slate-700 text-slate-500"
-                            }`}
-                        >
-                            {s < step || (step === 4 && s === 3) ? (
-                                <span className="material-symbols-outlined">check</span>
-                            ) : (
-                                s
-                            )}
-                        </div>
-                    ))}
-                </div>
-                <div className="text-center mt-2 text-xs text-slate-400">
-                    {step === 1 && "اختيار المبلغ"}
-                    {step === 2 && "اختيار طريقة الدفع"}
-                    {step === 3 && "تأكيد العملية"}
-                    {step === 4 && "تم بنجاح!"}
-                </div>
+  const handleSubmit = async () => {
+    if (!canSubmit) {
+      addToast("Please complete all required fields.", "error");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const success = await deposit(numericAmount, selectedMethod, referenceNumber);
+
+      if (!success) {
+        addToast("Failed to post deposit.", "error");
+        return;
+      }
+
+      addToast("Deposit posted successfully.", "success");
+      setStep(4);
+
+      setTimeout(() => {
+        router.push("/wallet");
+      }, 1500);
+    } catch (error) {
+      console.error("Deposit submission error:", error);
+      addToast("An error occurred while posting the deposit.", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col bg-bg-dark font-display">
+      <HeaderWithBack title="Wallet Deposit" />
+
+      <div className="border-b border-slate-800 bg-surface-dark px-4 py-4">
+        <div className="flex items-center justify-center gap-2">
+          {[1, 2, 3].map((s) => (
+            <div
+              key={s}
+              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-all ${
+                s < step || (step === 4 && s === 3)
+                  ? "bg-green-500 text-white"
+                  : s === step
+                  ? "bg-primary text-white"
+                  : "bg-slate-700 text-slate-500"
+              }`}
+            >
+              {s < step || (step === 4 && s === 3) ? (
+                <span className="material-symbols-outlined">check</span>
+              ) : (
+                s
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-2 text-center text-xs text-slate-400">
+          {step === 1 && "Amount"}
+          {step === 2 && "Method"}
+          {step === 3 && "Confirmation"}
+          {step === 4 && "Completed"}
+        </div>
+      </div>
+
+      <main className="flex-1 p-4 pb-24">
+        {step === 1 && (
+          <section className="mb-6">
+            <h2 className="mb-4 text-lg font-bold text-white">Choose amount</h2>
+
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              {presetAmounts.map((preset) => (
+                <button
+                  key={preset}
+                  onClick={() => setAmount(String(preset))}
+                  className={`rounded-xl border-2 p-4 transition-all ${
+                    amount === String(preset)
+                      ? "border-primary bg-primary/10"
+                      : "border-slate-700 bg-surface-highlight hover:border-slate-600"
+                  }`}
+                >
+                  <span className="text-xl font-bold text-white">
+                    {preset.toLocaleString()}
+                  </span>
+                  <span className="mt-1 block text-xs text-slate-400">SYP</span>
+                </button>
+              ))}
             </div>
 
-            <main className="flex-1 p-4 pb-24">
-                {step === 1 && (
-                    <>
-                        <section className="mb-6">
-                            <h2 className="text-lg font-bold text-white mb-4">اختر المبلغ</h2>
-                            <div className="grid grid-cols-2 gap-3 mb-4">
-                                {amounts.map((amt) => (
-                                    <button
-                                        key={amt}
-                                        onClick={() => setAmount(amt.toString())}
-                                        className={`p-4 rounded-xl border-2 transition-all ${
-                                            amount === amt.toString()
-                                                ? "border-primary bg-primary/10"
-                                                : "border-slate-700 bg-surface-highlight hover:border-slate-600"
-                                        }`}
-                                    >
-                                        <span className="text-xl font-bold text-white">
-                                            {amt.toLocaleString()}
-                                        </span>
-                                        <span className="block text-xs text-slate-400 mt-1">ل.س</span>
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="bg-surface-highlight rounded-xl p-4 border border-slate-700">
-                                <label className="block text-sm text-slate-400 mb-2">مبلغ مخصص</label>
-                                <input
-                                    type="number"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="أدخل المبلغ..."
-                                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white text-lg text-center focus:border-primary focus:outline-none transition-colors"
-                                />
-                            </div>
-                        </section>
-                    </>
-                )}
+            <div className="rounded-xl border border-slate-700 bg-surface-highlight p-4">
+              <label className="mb-2 block text-sm text-slate-400">Custom amount</label>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Enter amount"
+                className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-center text-lg text-white transition-colors focus:border-primary focus:outline-none"
+              />
+            </div>
+          </section>
+        )}
 
-                {step === 2 && (
-                    <>
-                        <section className="mb-6">
-                            <h2 className="text-lg font-bold text-white mb-4">اختر طريقة الدفع</h2>
-                            <div className="space-y-3">
-                                {paymentMethods.map((method) => (
-                                    <button
-                                        key={method.id}
-                                        onClick={() => setSelectedMethod(method.id)}
-                                        className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-right ${
-                                            selectedMethod === method.id
-                                                ? "border-primary bg-primary/10"
-                                                : "border-slate-700 bg-surface-highlight hover:border-slate-600"
-                                        }`}
-                                    >
-                                        <span className="text-3xl">{method.icon}</span>
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-white">{method.name}</h3>
-                                            <p className="text-sm text-slate-400">{method.description}</p>
-                                        </div>
-                                        {selectedMethod === method.id && (
-                                            <span className="material-symbols-outlined text-primary">
-                                                check_circle
-                                            </span>
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
-                        </section>
-                    </>
-                )}
+        {step === 2 && (
+          <section className="mb-6">
+            <h2 className="mb-4 text-lg font-bold text-white">Choose method</h2>
 
-                {step === 3 && (
-                    <>
-                        <section className="mb-6">
-                            <div className="text-center mb-6">
-                                <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4">
-                                    <span className="material-symbols-outlined text-4xl text-primary">receipt_long</span>
-                                </div>
-                                <h2 className="text-xl font-bold text-white mb-2">تأكيد العملية</h2>
-                                <p className="text-slate-400">أدخل رقم العملية (Reference Number)</p>
-                            </div>
+            <div className="space-y-3">
+              {paymentMethods.map((method) => (
+                <button
+                  key={method.id}
+                  onClick={() => setSelectedMethod(method.id)}
+                  className={`w-full rounded-xl border-2 p-4 text-right transition-all ${
+                    selectedMethod === method.id
+                      ? "border-primary bg-primary/10"
+                      : "border-slate-700 bg-surface-highlight hover:border-slate-600"
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <span className="text-3xl">{method.icon}</span>
 
-                            <div className="bg-surface-highlight rounded-xl p-4 border border-slate-700 mb-4">
-                                <label className="block text-sm text-slate-400 mb-2">رقم العملية</label>
-                                <input
-                                    type="text"
-                                    value={referenceNumber}
-                                    onChange={(e) => setReferenceNumber(e.target.value)}
-                                    placeholder="مثال: TX123456789"
-                                    className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white text-lg text-center focus:border-primary focus:outline-none transition-colors"
-                                />
-                            </div>
-
-                            <div className="bg-surface-highlight rounded-xl p-4 border border-slate-700">
-                                <h3 className="font-bold text-white mb-3">ملخص العملية:</h3>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-400">المبلغ:</span>
-                                        <span className="text-white font-bold">{parseInt(amount).toLocaleString()} ل.س</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-400">طريقة الدفع:</span>
-                                        <span className="text-white">
-                                            {paymentMethods.find(m => m.id === selectedMethod)?.name}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-400">الرسوم:</span>
-                                        <span className="text-green-400">مجاناً</span>
-                                    </div>
-                                    <div className="border-t border-slate-700 pt-2 mt-2">
-                                        <div className="flex justify-between">
-                                            <span className="text-slate-400">الإجمالي:</span>
-                                            <span className="text-primary font-bold text-lg">
-                                                {parseInt(amount).toLocaleString()} ل.س
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-                    </>
-                )}
-
-                {step === 4 && (
-                    <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                        <div className="w-24 h-24 rounded-full bg-green-500/20 flex items-center justify-center mb-6">
-                            <span className="material-symbols-outlined text-5xl text-green-500">check_circle</span>
-                        </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">تم إرسال الطلب!</h2>
-                        <p className="text-slate-400 mb-4">
-                            سيتم التحقق من عمليتك خلال 24 ساعة وإضافة المبلغ لمحفظتك
-                        </p>
-                        <div className="bg-surface-highlight rounded-xl p-4 border border-slate-700 w-full max-w-xs">
-                            <p className="text-sm text-slate-400">رقم العملية:</p>
-                            <p className="text-white font-mono font-bold">{referenceNumber}</p>
-                        </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-white">{method.name}</h3>
+                      <p className="text-sm text-slate-400">{method.description}</p>
                     </div>
-                )}
-            </main>
 
-            {/* Bottom Actions */}
-            {step !== 4 && (
-                <div className="fixed bottom-0 left-0 right-0 bg-surface-dark border-t border-slate-800 p-4 pb-safe">
-                    <div className="max-w-md mx-auto flex gap-3">
-                        {step > 1 && (
-                            <button
-                                onClick={() => setStep((s) => (s - 1) as typeof step)}
-                                className="flex-1 py-3 px-4 rounded-xl font-bold text-slate-300 bg-slate-700 hover:bg-slate-600 transition-all"
-                            >
-                                السابق
-                            </button>
-                        )}
-                        <button
-                            onClick={step === 3 ? handleSubmit : handleNext}
-                            disabled={
-                                (step === 1 && !amount) ||
-                                (step === 2 && !selectedMethod) ||
-                                (step === 3 && !referenceNumber) ||
-                                isSubmitting
-                            }
-                            className={`flex-[2] py-3 px-4 rounded-xl font-bold transition-all ${
-                                ((step === 1 && amount) ||
-                                (step === 2 && selectedMethod) ||
-                                (step === 3 && referenceNumber)) && !isSubmitting
-                                    ? "bg-primary text-white hover:bg-primary-dark"
-                                    : "bg-slate-700 text-slate-500 cursor-not-allowed"
-                            }`}
-                        >
-                            {isSubmitting ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                    جاري الإرسال...
-                                </span>
-                            ) : (
-                                step === 3 ? "تأكيد الإيداع" : "متابعة"
-                            )}
-                        </button>
-                    </div>
+                    {selectedMethod === method.id && (
+                      <span className="material-symbols-outlined text-primary">
+                        check_circle
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {step === 3 && (
+          <section className="mb-6">
+            <div className="mb-6 text-center">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/20">
+                <span className="material-symbols-outlined text-4xl text-primary">
+                  receipt_long
+                </span>
+              </div>
+
+              <h2 className="mb-2 text-xl font-bold text-white">Confirm deposit</h2>
+              <p className="text-slate-400">
+                This action posts the deposit immediately to the wallet ledger.
+              </p>
+            </div>
+
+            <div className="mb-4 rounded-xl border border-slate-700 bg-surface-highlight p-4">
+              <label className="mb-2 block text-sm text-slate-400">
+                Transfer reference number
+              </label>
+              <input
+                type="text"
+                value={referenceNumber}
+                onChange={(e) => setReferenceNumber(e.target.value)}
+                placeholder="Example: TX123456789"
+                className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-center text-lg text-white transition-colors focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            <div className="rounded-xl border border-slate-700 bg-surface-highlight p-4">
+              <h3 className="mb-3 font-bold text-white">Summary</h3>
+
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Amount</span>
+                  <span className="font-bold text-white">
+                    {numericAmount.toLocaleString()} SYP
+                  </span>
                 </div>
+
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Method</span>
+                  <span className="text-white">{selectedMethodMeta?.name ?? "-"}</span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Reference</span>
+                  <span className="text-white">{referenceNumber || "-"}</span>
+                </div>
+
+                <div className="mt-2 border-t border-slate-700 pt-2">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Posted amount</span>
+                    <span className="text-lg font-bold text-primary">
+                      {numericAmount.toLocaleString()} SYP
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {step === 4 && (
+          <div className="flex h-full flex-col items-center justify-center py-12 text-center">
+            <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500/20">
+              <span className="material-symbols-outlined text-5xl text-green-500">
+                check_circle
+              </span>
+            </div>
+
+            <h2 className="mb-2 text-2xl font-bold text-white">Deposit posted</h2>
+            <p className="mb-4 text-slate-400">
+              The wallet balance has been updated immediately.
+            </p>
+
+            <div className="w-full max-w-xs rounded-xl border border-slate-700 bg-surface-highlight p-4">
+              <p className="text-sm text-slate-400">Reference number</p>
+              <p className="font-mono font-bold text-white">{referenceNumber}</p>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {step !== 4 && (
+        <div className="fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-surface-dark p-4 pb-safe">
+          <div className="mx-auto flex max-w-md gap-3">
+            {step > 1 && (
+              <button
+                onClick={() => setStep((s) => (s - 1) as typeof step)}
+                className="flex-1 rounded-xl bg-slate-700 px-4 py-3 font-bold text-slate-300 transition-all hover:bg-slate-600"
+              >
+                Back
+              </button>
             )}
+
+            <button
+              onClick={step === 3 ? handleSubmit : handleNext}
+              disabled={
+                isSubmitting ||
+                (step === 1 && !canGoFromStep1) ||
+                (step === 2 && !canGoFromStep2) ||
+                (step === 3 && !canSubmit)
+              }
+              className={`flex-[2] rounded-xl px-4 py-3 font-bold transition-all ${
+                !isSubmitting &&
+                ((step === 1 && canGoFromStep1) ||
+                  (step === 2 && canGoFromStep2) ||
+                  (step === 3 && canSubmit))
+                  ? "bg-primary text-white hover:bg-primary-dark"
+                  : "cursor-not-allowed bg-slate-700 text-slate-500"
+              }`}
+            >
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
+                  Posting...
+                </span>
+              ) : step === 3 ? (
+                "Confirm deposit"
+              ) : (
+                "Continue"
+              )}
+            </button>
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 }
