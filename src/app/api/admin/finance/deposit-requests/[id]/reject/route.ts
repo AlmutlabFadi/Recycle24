@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
 
 interface RouteContext {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 function parseNonEmptyString(value: unknown) {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       );
     }
 
-    const requestId = context.params?.id;
+    const { id: requestId } = await context.params;
 
     if (!requestId) {
       return NextResponse.json(
