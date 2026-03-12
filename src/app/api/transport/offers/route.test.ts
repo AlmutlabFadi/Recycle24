@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+﻿import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const transportBooking = {
   findUnique: vi.fn(),
@@ -31,7 +31,7 @@ describe("transport offers route", () => {
 
     expect(response.status).toBe(404);
     expect(payload.success).toBe(false);
-    expect(payload.error).toBe("Booking not found");
+    expect(payload.error).toBe("طلب النقل غير موجود");
   });
 
   it("returns offers for an existing booking", async () => {

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
 type StoredOffer = {
@@ -30,6 +30,14 @@ function parseBookingNotes(notes: string | null): BookingNotes {
   }
 }
 
+function isOffersStage(status: string): boolean {
+  return status === "OPEN" || status === "HAS_OFFERS";
+}
+
+function hasAcceptedOffer(offers: StoredOffer[]): boolean {
+  return offers.some((offer) => offer.status === "ACCEPTED");
+}
+
 // GET: fetch all offers by trackingId
 export async function GET(request: NextRequest) {
   try {
@@ -38,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     if (!trackingId) {
       return NextResponse.json(
-        { error: "Missing trackingId", success: false },
+        { error: "معرف التتبع مطلوب", success: false },
         { status: 400 },
       );
     }
@@ -49,7 +57,7 @@ export async function GET(request: NextRequest) {
 
     if (!booking) {
       return NextResponse.json(
-        { error: "Booking not found", success: false },
+        { error: "طلب النقل غير موجود", success: false },
         { status: 404 },
       );
     }
@@ -58,7 +66,11 @@ export async function GET(request: NextRequest) {
     const offers = Array.isArray(parsedNotes.offers) ? parsedNotes.offers : [];
 
     return NextResponse.json(
-      { success: true, offers },
+      {
+        success: true,
+        offers,
+        bookingStatus: booking.status,
+      },
       { status: 200 },
     );
   } catch (error) {
@@ -79,16 +91,30 @@ export async function POST(request: NextRequest) {
       driverName?: string;
       driverPhone?: string;
       price?: number | string;
-      rating?: number;
+      rating?: number | string;
     };
 
     const trackingId = body.trackingId?.trim();
     const driverId = body.driverId?.trim();
     const numericPrice = Number(body.price);
+    const numericRating =
+      body.rating === undefined || body.rating === null || body.rating === ""
+        ? undefined
+        : Number(body.rating);
 
     if (!trackingId || !driverId || !Number.isFinite(numericPrice) || numericPrice <= 0) {
       return NextResponse.json(
-        { error: "Missing or invalid fields", success: false },
+        { error: "بيانات العرض غير مكتملة أو غير صالحة", success: false },
+        { status: 400 },
+      );
+    }
+
+    if (
+      numericRating !== undefined &&
+      (!Number.isFinite(numericRating) || numericRating < 0 || numericRating > 5)
+    ) {
+      return NextResponse.json(
+        { error: "التقييم يجب أن يكون بين 0 و 5", success: false },
         { status: 400 },
       );
     }
@@ -99,13 +125,28 @@ export async function POST(request: NextRequest) {
 
     if (!booking) {
       return NextResponse.json(
-        { error: "Booking not found", success: false },
+        { error: "طلب النقل غير موجود", success: false },
         { status: 404 },
+      );
+    }
+
+    if (!isOffersStage(booking.status)) {
+      return NextResponse.json(
+        { error: "هذا الطلب لم يعد متاحا لاستقبال العروض", success: false },
+        { status: 409 },
       );
     }
 
     const parsedNotes = parseBookingNotes(booking.notes);
     const offers: StoredOffer[] = Array.isArray(parsedNotes.offers) ? parsedNotes.offers : [];
+
+    if (hasAcceptedOffer(offers)) {
+      return NextResponse.json(
+        { error: "تم قبول عرض بالفعل ولا يمكن تعديل العروض الآن", success: false },
+        { status: 409 },
+      );
+    }
+
     const existingOfferIndex = offers.findIndex((offer) => offer.driverId === driverId);
     const timestamp = new Date().toISOString();
 
@@ -115,7 +156,7 @@ export async function POST(request: NextRequest) {
         driverName: body.driverName ?? offers[existingOfferIndex].driverName,
         driverPhone: body.driverPhone ?? offers[existingOfferIndex].driverPhone,
         price: numericPrice,
-        rating: body.rating ?? offers[existingOfferIndex].rating,
+        rating: numericRating ?? offers[existingOfferIndex].rating,
         timestamp,
         status: "PENDING",
       };
@@ -125,7 +166,7 @@ export async function POST(request: NextRequest) {
         driverName: body.driverName,
         driverPhone: body.driverPhone,
         price: numericPrice,
-        rating: body.rating,
+        rating: numericRating,
         timestamp,
         status: "PENDING",
       });
@@ -167,7 +208,7 @@ export async function PATCH(request: NextRequest) {
 
     if (!trackingId || !driverId) {
       return NextResponse.json(
-        { error: "Missing fields", success: false },
+        { error: "الحقول المطلوبة ناقصة", success: false },
         { status: 400 },
       );
     }
@@ -178,8 +219,15 @@ export async function PATCH(request: NextRequest) {
 
     if (!booking) {
       return NextResponse.json(
-        { error: "Booking not found", success: false },
+        { error: "طلب النقل غير موجود", success: false },
         { status: 404 },
+      );
+    }
+
+    if (!isOffersStage(booking.status)) {
+      return NextResponse.json(
+        { error: "لا يمكن قبول عرض في الحالة الحالية للطلب", success: false },
+        { status: 409 },
       );
     }
 
@@ -189,8 +237,16 @@ export async function PATCH(request: NextRequest) {
 
     if (!acceptedOffer) {
       return NextResponse.json(
-        { error: "Offer not found", success: false },
+        { error: "العرض غير موجود", success: false },
         { status: 404 },
+      );
+    }
+
+    const existingAccepted = offers.find((offer) => offer.status === "ACCEPTED");
+    if (existingAccepted && existingAccepted.driverId !== driverId) {
+      return NextResponse.json(
+        { error: "تم قبول عرض آخر بالفعل", success: false },
+        { status: 409 },
       );
     }
 
