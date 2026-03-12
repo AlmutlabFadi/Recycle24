@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
+import {
+  getDepositApprovalDecision,
+  isAwaitingFinalApproval,
+} from "@/lib/finance/approval-policy";
 import { LedgerPostingService } from "@/lib/ledger/service";
-import { LedgerAccountSlug, TransactionType } from "@/lib/ledger/types";
+import { Currency, LedgerAccountSlug, TransactionType } from "@/lib/ledger/types";
 import { requirePermission } from "@/lib/rbac";
 
 interface RouteContext {
@@ -58,6 +62,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
           proofUrl: true,
           requestNote: true,
           reviewNote: true,
+          reviewedById: true,
+          reviewedAt: true,
+          approvalStage: true,
+          approvedById: true,
+          approvedAt: true,
           createdAt: true,
           account: {
             select: {
@@ -103,12 +112,88 @@ export async function POST(request: NextRequest, context: RouteContext) {
         };
       }
 
-      if (depositRequest.currency !== "SYP") {
+      if (depositRequest.currency !== Currency.SYP) {
         return {
           kind: "error" as const,
           response: NextResponse.json(
-            { error: "Only SYP deposit approvals are supported حاليا" },
+            { error: "Only SYP deposit approvals are supported currently" },
             { status: 400 }
+          ),
+        };
+      }
+
+      const approvalDecision = getDepositApprovalDecision(
+        Currency.SYP,
+        depositRequest.amount
+      );
+
+      if (
+        approvalDecision === "REQUIRES_SECOND_APPROVER" &&
+        !isAwaitingFinalApproval(depositRequest.approvalStage)
+      ) {
+        const stagedRequest = await tx.depositRequest.update({
+          where: { id: depositRequest.id },
+          data: {
+            status: "UNDER_REVIEW",
+            reviewedById: auth.userId,
+            reviewedAt: new Date(),
+            reviewNote: reviewNote ?? depositRequest.reviewNote ?? undefined,
+            approvalStage: "AWAITING_FINAL_APPROVAL",
+          },
+          select: {
+            id: true,
+            status: true,
+            approvalStage: true,
+            reviewedById: true,
+            reviewedAt: true,
+            reviewNote: true,
+            amount: true,
+            currency: true,
+            method: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            actorRole: "ADMIN",
+            actorId: auth.userId,
+            action: "FINANCE_DEPOSIT_REQUEST_ESCALATED_FOR_FINAL_APPROVAL",
+            entityType: "DepositRequest",
+            entityId: stagedRequest.id,
+            beforeJson: {
+              status: depositRequest.status,
+              approvalStage: depositRequest.approvalStage,
+            },
+            afterJson: {
+              status: stagedRequest.status,
+              approvalStage: stagedRequest.approvalStage,
+              reviewedById: stagedRequest.reviewedById,
+              reviewedAt: stagedRequest.reviewedAt,
+            },
+          },
+        });
+
+        return {
+          kind: "staged" as const,
+          stagedRequest,
+        };
+      }
+
+      if (
+        approvalDecision === "REQUIRES_SECOND_APPROVER" &&
+        depositRequest.reviewedById &&
+        depositRequest.reviewedById === auth.userId
+      ) {
+        return {
+          kind: "error" as const,
+          response: NextResponse.json(
+            {
+              error:
+                "Final approval requires a second finance admin different from the first reviewer",
+            },
+            { status: 409 }
           ),
         };
       }
@@ -138,6 +223,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             method: depositRequest.method,
             proofUrl: depositRequest.proofUrl,
             requestNote: depositRequest.requestNote,
+            reviewedByUserId: depositRequest.reviewedById ?? null,
             approvedByUserId: auth.userId,
           },
         }
@@ -170,8 +256,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
         where: { id: depositRequest.id },
         data: {
           status: "COMPLETED",
-          reviewedById: auth.userId,
-          reviewedAt: new Date(),
+          reviewedById: depositRequest.reviewedById ?? auth.userId,
+          reviewedAt: depositRequest.reviewedAt ?? new Date(),
+          approvedById:
+            approvalDecision === "REQUIRES_SECOND_APPROVER"
+              ? auth.userId
+              : null,
+          approvedAt:
+            approvalDecision === "REQUIRES_SECOND_APPROVER"
+              ? new Date()
+              : null,
+          approvalStage: "FINAL_APPROVED",
           completedAt: new Date(),
           reviewNote: reviewNote ?? depositRequest.reviewNote ?? undefined,
         },
@@ -188,6 +283,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
           reviewNote: true,
           reviewedById: true,
           reviewedAt: true,
+          approvalStage: true,
+          approvedById: true,
+          approvedAt: true,
           completedAt: true,
           createdAt: true,
           updatedAt: true,
@@ -203,11 +301,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
           entityId: completedRequest.id,
           beforeJson: {
             status: depositRequest.status,
+            approvalStage: depositRequest.approvalStage,
+            reviewedById: depositRequest.reviewedById,
           },
           afterJson: {
             status: completedRequest.status,
+            approvalStage: completedRequest.approvalStage,
             reviewedById: completedRequest.reviewedById,
             reviewedAt: completedRequest.reviewedAt,
+            approvedById: completedRequest.approvedById,
+            approvedAt: completedRequest.approvedAt,
             completedAt: completedRequest.completedAt,
             ledgerBalanceAfter: updatedAccount?.balance ?? null,
           },
@@ -226,7 +329,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return result.response;
     }
 
-    await LedgerPostingService.dispatchNotifications(result.notifications);
+    if (result.kind === "committed") {
+      await LedgerPostingService.dispatchNotifications(result.notifications);
+    }
+
+    if (result.kind === "staged") {
+      return NextResponse.json({
+        success: true,
+        message: "Deposit request moved to final approval stage",
+        depositRequest: result.stagedRequest,
+      });
+    }
 
     return NextResponse.json({
       success: true,

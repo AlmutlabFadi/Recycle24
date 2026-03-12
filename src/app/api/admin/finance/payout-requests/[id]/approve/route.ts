@@ -1,8 +1,12 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
+import {
+  getPayoutApprovalDecision,
+  isAwaitingFinalApproval,
+} from "@/lib/finance/approval-policy";
 import { LedgerPostingService } from "@/lib/ledger/service";
-import { LedgerAccountSlug, TransactionType } from "@/lib/ledger/types";
+import { Currency, LedgerAccountSlug, TransactionType } from "@/lib/ledger/types";
 import { requirePermission } from "@/lib/rbac";
 
 interface RouteContext {
@@ -58,6 +62,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
           status: true,
           requestNote: true,
           reviewNote: true,
+          reviewedById: true,
+          reviewedAt: true,
+          approvalStage: true,
+          approvedById: true,
+          approvedAt: true,
           createdAt: true,
           account: {
             select: {
@@ -105,12 +114,89 @@ export async function POST(request: NextRequest, context: RouteContext) {
         };
       }
 
-      if (payoutRequest.currency !== "SYP") {
+      if (payoutRequest.currency !== Currency.SYP) {
         return {
           kind: "error" as const,
           response: NextResponse.json(
             { error: "Only SYP payout approvals are supported currently" },
             { status: 400 }
+          ),
+        };
+      }
+
+      const approvalDecision = getPayoutApprovalDecision(
+        Currency.SYP,
+        payoutRequest.amount
+      );
+
+      if (
+        approvalDecision === "REQUIRES_SECOND_APPROVER" &&
+        !isAwaitingFinalApproval(payoutRequest.approvalStage)
+      ) {
+        const stagedRequest = await tx.payoutRequest.update({
+          where: { id: payoutRequest.id },
+          data: {
+            status: "UNDER_REVIEW",
+            reviewedById: auth.userId,
+            reviewedAt: new Date(),
+            reviewNote: reviewNote ?? payoutRequest.reviewNote ?? undefined,
+            approvalStage: "AWAITING_FINAL_APPROVAL",
+          },
+          select: {
+            id: true,
+            status: true,
+            approvalStage: true,
+            reviewedById: true,
+            reviewedAt: true,
+            reviewNote: true,
+            amount: true,
+            currency: true,
+            method: true,
+            destination: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            actorRole: "ADMIN",
+            actorId: auth.userId,
+            action: "FINANCE_PAYOUT_REQUEST_ESCALATED_FOR_FINAL_APPROVAL",
+            entityType: "PayoutRequest",
+            entityId: stagedRequest.id,
+            beforeJson: {
+              status: payoutRequest.status,
+              approvalStage: payoutRequest.approvalStage,
+            },
+            afterJson: {
+              status: stagedRequest.status,
+              approvalStage: stagedRequest.approvalStage,
+              reviewedById: stagedRequest.reviewedById,
+              reviewedAt: stagedRequest.reviewedAt,
+            },
+          },
+        });
+
+        return {
+          kind: "staged" as const,
+          stagedRequest,
+        };
+      }
+
+      if (
+        approvalDecision === "REQUIRES_SECOND_APPROVER" &&
+        payoutRequest.reviewedById &&
+        payoutRequest.reviewedById === auth.userId
+      ) {
+        return {
+          kind: "error" as const,
+          response: NextResponse.json(
+            {
+              error:
+                "Final approval requires a second finance admin different from the first reviewer",
+            },
+            { status: 409 }
           ),
         };
       }
@@ -160,6 +246,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             method: payoutRequest.method,
             destination: payoutRequest.destination,
             requestNote: payoutRequest.requestNote,
+            reviewedByUserId: payoutRequest.reviewedById ?? null,
             approvedByUserId: auth.userId,
           },
         }
@@ -192,8 +279,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
         where: { id: payoutRequest.id },
         data: {
           status: "COMPLETED",
-          reviewedById: auth.userId,
-          reviewedAt: new Date(),
+          reviewedById: payoutRequest.reviewedById ?? auth.userId,
+          reviewedAt: payoutRequest.reviewedAt ?? new Date(),
+          approvedById:
+            approvalDecision === "REQUIRES_SECOND_APPROVER"
+              ? auth.userId
+              : null,
+          approvedAt:
+            approvalDecision === "REQUIRES_SECOND_APPROVER"
+              ? new Date()
+              : null,
+          approvalStage: "FINAL_APPROVED",
           processedAt: new Date(),
           completedAt: new Date(),
           reviewNote: reviewNote ?? payoutRequest.reviewNote ?? undefined,
@@ -211,6 +307,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
           reviewNote: true,
           reviewedById: true,
           reviewedAt: true,
+          approvalStage: true,
+          approvedById: true,
+          approvedAt: true,
           processedAt: true,
           completedAt: true,
           failedAt: true,
@@ -229,11 +328,16 @@ export async function POST(request: NextRequest, context: RouteContext) {
           entityId: completedRequest.id,
           beforeJson: {
             status: payoutRequest.status,
+            approvalStage: payoutRequest.approvalStage,
+            reviewedById: payoutRequest.reviewedById,
           },
           afterJson: {
             status: completedRequest.status,
+            approvalStage: completedRequest.approvalStage,
             reviewedById: completedRequest.reviewedById,
             reviewedAt: completedRequest.reviewedAt,
+            approvedById: completedRequest.approvedById,
+            approvedAt: completedRequest.approvedAt,
             processedAt: completedRequest.processedAt,
             completedAt: completedRequest.completedAt,
             ledgerBalanceAfter: updatedAccount?.balance ?? null,
@@ -253,7 +357,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return result.response;
     }
 
-    await LedgerPostingService.dispatchNotifications(result.notifications);
+    if (result.kind === "committed") {
+      await LedgerPostingService.dispatchNotifications(result.notifications);
+    }
+
+    if (result.kind === "staged") {
+      return NextResponse.json({
+        success: true,
+        message: "Payout request moved to final approval stage",
+        payoutRequest: result.stagedRequest,
+      });
+    }
 
     return NextResponse.json({
       success: true,

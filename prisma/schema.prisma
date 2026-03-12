@@ -928,23 +928,26 @@ model LedgerHold {
 }
 
 model DepositRequest {
-  id           String        @id @default(cuid())
-  accountId    String
-  userId       String
-  amount       Float
-  currency     String        @default("SYP")
-  method       String
-  status       String        @default("PENDING")
-  proofUrl     String?
-  requestNote  String?
-  reviewNote   String?
-  reviewedById String?
-  reviewedAt   DateTime?
-  completedAt  DateTime?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  account      LedgerAccount @relation(fields: [accountId], references: [id])
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String        @id @default(cuid())
+  accountId     String
+  userId        String
+  amount        Float
+  currency      String        @default("SYP")
+  method        String
+  status        String        @default("PENDING")
+  proofUrl      String?
+  requestNote   String?
+  reviewNote    String?
+  reviewedById  String?
+  reviewedAt    DateTime?
+  approvalStage String        @default("NONE")
+  approvedById  String?
+  approvedAt    DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  account       LedgerAccount @relation(fields: [accountId], references: [id])
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([accountId])
   @@index([userId])
@@ -965,6 +968,9 @@ model PayoutRequest {
   reviewNote    String?
   reviewedById  String?
   reviewedAt    DateTime?
+  approvalStage String        @default("NONE")
+  approvedById  String?
+  approvedAt    DateTime?
   processedAt   DateTime?
   completedAt   DateTime?
   failedAt      DateTime?
