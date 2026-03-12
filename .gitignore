@@ -50,3 +50,19 @@ next-env.d.ts
 
 # dist
 dist/
+
+# Local backups and scratch artifacts
+backups/
+*.bak
+finance-extract/
+finance-api-files-only.txt
+finance-audit-clean.txt
+finance-audit-stage1.txt
+finance-schema-audit.txt
+finance-schema-only.txt
+finance-source-only.txt
+ledger-files-only.txt
+
+# Runtime uploads
+public/uploads/
+
