@@ -116,6 +116,7 @@ function approvalStageBadge(stage: string) {
 
   if (normalized === "AWAITING_FINAL_APPROVAL") return badgeClasses("review");
   if (normalized === "FINAL_APPROVED") return badgeClasses("approved");
+  if (normalized === "FINAL_REJECTED" || normalized === "REJECTED") return badgeClasses("rejected");
 
   return badgeClasses("neutral");
 }
@@ -378,6 +379,41 @@ export default function AdminFinancePage() {
     }
   }
 
+  async function submitPayoutReject(id: string) {
+    try {
+      setBusyKey(`payout-reject-${id}`);
+      setError(null);
+
+      const reviewNote = getReviewNote(id);
+
+      if (!reviewNote.trim()) {
+        throw new Error("Review note is required before rejecting a payout request");
+      }
+
+      const response = await fetch(`/api/admin/finance/payout-requests/${id}/reject`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          reviewNote,
+        }),
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Failed to reject payout request");
+      }
+
+      await loadData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Payout rejection failed");
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
   function tabButton(tab: ActiveTab, label: string) {
     const active = activeTab === tab;
 
@@ -509,6 +545,7 @@ export default function AdminFinancePage() {
 
   function renderPayoutCard(item: PayoutRequestItem) {
     const approveBusy = busyKey === `payout-approve-${item.id}`;
+    const rejectBusy = busyKey === `payout-reject-${item.id}`;
     const canAct = item.status === "PENDING" || item.status === "UNDER_REVIEW";
 
     return (
@@ -589,7 +626,7 @@ export default function AdminFinancePage() {
             onChange={(event) => setReviewNote(item.id, event.target.value)}
             rows={3}
             className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none ring-0 transition focus:border-slate-500"
-            placeholder="Enter review note for payout approval."
+            placeholder="Enter review note. Required for reject."
           />
         </div>
 
@@ -597,12 +634,15 @@ export default function AdminFinancePage() {
           <ActionButton
             label={approveBusy ? "Processing..." : item.approvalStage === "AWAITING_FINAL_APPROVAL" ? "Final Approve Payout" : "Approve Payout"}
             onClick={() => void submitPayoutApprove(item.id)}
-            disabled={!canAct || approveBusy}
+            disabled={!canAct || approveBusy || rejectBusy}
             tone="primary"
           />
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-            Payout reject route is not implemented yet.
-          </div>
+          <ActionButton
+            label={rejectBusy ? "Rejecting..." : "Reject Payout"}
+            onClick={() => void submitPayoutReject(item.id)}
+            disabled={!canAct || approveBusy || rejectBusy}
+            tone="danger"
+          />
         </div>
 
         {item.user.isLocked ? (
@@ -741,7 +781,7 @@ export default function AdminFinancePage() {
             <div>
               <h2 className="text-xl font-semibold text-slate-900">Payout Requests</h2>
               <p className="text-sm text-slate-500">
-                Full payout feed with direct approval actions.
+                Full payout feed with direct approval and rejection actions.
               </p>
             </div>
 
