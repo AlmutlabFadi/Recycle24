@@ -69,16 +69,18 @@ export async function POST(_request: NextRequest, context: RouteContext) {
       );
     }
 
+    const approvalTimestamp = new Date();
+
     const updatedAction = await db.controlAction.update({
       where: { id: actionId },
       data: {
         status: "approved",
-        approvedAt: new Date(),
+        approvedAt: approvalTimestamp,
         result: {
           ...((existingAction.result as Record<string, unknown> | null) ?? {}),
           approval: {
             approvedByUserId: approvalActorId,
-            approvedAt: new Date().toISOString(),
+            approvedAt: approvalTimestamp.toISOString(),
           },
         },
       },
@@ -91,7 +93,6 @@ export async function POST(_request: NextRequest, context: RouteContext) {
         result: true,
         incidentId: true,
         approvedAt: true,
-        executedAt: true,
         updatedAt: true,
       },
     });
