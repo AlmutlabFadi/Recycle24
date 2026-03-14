@@ -77,78 +77,6 @@ enum AuditActorRole {
   SYSTEM
 }
 
-enum AuctionType {
-  PRIVATE
-  GOVERNMENT
-}
-
-enum AuctionWorkflowStatus {
-  DRAFT
-  PENDING_APPROVAL
-  SCHEDULED
-  OPEN
-  UNDER_REVIEW
-  AWAITING_WINNER_CONFIRMATION
-  AWAITING_PAYMENT_PROOF
-  AWAITING_DELIVERY
-  AWAITING_INSPECTION
-  COMPLETED
-  DISPUTED
-  CANCELED
-  FAILED
-}
-
-enum AuctionParticipantWorkflowStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  SUSPENDED
-  WITHDRAWN
-}
-
-enum AuctionDepositWorkflowStatus {
-  NONE
-  PENDING
-  HELD
-  VERIFIED
-  EXEMPT
-  RELEASED
-  FORFEITED
-  REJECTED
-}
-
-enum BidWorkflowStatus {
-  ACTIVE
-  OUTBID
-  WINNING
-  FINALIZED
-  DISQUALIFIED
-  REJECTED
-}
-
-enum AuctionExtensionStage {
-  NONE
-  FIRST
-  SECOND
-  THIRD
-  FINAL_CLOSED
-}
-
-enum AuctionPenaltyType {
-  DEPOSIT_FORFEITURE
-  ACCOUNT_FREEZE
-  TEMP_BAN
-  LEGAL_ESCALATION
-}
-
-enum AuctionDisputeStatus {
-  OPEN
-  UNDER_REVIEW
-  RESOLVED
-  REJECTED
-  ESCALATED
-}
-
 model User {
   id                         String                      @id @default(cuid())
   phone                      String?                     @unique
@@ -223,7 +151,6 @@ model User {
   payoutRequests             PayoutRequest[]
   reviewsReceived            Review[]                    @relation("reviewee")
   reviewsGiven               Review[]                    @relation("reviewer")
-  auctionPenalties           AuctionPenalty[]
 }
 
 model Notification {
@@ -307,65 +234,36 @@ model TraderDocument {
 }
 
 model Auction {
-  id              String @id @default(cuid())
+  id              String               @id @default(cuid())
   sellerId        String
   title           String
   category        String
   weight          Float
-  weightUnit      String @default("KG")
+  weightUnit      String               @default("KG")
   location        String
   startingBid     Float
   buyNowPrice     Float?
-  securityDeposit Float  @default(0)
-  entryFee        Float  @default(0)
+  securityDeposit Float                @default(0)
+  entryFee        Float                @default(0)
   duration        Int
-
-  status         String                @default("SCHEDULED")
-  type           AuctionType           @default(PRIVATE)
-  workflowStatus AuctionWorkflowStatus @default(DRAFT)
-
+  status          String               @default("SCHEDULED")
   scheduledAt     DateTime?
   startedAt       DateTime?
   endsAt          DateTime?
-  originalEndsAt  DateTime?
-  effectiveEndsAt DateTime?
-  extensionCount  Int                   @default(0)
-  extensionStage  AuctionExtensionStage @default(NONE)
-  lastExtensionAt DateTime?
-  isFinallyClosed Boolean               @default(false)
-
-  winnerId      String?
-  winningBidId  String?
-  finalPrice    Float?
-  currentBid    Float?
-  reservePrice  Float?
-  finalClosedAt DateTime?
-
-  depositPercent Float @default(0)
-
-  requiresESign     Boolean @default(true)
-  govWaiverRequired Boolean @default(false)
-  govWaiverFileUrl  String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  seller       User                 @relation(fields: [sellerId], references: [id])
-  images       AuctionImage[]
-  participants AuctionParticipant[]
-  bids         Bid[]
-  events       AuctionEventLog[]
-  disputes     AuctionDispute[]
-  penalties    AuctionPenalty[]
+  winnerId        String?
+  finalPrice      Float?
+  currentBid      Float?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  seller          User                 @relation(fields: [sellerId], references: [id])
+  images          AuctionImage[]
+  participants    AuctionParticipant[]
+  bids            Bid[]
 
   @@index([sellerId])
   @@index([category])
   @@index([status])
-  @@index([type, workflowStatus])
   @@index([endsAt])
-  @@index([effectiveEndsAt])
-  @@index([winnerId])
-  @@index([winningBidId])
 }
 
 model AuctionParticipant {
@@ -384,24 +282,12 @@ model AuctionParticipant {
   agreedToPrivacy     Boolean  @default(false)
   agreedToTerms       Boolean  @default(false)
   hasInspectedGoods   Boolean  @default(false)
-
-  workflowStatus        AuctionParticipantWorkflowStatus @default(PENDING)
-  depositWorkflowStatus AuctionDepositWorkflowStatus     @default(NONE)
-  depositHoldId         String?
-
-  approvedAt      DateTime?
-  rejectedAt      DateTime?
-  rejectionReason String?
-
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id])
+  auction             Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user                User     @relation(fields: [userId], references: [id])
 
   @@unique([auctionId, userId])
   @@index([auctionId])
   @@index([userId])
-  @@index([workflowStatus])
-  @@index([depositWorkflowStatus])
-  @@index([depositHoldId])
 }
 
 model AuctionImage {
@@ -416,73 +302,15 @@ model AuctionImage {
 }
 
 model Bid {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   auctionId String
   bidderId  String
   amount    Float
-
-  participantId String?
-  status        BidWorkflowStatus @default(ACTIVE)
-
-  acceptedAt      DateTime?
-  rejectedAt      DateTime?
-  rejectionReason String?
-  createdAt       DateTime  @default(now())
-
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  bidder  User    @relation(fields: [bidderId], references: [id])
-
-  @@index([auctionId, createdAt])
-  @@index([auctionId, amount])
-  @@index([bidderId, createdAt])
-  @@index([status])
-}
-
-model AuctionEventLog {
-  id        String   @id @default(cuid())
-  auctionId String
-  actorId   String?
-  eventType String
-  payload   Json?
   createdAt DateTime @default(now())
-
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  bidder    User     @relation(fields: [bidderId], references: [id])
 
   @@index([auctionId, createdAt])
-  @@index([eventType, createdAt])
-}
-
-model AuctionDispute {
-  id          String               @id @default(cuid())
-  auctionId   String
-  openedById  String
-  status      AuctionDisputeStatus @default(OPEN)
-  subject     String
-  description String
-  resolution  String?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
-
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-
-  @@index([auctionId, status])
-}
-
-model AuctionPenalty {
-  id         String             @id @default(cuid())
-  auctionId  String
-  userId     String
-  type       AuctionPenaltyType
-  amount     Float?
-  reason     String
-  createdAt  DateTime           @default(now())
-  resolvedAt DateTime?
-
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id])
-
-  @@index([auctionId, userId])
-  @@index([userId, type])
 }
 
 model Deal {
@@ -1022,26 +850,26 @@ model StaffInvite {
 }
 
 model LedgerAccount {
-  id              String                @id @default(cuid())
-  ownerId         String?
-  slug            String                @unique
-  currency        String                @default("SYP")
-  balance         Float                 @default(0)
-  metadata        Json?
-  status          String                @default("ACTIVE")
-  debtStartedAt   DateTime?
-  debtDueAt       DateTime?
-  debtStatus      String                @default("CLEAR")
-  lockedByDebt    Boolean               @default(false)
-  debtLockReason  String?
-  creditLimit     Float                 @default(0)
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-  lines           JournalLine[]
-  holds           LedgerHold[]
-  depositRequests DepositRequest[]
-  payoutRequests  PayoutRequest[]
-  waiverPolicies  AccountWaiverPolicy[]
+  id                String               @id @default(cuid())
+  ownerId           String?
+  slug              String               @unique
+  currency          String               @default("SYP")
+  balance           Float                @default(0)
+  metadata          Json?
+  status            String               @default("ACTIVE")
+  debtStartedAt     DateTime?
+  debtDueAt         DateTime?
+  debtStatus        String               @default("CLEAR")
+  lockedByDebt      Boolean              @default(false)
+  debtLockReason    String?
+  creditLimit       Float                @default(0)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  lines             JournalLine[]
+  holds             LedgerHold[]
+  depositRequests   DepositRequest[]
+  payoutRequests    PayoutRequest[]
+  waiverPolicies    AccountWaiverPolicy[]
 
   @@index([ownerId])
   @@index([slug])
@@ -1405,21 +1233,27 @@ model Review {
   @@index([rating])
 }
 
+// ──────────────────────────────────────────────────────────
+// CONTROL TOWER — Event Stream + Alerts + Actions + KillSwitch
+// ──────────────────────────────────────────────────────────
+
+/// مكونات النظام المراقبة (مزاد، دفع، WAF، Ledger، لوجستيات)
 model SystemComponent {
-  id              String    @id @default(cuid())
-  key             String    @unique
+  id              String   @id @default(cuid())
+  key             String   @unique
   name            String
-  criticality     String    @default("medium")
-  status          String    @default("healthy")
+  criticality     String   @default("medium")
+  status          String   @default("healthy")
   lastHeartbeatAt DateTime?
-  meta            Json      @default("{}")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  meta            Json     @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([status])
   @@index([criticality])
 }
 
+/// تيار الأحداث — القلب النابض للمنظومة
 model ControlEvent {
   id                 String   @id @default(cuid())
   ts                 DateTime @default(now())
@@ -1441,18 +1275,19 @@ model ControlEvent {
   @@index([severity])
 }
 
+/// تنبيهات ناتجة عن قواعد الكشف
 model CtAlert {
-  id                   String    @id @default(cuid())
-  createdAt            DateTime  @default(now())
-  status               String    @default("open")
-  severity             String    @default("medium")
+  id                   String   @id @default(cuid())
+  createdAt            DateTime @default(now())
+  status               String   @default("open")
+  severity             String   @default("medium")
   ruleKey              String
   title                String
   description          String?
   primaryEntityType    String?
   primaryEntityId      String?
-  relatedEntities      Json      @default("[]")
-  evidence             Json      @default("{}")
+  relatedEntities      Json     @default("[]")
+  evidence             Json     @default("{}")
   assignedToUserId     String?
   acknowledgedByUserId String?
   acknowledgedAt       DateTime?
@@ -1464,6 +1299,7 @@ model CtAlert {
   @@index([assignedToUserId])
 }
 
+/// حوادث — تجميع عدة تنبيهات/أحداث للتحقيق
 model Incident {
   id          String   @id @default(cuid())
   createdAt   DateTime @default(now())
@@ -1482,6 +1318,7 @@ model Incident {
   @@index([ownerUserId])
 }
 
+/// روابط الحوادث
 model IncidentLink {
   id         String   @id @default(cuid())
   incidentId String
@@ -1495,18 +1332,20 @@ model IncidentLink {
   @@index([linkType, linkId])
 }
 
+/// إجراءات الاحتواء/التصعيد/الموافقة
 model ControlAction {
-  id                String    @id @default(cuid())
-  createdAt         DateTime  @default(now())
+  id                String   @id @default(cuid())
+  createdAt         DateTime @default(now())
   type              String
-  status            String    @default("pending")
+  status            String   @default("pending")
   requestedByUserId String
   approvedAt        DateTime?
+  executedAt        DateTime?
   reason            String
-  scope             Json      @default("{}")
+  scope             Json     @default("{}")
   incidentId        String?
-  result            Json      @default("{}")
-  updatedAt         DateTime  @updatedAt
+  result            Json     @default("{}")
+  updatedAt         DateTime @updatedAt
 
   @@index([status, createdAt(sort: Desc)])
   @@index([type])
@@ -1514,6 +1353,7 @@ model ControlAction {
   @@index([incidentId])
 }
 
+/// مفاتيح الإيقاف الطارئ
 model KillSwitch {
   id              String   @id @default(cuid())
   key             String   @unique
