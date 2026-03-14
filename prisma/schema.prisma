@@ -347,10 +347,32 @@ model Auction {
   govWaiverRequired Boolean @default(false)
   govWaiverFileUrl  String?
 
+  // Financial fields
+  pricingMode             String  @default("unified") // unified, per_material
+  startingBidCurrency     String  @default("SYP")
+  startingBidUnit         String  @default("total") // total, ton, kg, piece
+  buyNowPriceCurrency     String  @default("SYP")
+  securityDepositCurrency String  @default("SYP")
+  securityDepositMethod   String  @default("platform")
+
+  // Preview fields
+  allowPreview     Boolean   @default(false)
+  previewStartDate DateTime?
+  previewEndDate   DateTime?
+  previewStartTime String?
+  previewEndTime   String?
+
+  // Additional details
+  notes                String?
+  shipmentDurationDays Int?
+  organization         String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   seller       User                 @relation(fields: [sellerId], references: [id])
+  items        AuctionItem[]
+  documents    AuctionDocument[]
   images       AuctionImage[]
   participants AuctionParticipant[]
   bids         Bid[]
@@ -366,6 +388,35 @@ model Auction {
   @@index([effectiveEndsAt])
   @@index([winnerId])
   @@index([winningBidId])
+  version         Int      @default(0)
+}
+
+model AuctionItem {
+  id          String   @id @default(cuid())
+  auctionId   String
+  type        String
+  customType  String?
+  weight      Float
+  unit        String   @default("kg")
+  isAccurate  Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  auction     Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+
+  @@index([auctionId])
+}
+
+model AuctionDocument {
+  id          String   @id @default(cuid())
+  auctionId   String
+  fileUrl     String
+  fileName    String?
+  fileType    String?
+  fileSize    Int?     // Size in bytes
+  createdAt   DateTime @default(now())
+  auction     Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+
+  @@index([auctionId])
 }
 
 model AuctionParticipant {

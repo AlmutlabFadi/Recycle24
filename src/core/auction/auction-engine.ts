@@ -11,6 +11,7 @@ type AuctionRecord = {
   endAt: Date;
   currentPrice: number;
   highestBidderId: string | null;
+  version: number;
 };
 
 export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
@@ -29,6 +30,7 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
         endAt: true,
         currentPrice: true,
         highestBidderId: true,
+        version: true,
       },
     })) as AuctionRecord | null;
 
@@ -68,14 +70,27 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
       },
     });
 
-    await tx.auction.update({
-      where: { id: input.auctionId },
+    const updated = await tx.auction.updateMany({
+      where: {
+        id: input.auctionId,
+        version: auction.version,
+      },
       data: {
         currentPrice: input.amount,
         highestBidderId: input.bidderId,
         endAt: nextEndAt,
+        version: {
+          increment: 1,
+        },
       },
     });
+
+    if (updated.count === 0) {
+      return bidFailure(
+        "BID_CONFLICT",
+        "Auction state changed during bidding. Please retry.",
+      );
+    }
 
     return {
       ok: true as const,

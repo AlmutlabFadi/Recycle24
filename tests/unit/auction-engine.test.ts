@@ -1,9 +1,9 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => {
   const auction = {
     findUnique: vi.fn(),
-    update: vi.fn(),
+    updateMany: vi.fn(),
   };
 
   const bid = {
@@ -52,6 +52,7 @@ describe("auction engine", () => {
       endAt: new Date("2026-03-14T12:00:00.000Z"),
       currentPrice: 1000,
       highestBidderId: "u9",
+      version: 0,
     } as any);
 
     const result = await placeBid({
@@ -74,10 +75,11 @@ describe("auction engine", () => {
       endAt: new Date("2026-03-14T12:00:00.000Z"),
       currentPrice: 1000,
       highestBidderId: "u9",
+      version: 0,
     } as any);
 
     vi.mocked(db.bid.create).mockResolvedValueOnce({} as any);
-    vi.mocked(db.auction.update).mockResolvedValueOnce({} as any);
+    vi.mocked(db.auction.updateMany).mockResolvedValueOnce({ count: 1 } as any);
 
     const result = await placeBid({
       auctionId: "a1",
@@ -101,10 +103,11 @@ describe("auction engine", () => {
       endAt: new Date("2026-03-14T10:00:20.000Z"),
       currentPrice: 1000,
       highestBidderId: "u9",
+      version: 0,
     } as any);
 
     vi.mocked(db.bid.create).mockResolvedValueOnce({} as any);
-    vi.mocked(db.auction.update).mockResolvedValueOnce({} as any);
+    vi.mocked(db.auction.updateMany).mockResolvedValueOnce({ count: 1 } as any);
 
     const result = await placeBid({
       auctionId: "a1",
@@ -117,6 +120,32 @@ describe("auction engine", () => {
     if (result.ok) {
       expect(result.extended).toBe(true);
       expect(result.endAt.toISOString()).toBe("2026-03-14T10:01:00.000Z");
+    }
+  });
+
+  it("rejects bid when auction version changes during update", async () => {
+    vi.mocked(db.auction.findUnique).mockResolvedValueOnce({
+      id: "a1",
+      status: "LIVE",
+      endAt: new Date("2026-03-14T12:00:00.000Z"),
+      currentPrice: 1000,
+      highestBidderId: "u9",
+      version: 3,
+    } as any);
+
+    vi.mocked(db.bid.create).mockResolvedValueOnce({} as any);
+    vi.mocked(db.auction.updateMany).mockResolvedValueOnce({ count: 0 } as any);
+
+    const result = await placeBid({
+      auctionId: "a1",
+      bidderId: "u1",
+      amount: 1050,
+      now: new Date("2026-03-14T10:00:00.000Z"),
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe("BID_CONFLICT");
     }
   });
 });

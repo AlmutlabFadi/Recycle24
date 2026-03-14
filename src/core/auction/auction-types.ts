@@ -30,7 +30,8 @@ export type PlaceBidFailureCode =
   | "AUCTION_ENDED"
   | "SELF_OUTBID_FORBIDDEN"
   | "INVALID_BID_AMOUNT"
-  | "BID_TOO_LOW";
+  | "BID_TOO_LOW"
+  | "BID_CONFLICT";
 
 export type PlaceBidFailure = {
   ok: false;
