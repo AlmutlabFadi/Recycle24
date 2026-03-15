@@ -1,107 +1,222 @@
+import {
+  AuctionExtensionStage,
+  AuctionWorkflowStatus,
+  BidWorkflowStatus,
+} from "@prisma/client";
+
 import { db } from "@/lib/db";
 
 import { computeExtendedEndAt } from "./anti-sniping";
 import { bidFailure } from "./auction-errors";
 import { getMinimumAllowedBid } from "./increment-policy";
-import type { PlaceBidInput, PlaceBidResult } from "./auction-types";
+import type {
+  AuctionRuntimeSnapshot,
+  HighestBidSnapshot,
+  PlaceBidInput,
+  PlaceBidResult,
+} from "./auction-types";
 
-type AuctionRecord = {
-  id: string;
-  status: string;
-  endAt: Date;
-  currentPrice: number;
-  highestBidderId: string | null;
-  version: number;
-};
+class BidConflictError extends Error {
+  constructor() {
+    super("Auction state changed during bidding.");
+    this.name = "BidConflictError";
+  }
+}
+
+function isAuctionOpen(auction: AuctionRuntimeSnapshot) {
+  const legacyOpen = auction.status === "LIVE";
+  const workflowOpen = auction.workflowStatus === "OPEN";
+
+  return !auction.isFinallyClosed && (legacyOpen || workflowOpen);
+}
+
+function resolveAuctionDeadline(auction: {
+  effectiveEndsAt: Date | null;
+  endsAt: Date | null;
+}) {
+  return auction.effectiveEndsAt ?? auction.endsAt;
+}
+
+function resolveCurrentBidAmount(
+  auction: Pick<AuctionRuntimeSnapshot, "currentBid" | "startingBid">,
+  highestBid: HighestBidSnapshot | null
+) {
+  return highestBid?.amount ?? auction.currentBid ?? auction.startingBid;
+}
+
+function mapExtensionStage(extensionCount: number): AuctionExtensionStage {
+  if (extensionCount <= 0) return AuctionExtensionStage.NONE;
+  if (extensionCount === 1) return AuctionExtensionStage.FIRST;
+  if (extensionCount === 2) return AuctionExtensionStage.SECOND;
+  return AuctionExtensionStage.THIRD;
+}
 
 export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
   const now = input.now ?? new Date();
 
   if (!Number.isFinite(input.amount) || input.amount <= 0) {
-    return bidFailure("INVALID_BID_AMOUNT", "Bid amount must be a positive number.");
+    return bidFailure(
+      "INVALID_BID_AMOUNT",
+      "Bid amount must be a positive number."
+    );
   }
 
-  const result = await db.$transaction(async (tx) => {
-    const auction = (await tx.auction.findUnique({
-      where: { id: input.auctionId },
-      select: {
-        id: true,
-        status: true,
-        endAt: true,
-        currentPrice: true,
-        highestBidderId: true,
-        version: true,
-      },
-    })) as AuctionRecord | null;
-
-    if (!auction) {
-      return bidFailure("AUCTION_NOT_FOUND", "Auction not found.");
-    }
-
-    if (auction.status !== "LIVE") {
-      return bidFailure("AUCTION_NOT_LIVE", "Auction is not live.");
-    }
-
-    if (auction.endAt.getTime() <= now.getTime()) {
-      return bidFailure("AUCTION_ENDED", "Auction already ended.");
-    }
-
-    if (auction.highestBidderId && auction.highestBidderId === input.bidderId) {
-      return bidFailure("SELF_OUTBID_FORBIDDEN", "Highest bidder cannot outbid themselves.");
-    }
-
-    const minimumAllowedBid = getMinimumAllowedBid(auction.currentPrice);
-
-    if (input.amount < minimumAllowedBid) {
-      return bidFailure(
-        "BID_TOO_LOW",
-        `Bid must be at least ${minimumAllowedBid}.`,
-      );
-    }
-
-    const nextEndAt = computeExtendedEndAt(auction.endAt, now);
-    const extended = nextEndAt.getTime() !== auction.endAt.getTime();
-
-    await tx.bid.create({
-      data: {
-        auctionId: input.auctionId,
-        bidderId: input.bidderId,
-        amount: input.amount,
-      },
-    });
-
-    const updated = await tx.auction.updateMany({
-      where: {
-        id: input.auctionId,
-        version: auction.version,
-      },
-      data: {
-        currentPrice: input.amount,
-        highestBidderId: input.bidderId,
-        endAt: nextEndAt,
-        version: {
-          increment: 1,
+  try {
+    const result = await db.$transaction(async (tx) => {
+      const auction = (await tx.auction.findUnique({
+        where: { id: input.auctionId },
+        select: {
+          id: true,
+          sellerId: true,
+          title: true,
+          startingBid: true,
+          status: true,
+          workflowStatus: true,
+          isFinallyClosed: true,
+          endsAt: true,
+          effectiveEndsAt: true,
+          extensionCount: true,
+          currentBid: true,
+          winningBidId: true,
+          version: true,
         },
-      },
+      })) as AuctionRuntimeSnapshot | null;
+
+      if (!auction) {
+        return bidFailure("AUCTION_NOT_FOUND", "Auction not found.");
+      }
+
+      if (!isAuctionOpen(auction)) {
+        return bidFailure("AUCTION_NOT_OPEN", "Auction is not open for bidding.");
+      }
+
+      const deadline = resolveAuctionDeadline(auction);
+
+      if (!deadline || deadline.getTime() <= now.getTime()) {
+        return bidFailure("AUCTION_ENDED", "Auction already ended.");
+      }
+
+      const currentWinningBid = (await tx.bid.findFirst({
+        where: {
+          auctionId: input.auctionId,
+          status: {
+            in: [
+              BidWorkflowStatus.ACTIVE,
+              BidWorkflowStatus.WINNING,
+              BidWorkflowStatus.OUTBID,
+              BidWorkflowStatus.FINALIZED,
+            ],
+          },
+        },
+        orderBy: [{ amount: "desc" }, { createdAt: "desc" }],
+        select: {
+          id: true,
+          bidderId: true,
+          amount: true,
+          status: true,
+          createdAt: true,
+        },
+      })) as HighestBidSnapshot | null;
+
+      if (currentWinningBid?.bidderId === input.bidderId) {
+        return bidFailure(
+          "SELF_OUTBID_FORBIDDEN",
+          "Highest bidder cannot outbid themselves."
+        );
+      }
+
+      const currentAmount = resolveCurrentBidAmount(auction, currentWinningBid);
+      const minimumAllowedBid = getMinimumAllowedBid(currentAmount);
+
+      if (input.amount < minimumAllowedBid) {
+        return bidFailure(
+          "BID_TOO_LOW",
+          `Bid must be at least ${minimumAllowedBid}.`
+        );
+      }
+
+      const nextEffectiveEndsAt = computeExtendedEndAt(deadline, now);
+      const extended = nextEffectiveEndsAt.getTime() !== deadline.getTime();
+      const nextExtensionCount = extended ? auction.extensionCount + 1 : auction.extensionCount;
+
+      if (currentWinningBid?.status === BidWorkflowStatus.WINNING) {
+        await tx.bid.update({
+          where: { id: currentWinningBid.id },
+          data: {
+            status: BidWorkflowStatus.OUTBID,
+          },
+        });
+      }
+
+      const newBid = await tx.bid.create({
+        data: {
+          auctionId: input.auctionId,
+          bidderId: input.bidderId,
+          participantId: input.participantId,
+          amount: input.amount,
+          status: BidWorkflowStatus.WINNING,
+          acceptedAt: now,
+        },
+        select: {
+          id: true,
+          bidderId: true,
+          amount: true,
+          status: true,
+          createdAt: true,
+        },
+      });
+
+      const updated = await tx.auction.updateMany({
+        where: {
+          id: input.auctionId,
+          version: auction.version,
+        },
+        data: {
+          currentBid: input.amount,
+          winningBidId: newBid.id,
+          workflowStatus: AuctionWorkflowStatus.OPEN,
+          effectiveEndsAt: nextEffectiveEndsAt,
+          extensionCount: nextExtensionCount,
+          extensionStage: mapExtensionStage(nextExtensionCount),
+          lastExtensionAt: extended ? now : undefined,
+          version: {
+            increment: 1,
+          },
+        },
+      });
+
+      if (updated.count === 0) {
+        throw new BidConflictError();
+      }
+
+      return {
+        ok: true as const,
+        auctionId: input.auctionId,
+        bidId: newBid.id,
+        amount: input.amount,
+        bidderId: input.bidderId,
+        previousHighestBidId: currentWinningBid?.id ?? null,
+        previousHighestBidderId:
+          currentWinningBid?.bidderId && currentWinningBid.bidderId !== input.bidderId
+            ? currentWinningBid.bidderId
+            : null,
+        currentBid: input.amount,
+        winningBidId: newBid.id,
+        effectiveEndsAt: nextEffectiveEndsAt,
+        extensionCount: nextExtensionCount,
+        extended,
+      };
     });
 
-    if (updated.count === 0) {
+    return result;
+  } catch (error) {
+    if (error instanceof BidConflictError) {
       return bidFailure(
         "BID_CONFLICT",
-        "Auction state changed during bidding. Please retry.",
+        "Auction state changed during bidding. Please retry."
       );
     }
 
-    return {
-      ok: true as const,
-      auctionId: input.auctionId,
-      amount: input.amount,
-      highestBidderId: input.bidderId,
-      currentPrice: input.amount,
-      extended,
-      endAt: nextEndAt,
-    };
-  });
-
-  return result;
+    throw error;
+  }
 }
