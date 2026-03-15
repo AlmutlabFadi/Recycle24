@@ -163,7 +163,7 @@ export async function POST(
       data: {
         auctionId,
         actorId: user.id,
-        type: "BID_PLACED",
+        eventType: "AUCTION_BID_PLACED",
         payload: {
           bidId: result.bidId,
           amount: result.amount,
