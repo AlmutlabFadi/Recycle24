@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import {
   AuctionDepositWorkflowStatus,
-  AuctionExtensionStage,
   AuctionParticipantWorkflowStatus,
-  AuctionWorkflowStatus,
   BidWorkflowStatus,
 } from "@prisma/client";
 
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { NotificationService } from "@/lib/notifications/service";
+import { sseManager } from "@/lib/realtime/sse-server";
+import { placeBid } from "@/core/auction/auction-engine";
 
 interface SessionUser {
   id: string;
@@ -28,76 +29,20 @@ function roundMoney(value: number) {
   return Math.round(value * 100) / 100;
 }
 
-function canBidOnAuction(auction: {
-  status: string;
-  workflowStatus: AuctionWorkflowStatus;
-  isFinallyClosed: boolean;
-}) {
-  const legacyOpen = auction.status === "LIVE";
-  const workflowOpen = auction.workflowStatus === AuctionWorkflowStatus.OPEN;
-
-  return !auction.isFinallyClosed && (workflowOpen || legacyOpen);
-}
-
-function resolveAuctionDeadline(auction: {
-  effectiveEndsAt: Date | null;
-  endsAt: Date | null;
-}) {
-  return auction.effectiveEndsAt ?? auction.endsAt;
-}
-
-function computeExtensionUpdate(auction: {
-  effectiveEndsAt: Date | null;
-  endsAt: Date | null;
-  extensionCount: number;
-}) {
-  const deadline = resolveAuctionDeadline(auction);
-
-  if (!deadline) {
-    return null;
-  }
-
-  const msRemaining = deadline.getTime() - Date.now();
-  const inLastMinute = msRemaining >= 0 && msRemaining <= 60 * 1000;
-
-  if (!inLastMinute) {
-    return null;
-  }
-
-  if (auction.extensionCount >= 3) {
-    return null;
-  }
-
-  const nextExtensionCount = auction.extensionCount + 1;
-  const nextDeadline = new Date(deadline.getTime() + 5 * 60 * 1000);
-
-  const nextStage =
-    nextExtensionCount === 1
-      ? AuctionExtensionStage.FIRST
-      : nextExtensionCount === 2
-        ? AuctionExtensionStage.SECOND
-        : AuctionExtensionStage.THIRD;
-
-  return {
-    extensionCount: nextExtensionCount,
-    extensionStage: nextStage,
-    effectiveEndsAt: nextDeadline,
-    lastExtensionAt: new Date(),
-  };
-}
-
-function getExtensionLabel(stage: AuctionExtensionStage) {
-  switch (stage) {
-    case AuctionExtensionStage.FIRST:
-      return "التمديد الأول";
-    case AuctionExtensionStage.SECOND:
-      return "التمديد الثاني";
-    case AuctionExtensionStage.THIRD:
-      return "التمديد الثالث والأخير";
-    case AuctionExtensionStage.FINAL_CLOSED:
-      return "الإغلاق النهائي";
+function mapFailureToStatus(code: string) {
+  switch (code) {
+    case "AUCTION_NOT_FOUND":
+      return 404;
+    case "AUCTION_NOT_OPEN":
+    case "AUCTION_ENDED":
+    case "SELF_OUTBID_FORBIDDEN":
+    case "INVALID_BID_AMOUNT":
+    case "BID_TOO_LOW":
+      return 400;
+    case "BID_CONFLICT":
+      return 409;
     default:
-      return "بدون تمديد";
+      return 400;
   }
 }
 
@@ -107,467 +52,193 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions);
+    const user = session?.user as SessionUser | undefined;
 
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: "يجب تسجيل الدخول للمزايدة" },
-        { status: 401 }
-      );
-    }
-
-    const sessionUser = session.user as SessionUser;
-    const bidderId = sessionUser.id;
-
-    if (!bidderId) {
-      return NextResponse.json(
-        { error: "معلومات المستخدم غير صالحة" },
-        { status: 401 }
-      );
+    if (!user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id: auctionId } = await context.params;
-
-    if (!auctionId) {
-      return NextResponse.json(
-        { error: "معرف المزاد مطلوب" },
-        { status: 400 }
-      );
-    }
-
     const body = (await request.json()) as BidRequestBody;
-    const parsedAmount = Number(body.amount);
+    const amount = Number(body.amount);
 
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+    if (!Number.isFinite(amount) || amount <= 0) {
       return NextResponse.json(
-        { error: "مبلغ المزايدة مطلوب ويجب أن يكون أكبر من صفر" },
+        { error: "Bid amount must be a positive number." },
         { status: 400 }
       );
     }
 
-    const bidAmount = roundMoney(parsedAmount);
-    const prisma = await db;
-
-    const user = await prisma.user.findUnique({
-      where: { id: bidderId },
-      include: {
-        trader: true,
+    const participant = await db.auctionParticipant.findFirst({
+      where: {
+        auctionId,
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        isExempt: true,
+        depositStatus: true,
+        workflowStatus: true,
       },
     });
 
-    if (!user) {
+    if (!participant) {
       return NextResponse.json(
-        { error: "المستخدم غير موجود" },
-        { status: 404 }
-      );
-    }
-
-    if (user.isLocked) {
-      return NextResponse.json(
-        {
-          error: `الحساب مقفل حالياً. السبب: ${user.lockReason || "تقييد على الحساب"}`,
-        },
+        { error: "You must join the auction before bidding." },
         { status: 403 }
       );
     }
 
-    const auction = await prisma.auction.findUnique({
+    const participantOpen =
+      participant.workflowStatus === AuctionParticipantWorkflowStatus.ACTIVE ||
+      participant.workflowStatus === AuctionParticipantWorkflowStatus.APPROVED;
+
+    if (!participantOpen) {
+      return NextResponse.json(
+        { error: "Your auction participation is not active." },
+        { status: 403 }
+      );
+    }
+
+    const depositSatisfied =
+      participant.isExempt ||
+      participant.depositStatus === AuctionDepositWorkflowStatus.HELD ||
+      participant.depositStatus === AuctionDepositWorkflowStatus.WAIVED;
+
+    if (!depositSatisfied) {
+      return NextResponse.json(
+        { error: "Security deposit must be held before bidding." },
+        { status: 403 }
+      );
+    }
+
+    const result = await placeBid({
+      auctionId,
+      bidderId: user.id,
+      participantId: participant.id,
+      amount: roundMoney(amount),
+    });
+
+    if (!result.ok) {
+      return NextResponse.json(
+        { error: result.message, code: result.code },
+        { status: mapFailureToStatus(result.code) }
+      );
+    }
+
+    if (result.previousHighestBidId) {
+      await db.bid.updateMany({
+        where: {
+          id: result.previousHighestBidId,
+          status: BidWorkflowStatus.WINNING,
+        },
+        data: {
+          status: BidWorkflowStatus.OUTBID,
+        },
+      });
+    }
+
+    const auction = await db.auction.findUnique({
       where: { id: auctionId },
       select: {
         id: true,
-        title: true,
         sellerId: true,
-        startingBid: true,
-        status: true,
-        workflowStatus: true,
-        isFinallyClosed: true,
-        endsAt: true,
+        title: true,
+        currentBid: true,
+        winningBidId: true,
         effectiveEndsAt: true,
         extensionCount: true,
-        extensionStage: true,
-        currentBid: true,
-        participants: {
-          where: { userId: bidderId },
-          select: {
-            id: true,
-            userId: true,
-            workflowStatus: true,
-            depositWorkflowStatus: true,
-            isExempt: true,
-          },
-          take: 1,
-        },
-        bids: {
-          orderBy: [{ amount: "desc" }, { createdAt: "desc" }],
-          select: {
-            id: true,
-            bidderId: true,
-            amount: true,
-            status: true,
-            createdAt: true,
-          },
-          take: 1,
-        },
+        version: true,
       },
     });
 
     if (!auction) {
       return NextResponse.json(
-        { error: "المزاد غير موجود" },
+        { error: "Auction not found after bid execution." },
         { status: 404 }
       );
     }
 
-    if (!canBidOnAuction(auction)) {
-      return NextResponse.json(
-        { error: "المزاد غير نشط حالياً" },
-        { status: 400 }
-      );
-    }
+    await db.auctionEventLog.create({
+      data: {
+        auctionId,
+        actorId: user.id,
+        type: "BID_PLACED",
+        payload: {
+          bidId: result.bidId,
+          amount: result.amount,
+          bidderId: result.bidderId,
+          previousHighestBidId: result.previousHighestBidId,
+          previousHighestBidderId: result.previousHighestBidderId,
+          currentBid: result.currentBid,
+          winningBidId: result.winningBidId,
+          effectiveEndsAt: result.effectiveEndsAt,
+          extensionCount: result.extensionCount,
+          extended: result.extended,
+          version: auction.version,
+        },
+      },
+    });
 
-    if (auction.sellerId === bidderId) {
-      return NextResponse.json(
-        { error: "لا يمكنك المزايدة على مزادك الخاص" },
-        { status: 400 }
-      );
-    }
-
-    const deadline = resolveAuctionDeadline(auction);
-
-    if (!deadline) {
-      return NextResponse.json(
-        { error: "المزاد غير مهيأ بوقت انتهاء صالح" },
-        { status: 400 }
-      );
-    }
-
-    if (Date.now() > deadline.getTime()) {
-      return NextResponse.json(
-        { error: "انتهى وقت المزاد" },
-        { status: 400 }
-      );
-    }
-
-    const participant = auction.participants[0];
-
-    if (!participant) {
-      return NextResponse.json(
-        { error: "يجب الانضمام إلى المزاد أولاً قبل تقديم أي مزايدة" },
-        { status: 403 }
-      );
+    if (auction.sellerId !== user.id) {
+      await NotificationService.create({
+        userId: auction.sellerId,
+        title: "New bid received",
+        message: `A new bid of ${result.amount} was placed on ${auction.title}.`,
+        type: "AUCTION_BID",
+      });
     }
 
     if (
-      participant.workflowStatus !== AuctionParticipantWorkflowStatus.APPROVED
+      result.previousHighestBidderId &&
+      result.previousHighestBidderId !== user.id
     ) {
-      return NextResponse.json(
-        { error: "الحساب غير معتمد للمشاركة في هذا المزاد" },
-        { status: 403 }
-      );
-    }
-
-    const depositAllowedStatuses: AuctionDepositWorkflowStatus[] = [
-      AuctionDepositWorkflowStatus.HELD,
-      AuctionDepositWorkflowStatus.VERIFIED,
-      AuctionDepositWorkflowStatus.EXEMPT,
-    ];
-
-    if (!depositAllowedStatuses.includes(participant.depositWorkflowStatus)) {
-      return NextResponse.json(
-        { error: "لا يمكن تقديم مزايدة قبل تثبيت حالة التأمين" },
-        { status: 403 }
-      );
-    }
-
-    const currentHighestBid = auction.bids[0];
-    const currentHighestAmount =
-      currentHighestBid?.amount ?? auction.currentBid ?? auction.startingBid;
-
-    if (bidAmount <= currentHighestAmount) {
-      return NextResponse.json(
-        {
-          error: `يجب أن تكون المزايدة أعلى من ${currentHighestAmount.toLocaleString()} ل.س`,
-          currentHighestAmount,
-        },
-        { status: 400 }
-      );
-    }
-
-    const result = await prisma.$transaction(async (tx) => {
-      const latestAuction = await tx.auction.findUnique({
-        where: { id: auctionId },
-        select: {
-          id: true,
-          title: true,
-          sellerId: true,
-          startingBid: true,
-          currentBid: true,
-          status: true,
-          workflowStatus: true,
-          isFinallyClosed: true,
-          endsAt: true,
-          effectiveEndsAt: true,
-          extensionCount: true,
-          extensionStage: true,
-        },
-      });
-
-      if (!latestAuction) {
-        throw new Error("Auction not found during bid transaction");
-      }
-
-      if (!canBidOnAuction(latestAuction)) {
-        throw new Error("Auction is not open for bidding");
-      }
-
-      const latestDeadline = resolveAuctionDeadline(latestAuction);
-
-      if (!latestDeadline || Date.now() > latestDeadline.getTime()) {
-        throw new Error("Auction deadline has passed");
-      }
-
-      const latestHighestBid = await tx.bid.findFirst({
-        where: {
-          auctionId,
-          status: {
-            in: [
-              BidWorkflowStatus.ACTIVE,
-              BidWorkflowStatus.WINNING,
-              BidWorkflowStatus.OUTBID,
-              BidWorkflowStatus.FINALIZED,
-            ],
-          },
-        },
-        orderBy: [{ amount: "desc" }, { createdAt: "desc" }],
-        select: {
-          id: true,
-          bidderId: true,
-          amount: true,
-          status: true,
-          createdAt: true,
-        },
-      });
-
-      const latestHighestAmount =
-        latestHighestBid?.amount ??
-        latestAuction.currentBid ??
-        latestAuction.startingBid;
-
-      if (bidAmount <= latestHighestAmount) {
-        throw new Error(`Bid amount must exceed ${latestHighestAmount}`);
-      }
-
-      if (latestHighestBid?.status === BidWorkflowStatus.WINNING) {
-        await tx.bid.update({
-          where: { id: latestHighestBid.id },
-          data: {
-            status: BidWorkflowStatus.OUTBID,
-          },
-        });
-      }
-
-      const newBid = await tx.bid.create({
-        data: {
-          auctionId,
-          bidderId,
-          participantId: participant.id,
-          amount: bidAmount,
-          status: BidWorkflowStatus.WINNING,
-          acceptedAt: new Date(),
-        },
-        include: {
-          bidder: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      });
-
-      const extensionUpdate = computeExtensionUpdate({
-        effectiveEndsAt: latestAuction.effectiveEndsAt,
-        endsAt: latestAuction.endsAt,
-        extensionCount: latestAuction.extensionCount,
-      });
-
-      const updatedAuction = await tx.auction.update({
-        where: { id: auctionId },
-        data: {
-          currentBid: bidAmount,
-          winningBidId: newBid.id,
-          workflowStatus: AuctionWorkflowStatus.OPEN,
-          ...(extensionUpdate ?? {}),
-        },
-        select: {
-          id: true,
-          currentBid: true,
-          winningBidId: true,
-          effectiveEndsAt: true,
-          extensionCount: true,
-          extensionStage: true,
-        },
-      });
-
-      await tx.auctionEventLog.create({
-        data: {
-          auctionId,
-          actorId: bidderId,
-          eventType: "AUCTION_BID_PLACED",
-          payload: {
-            bidId: newBid.id,
-            amount: bidAmount,
-            bidderId,
-            previousHighestBidId: latestHighestBid?.id ?? null,
-            previousHighestAmount: latestHighestAmount,
-            extensionApplied: Boolean(extensionUpdate),
-            extensionCount: updatedAuction.extensionCount,
-            extensionStage: updatedAuction.extensionStage,
-            effectiveEndsAt:
-              updatedAuction.effectiveEndsAt?.toISOString() ?? null,
-          },
-        },
-      });
-
-      if (extensionUpdate) {
-        await tx.auctionEventLog.create({
-          data: {
-            auctionId,
-            actorId: bidderId,
-            eventType: "AUCTION_EXTENDED",
-            payload: {
-              extensionCount: updatedAuction.extensionCount,
-              extensionStage: updatedAuction.extensionStage,
-              extensionLabel: getExtensionLabel(updatedAuction.extensionStage),
-              newEffectiveEndsAt:
-                updatedAuction.effectiveEndsAt?.toISOString() ?? null,
-            },
-          },
-        });
-      }
-
-      return {
-        bid: newBid,
-        updatedAuction,
-        previousHighestBidderId:
-          latestHighestBid?.bidderId && latestHighestBid.bidderId !== bidderId
-            ? latestHighestBid.bidderId
-            : null,
-      };
-    });
-
-    if (result.previousHighestBidderId) {
-      const { NotificationService } = await import("@/lib/notifications/service");
-
       await NotificationService.create({
         userId: result.previousHighestBidderId,
-        title: "تمت المزايدة عليك بصورة أعلى!",
-        message: `قام شخص آخر بالمزايدة بمبلغ ${bidAmount.toLocaleString()} ل.س في مزاد "${auction.title}"`,
-        type: "URGENT",
-        link: `/auctions/${auctionId}`,
-        metadata: {
-          auctionId,
-          amount: bidAmount,
-        },
+        title: "You have been outbid",
+        message: `You have been outbid on ${auction.title}.`,
+        type: "AUCTION_OUTBID",
       });
     }
 
-    const { sseManager } = await import("@/lib/realtime/sse-server");
-
-    sseManager.broadcast({
-      type: "BID_PLACED",
-      auctionId,
-      amount: result.bid.amount,
-      bidderName: result.bid.bidder.name,
-      createdAt: result.bid.createdAt,
-      extensionCount: result.updatedAuction.extensionCount,
-      extensionStage: result.updatedAuction.extensionStage,
-      effectiveEndsAt: result.updatedAuction.effectiveEndsAt,
-    });
-
-    return NextResponse.json({
-      success: true,
-      bid: {
-        id: result.bid.id,
-        amount: result.bid.amount,
-        bidder: result.bid.bidder,
-        createdAt: result.bid.createdAt,
-        status: result.bid.status,
+    sseManager.broadcast(`auction:${auctionId}`, {
+      type: "AUCTION_BID_PLACED",
+      data: {
+        auctionId,
+        bidId: result.bidId,
+        amount: result.amount,
+        bidderId: result.bidderId,
+        currentBid: auction.currentBid,
+        winningBidId: auction.winningBidId,
+        effectiveEndsAt: auction.effectiveEndsAt,
+        extensionCount: auction.extensionCount,
+        extended: result.extended,
+        version: auction.version,
       },
-      auction: {
-        currentBid: result.updatedAuction.currentBid,
-        winningBidId: result.updatedAuction.winningBidId,
-        extensionCount: result.updatedAuction.extensionCount,
-        extensionStage: result.updatedAuction.extensionStage,
-        extensionLabel: getExtensionLabel(result.updatedAuction.extensionStage),
-        effectiveEndsAt: result.updatedAuction.effectiveEndsAt,
-      },
-      message: "تم تقديم المزايدة بنجاح",
     });
-  } catch (error) {
-    console.error("Place bid error:", error);
-
-    const message =
-      error instanceof Error ? error.message : "حدث خطأ أثناء تقديم المزايدة";
-
-    if (
-      typeof message === "string" &&
-      (message.includes("must exceed") ||
-        message.includes("deadline has passed") ||
-        message.includes("not open for bidding"))
-    ) {
-      return NextResponse.json({ error: message }, { status: 400 });
-    }
 
     return NextResponse.json(
-      { error: "حدث خطأ أثناء تقديم المزايدة" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id: auctionId } = await context.params;
-    const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "20", 10);
-
-    const bids = await db.bid.findMany({
-      where: { auctionId },
-      orderBy: [{ amount: "desc" }, { createdAt: "desc" }],
-      take: limit,
-      include: {
-        bidder: {
-          select: {
-            id: true,
-            name: true,
-          },
+      {
+        success: true,
+        bid: {
+          id: result.bidId,
+          amount: result.amount,
+          bidderId: result.bidderId,
+          currentBid: auction.currentBid,
+          winningBidId: auction.winningBidId,
+          effectiveEndsAt: auction.effectiveEndsAt,
+          extensionCount: auction.extensionCount,
+          extended: result.extended,
+          version: auction.version,
         },
       },
-    });
-
-    const total = await db.bid.count({
-      where: { auctionId },
-    });
-
-    return NextResponse.json({
-      success: true,
-      bids: bids.map((bid) => ({
-        id: bid.id,
-        amount: bid.amount,
-        bidder: bid.bidder,
-        createdAt: bid.createdAt,
-        status: bid.status,
-      })),
-      total,
-    });
+      { status: 200 }
+    );
   } catch (error) {
-    console.error("Get bids error:", error);
+    console.error("Auction bid route failed", error);
 
     return NextResponse.json(
-      { error: "حدث خطأ أثناء جلب المزايدات" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
