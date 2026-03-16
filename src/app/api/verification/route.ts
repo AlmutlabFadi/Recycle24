@@ -130,14 +130,9 @@ export async function POST(request: NextRequest) {
             dateOfBirth,
         } = body;
 
-        const finalBusinessName =
-            businessName || (vehicleType ? `مركبة: ${vehicleType} - ${vehicleColor || ""}`.trim() : null);
-        const finalLicenseNumber = licenseNumber || licensePlate || null;
-        const finalLocation = location || governorate || null;
-
-        if (!userId || !finalBusinessName) {
+        if (!userId) {
             return NextResponse.json(
-                { error: "جميع الحقول الأساسية مطلوبة" },
+                { error: "معرف المستخدم مطلوب" },
                 { status: 400 }
             );
         }
@@ -166,6 +161,24 @@ export async function POST(request: NextRequest) {
 
         const effectiveType = body.userType || user.userType || user.role;
         const isDriver = effectiveType === "DRIVER";
+        const isTrader = effectiveType === "TRADER";
+
+        const finalBusinessName =
+            businessName || 
+            (vehicleType ? `مركبة: ${vehicleType} - ${vehicleColor || ""}`.trim() : null) ||
+            body.name ||
+            user.name ||
+            (isDriver ? "سائق" : "حساب شخصي");
+
+        const finalLicenseNumber = licenseNumber || licensePlate || null;
+        const finalLocation = location || governorate || null;
+
+        if (isTrader && !finalBusinessName) {
+            return NextResponse.json(
+                { error: "اسم المنشأة التجاري مطلوب" },
+                { status: 400 }
+            );
+        }
 
         const [existingTrader, existingDriver] = await Promise.all([
             db.trader.findUnique({
