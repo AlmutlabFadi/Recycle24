@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import {
@@ -112,18 +112,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
         };
       }
 
-      if (depositRequest.currency !== Currency.SYP) {
+      if (depositRequest.currency !== Currency.SYP && depositRequest.currency !== Currency.USD) {
         return {
           kind: "error" as const,
           response: NextResponse.json(
-            { error: "Only SYP deposit approvals are supported currently" },
+            { error: "Only SYP and USD deposit approvals are supported currently" },
             { status: 400 }
           ),
         };
       }
 
       const approvalDecision = getDepositApprovalDecision(
-        Currency.SYP,
+        depositRequest.currency as Currency,
         depositRequest.amount
       );
 
@@ -242,13 +242,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
         where: {
           userId: depositRequest.userId,
         },
-        update: {
-          balanceSYP: updatedAccount?.balance ?? depositRequest.account.balance,
-        },
+        update: depositRequest.currency === Currency.SYP 
+          ? { balanceSYP: updatedAccount?.balance ?? depositRequest.account.balance }
+          : { balanceUSD: updatedAccount?.balance ?? depositRequest.account.balance },
         create: {
           userId: depositRequest.userId,
-          balanceSYP: updatedAccount?.balance ?? depositRequest.account.balance,
-          balanceUSD: 0,
+          balanceSYP: depositRequest.currency === Currency.SYP ? (updatedAccount?.balance ?? depositRequest.account.balance) : 0,
+          balanceUSD: depositRequest.currency === Currency.USD ? (updatedAccount?.balance ?? depositRequest.account.balance) : 0,
         },
       });
 

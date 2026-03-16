@@ -410,3 +410,4 @@ describe("Auction integration", () => {
     expect(eventTypes).toContain("AUCTION_WINNER_DISCHARGED");
   });
 });
+

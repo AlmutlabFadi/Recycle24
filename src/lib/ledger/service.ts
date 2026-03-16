@@ -328,13 +328,26 @@ export class LedgerPostingService {
       });
     });
   }
+static async releaseHold(holdId: string) {
+  return await this.runSerializableTransaction(async (tx) => {
+    const hold = await tx.ledgerHold.findUnique({
+      where: { id: holdId },
+    });
 
-  static async releaseHold(holdId: string) {
-    return await db.ledgerHold.update({
+    if (!hold) {
+      throw new Error("Hold not found.");
+    }
+
+    if (hold.status !== HoldStatus.OPEN) {
+      throw new Error("Only OPEN holds can be released.");
+    }
+
+    return await tx.ledgerHold.update({
       where: { id: holdId },
       data: { status: HoldStatus.RELEASED },
     });
-  }
+  });
+}
 
   static async captureHold(
     holdId: string,
@@ -399,3 +412,4 @@ export class LedgerPostingService {
     return aggregation._sum.amount || 0;
   }
 }
+

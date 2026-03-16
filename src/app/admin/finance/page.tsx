@@ -67,6 +67,8 @@ type FinanceApiResponse<T> = {
 
 type ActiveTab = "all" | "awaiting-final" | "pending-first" | "deposits" | "payouts";
 
+type CurrencyFilter = "ALL" | "SYP" | "USD";
+
 function formatAmount(amount: number, currency: string) {
   return `${amount.toLocaleString()} ${currency}`;
 }
@@ -174,6 +176,7 @@ export default function AdminFinancePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>("awaiting-final");
+  const [currencyFilter, setCurrencyFilter] = useState<CurrencyFilter>("ALL");
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
 
@@ -215,34 +218,44 @@ export default function AdminFinancePage() {
     void loadData();
   }, []);
 
+  const filteredDepositItems = useMemo(
+    () => depositItems.filter(i => currencyFilter === "ALL" || i.currency === currencyFilter),
+    [depositItems, currencyFilter]
+  );
+
+  const filteredPayoutItems = useMemo(
+    () => payoutItems.filter(i => currencyFilter === "ALL" || i.currency === currencyFilter),
+    [payoutItems, currencyFilter]
+  );
+
   const depositAwaitingFinal = useMemo(
     () =>
-      depositItems.filter(
+      filteredDepositItems.filter(
         (item) =>
           item.status === "UNDER_REVIEW" &&
           item.approvalStage === "AWAITING_FINAL_APPROVAL"
       ),
-    [depositItems]
+    [filteredDepositItems]
   );
 
   const payoutAwaitingFinal = useMemo(
     () =>
-      payoutItems.filter(
+      filteredPayoutItems.filter(
         (item) =>
           item.status === "UNDER_REVIEW" &&
           item.approvalStage === "AWAITING_FINAL_APPROVAL"
       ),
-    [payoutItems]
+    [filteredPayoutItems]
   );
 
   const depositPending = useMemo(
-    () => depositItems.filter((item) => item.status === "PENDING"),
-    [depositItems]
+    () => filteredDepositItems.filter((item) => item.status === "PENDING"),
+    [filteredDepositItems]
   );
 
   const payoutPending = useMemo(
-    () => payoutItems.filter((item) => item.status === "PENDING"),
-    [payoutItems]
+    () => filteredPayoutItems.filter((item) => item.status === "PENDING"),
+    [filteredPayoutItems]
   );
 
   const visibleDeposits = useMemo(() => {
@@ -252,13 +265,13 @@ export default function AdminFinancePage() {
       case "pending-first":
         return depositPending;
       case "deposits":
-        return depositItems;
+        return filteredDepositItems;
       case "payouts":
         return [];
       default:
-        return depositItems;
+        return filteredDepositItems;
     }
-  }, [activeTab, depositAwaitingFinal, depositPending, depositItems]);
+  }, [activeTab, depositAwaitingFinal, depositPending, filteredDepositItems]);
 
   const visiblePayouts = useMemo(() => {
     switch (activeTab) {
@@ -267,13 +280,13 @@ export default function AdminFinancePage() {
       case "pending-first":
         return payoutPending;
       case "payouts":
-        return payoutItems;
+        return filteredPayoutItems;
       case "deposits":
         return [];
       default:
-        return payoutItems;
+        return filteredPayoutItems;
     }
-  }, [activeTab, payoutAwaitingFinal, payoutPending, payoutItems]);
+  }, [activeTab, payoutAwaitingFinal, payoutPending, filteredPayoutItems]);
 
   function getReviewNote(id: string) {
     return reviewNotes[id] ?? "";
@@ -438,7 +451,7 @@ export default function AdminFinancePage() {
     const canAct = item.status === "PENDING" || item.status === "UNDER_REVIEW";
 
     return (
-      <div key={`deposit-${item.id}`} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div key={`deposit-${item.id}`} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:shadow-md hover:border-blue-200 hover:-translate-y-0.5">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <div className="text-sm text-slate-500">Deposit Request</div>
@@ -549,7 +562,7 @@ export default function AdminFinancePage() {
     const canAct = item.status === "PENDING" || item.status === "UNDER_REVIEW";
 
     return (
-      <div key={`payout-${item.id}`} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div key={`payout-${item.id}`} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:shadow-md hover:border-purple-200 hover:-translate-y-0.5">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <div className="text-sm text-slate-500">Payout Request</div>
@@ -709,13 +722,36 @@ export default function AdminFinancePage() {
           />
         </section>
 
-        <section className="flex flex-wrap gap-2">
-          {tabButton("awaiting-final", "Awaiting Final Approval")}
-          {tabButton("pending-first", "Pending First Review")}
-          {tabButton("deposits", "All Deposits")}
-          {tabButton("payouts", "All Payouts")}
-          {tabButton("all", "All Requests")}
-        </section>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <section className="flex flex-wrap gap-2">
+            {tabButton("awaiting-final", "Awaiting Final Approval")}
+            {tabButton("pending-first", "Pending First Review")}
+            {tabButton("deposits", "All Deposits")}
+            {tabButton("payouts", "All Payouts")}
+            {tabButton("all", "All Requests")}
+          </section>
+
+          <div className="flex items-center gap-2 rounded-xl bg-slate-200/50 p-1">
+            <button
+              onClick={() => setCurrencyFilter("ALL")}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${currencyFilter === "ALL" ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+            >
+              All Currencies
+            </button>
+            <button
+              onClick={() => setCurrencyFilter("SYP")}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${currencyFilter === "SYP" ? "bg-blue-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+            >
+              SYP (ل.س)
+            </button>
+            <button
+              onClick={() => setCurrencyFilter("USD")}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${currencyFilter === "USD" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-600 hover:text-slate-900"}`}
+            >
+              USD ($)
+            </button>
+          </div>
+        </div>
 
         {loading ? <EmptyState label="Loading finance requests..." /> : null}
 

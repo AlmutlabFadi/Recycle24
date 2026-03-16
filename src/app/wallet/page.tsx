@@ -128,6 +128,7 @@ export default function WalletPage() {
     if (!isAuthenticated) return false;
     if (verificationStatus === "APPROVED") return true;
     if (verificationStatus === "VERIFIED") return true;
+    if (verificationStatus === "ACTIVE") return true;
     return false;
   }, [isAuthenticated, verificationStatus]);
 

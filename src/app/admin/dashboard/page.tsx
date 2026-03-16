@@ -67,6 +67,7 @@ export default function AdminCommandCenter() {
         { id: 'finance', title: 'النظام البنكي والمالي', icon: 'account_balance', href: '/admin/finance', active: true },
         { id: 'subscription_designer', title: 'مصمم باقات الاشتراك', icon: 'design_services', href: '/admin/subscriptions/packages', active: true },
         { id: 'verification', title: 'التوثيق المستندي', icon: 'verified', href: '/admin/verification', count: stats?.verification.pending, active: true },
+        { id: 'auctions', title: 'مراجعة المزادات', icon: 'gavel', href: '/admin/auctions', active: true },
         { id: 'support', title: 'مكتب الدعم', icon: 'support_agent', href: '/admin/support', count: stats?.support.open, active: true },
         { id: 'rewards', title: 'إعدادات المكافآت', icon: 'loyalty', href: '/admin/rewards', active: true },
         { id: 'soc', title: 'الأمن والعمليات', icon: 'security', href: '/admin/soc', active: true },

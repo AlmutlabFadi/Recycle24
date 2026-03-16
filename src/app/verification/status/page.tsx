@@ -3,7 +3,7 @@
 import HeaderWithBack from "@/components/HeaderWithBack";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
 type VerificationStatus =
@@ -95,9 +95,10 @@ function StatusBadge({ status }: { status?: string }) {
 }
 
 function VerificationStatusContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const targetRole = searchParams.get("role");
-  const { user, activeRole } = useAuth();
+  const { user, activeRole, switchRole } = useAuth();
 
   const [data, setData] = useState<VerificationData>({
     status: "PENDING",
@@ -186,12 +187,17 @@ function VerificationStatusContent() {
               <p className="text-slate-300 text-sm mb-4">
                 يمكنك الآن الاستفادة من كامل صلاحيات الحساب داخل المنصة.
               </p>
-              <Link
-                href="/"
+              <button
+                onClick={() => {
+                  const verifiedRole = data.isDriver ? "DRIVER" : "TRADER";
+                  switchRole(verifiedRole);
+                  // Force full reload so NextAuth session refreshes with updated userType/status from DB
+                  window.location.href = "/";
+                }}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-emerald-600 text-white font-bold"
               >
                 العودة للرئيسية
-              </Link>
+              </button>
             </div>
           )}
 

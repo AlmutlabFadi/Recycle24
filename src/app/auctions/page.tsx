@@ -44,7 +44,8 @@ const getCategoryColor = (category: string) => {
 export default function AuctionsPage() {
     const [activeFilter, setActiveFilter] = useState("all");
     const { auctions, isLoading, error, refresh } = useAuctions();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, activeRole } = useAuth();
+    const isTrader = activeRole === "TRADER";
 
     const filteredAuctions = activeFilter === "all"
         ? auctions
@@ -112,7 +113,20 @@ export default function AuctionsPage() {
 
     return (
         <>
-            <HeaderWithBack title="المزادات" />
+            <HeaderWithBack
+                title="المزادات"
+                action={
+                    isAuthenticated ? (
+                        <Link
+                            href="/auctions/my-auctions"
+                            className="flex items-center gap-1 text-xs font-bold text-primary bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full"
+                        >
+                            <span className="material-symbols-outlined !text-[15px]">gavel</span>
+                            مزاداتي
+                        </Link>
+                    ) : undefined
+                }
+            />
 
             {/* Filters */}
             <div className="px-4 py-3 bg-surface-dark border-b border-slate-800">

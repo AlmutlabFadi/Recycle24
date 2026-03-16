@@ -157,18 +157,37 @@ export async function POST(request: NextRequest) {
 
         const body = await request.json();
 
-        await validateAuctionData(db, body, sellerId);
+        // Remove old basic validation since we rely on the rich payload now
+        // await validateAuctionData(db, body, sellerId);
 
         const {
             title,
-            material,
-            weight,
-            startingPrice,
-            buyNowPrice,
+            auctionType,
+            organization,
             governorate,
             address,
             startDate,
             endDate,
+            materials,
+            pricingMode,
+            startingBidCurrency,
+            startingBidUnit,
+            buyNowPriceCurrency,
+            startingPrice, // used as startingBidAmount
+            buyNowPrice,   // used as buyNowPriceAmount
+            securityDepositAmount,
+            securityDepositCurrency,
+            securityDepositPaymentMethod,
+            allowPreview,
+            previewStartDate,
+            previewEndDate,
+            previewStartTime,
+            previewEndTime,
+            notes,
+            shipmentDurationDays,
+            images,
+            videos,
+            termsFiles
         } = body;
 
         const endD = new Date(endDate);
@@ -179,15 +198,62 @@ export async function POST(request: NextRequest) {
             data: {
                 sellerId,
                 title,
-                category: material,
-                weight: Number(weight),
-                startingBid: Number(startingPrice),
+                // Maps the first item type for legacy category requirement, properly saved in items relation below
+                category: materials && materials[0] ? (materials[0].type === "أخرى" ? materials[0].customType : materials[0].type) : "غير محدد",
+                weight: materials && materials[0] ? Number(materials[0].weight || 0) : 0,
+                
+                startingBid: Number(startingPrice || 0),
                 buyNowPrice: buyNowPrice ? Number(buyNowPrice) : null,
+                securityDeposit: Number(securityDepositAmount || 0),
+                
                 location: governorate && address ? `${governorate}, ${address}` : (governorate || address || "غير محدد"),
                 duration: durationHours,
                 scheduledAt: startD,
                 endsAt: endD,
-                status: "LIVE",
+                status: "PENDING",
+                workflowStatus: "PENDING_APPROVAL",
+                type: auctionType === "government" ? "GOVERNMENT" : "PRIVATE",
+                organization: auctionType === "government" ? organization : null,
+
+                pricingMode: pricingMode || "unified",
+                startingBidCurrency: startingBidCurrency || "SYP",
+                startingBidUnit: startingBidUnit || "total",
+                buyNowPriceCurrency: buyNowPriceCurrency || "SYP",
+                securityDepositCurrency: securityDepositCurrency || "SYP",
+                securityDepositMethod: securityDepositPaymentMethod || "platform",
+
+                allowPreview: !!allowPreview,
+                previewStartDate: previewStartDate ? new Date(previewStartDate) : null,
+                previewEndDate: previewEndDate ? new Date(previewEndDate) : null,
+                previewStartTime: previewStartTime || null,
+                previewEndTime: previewEndTime || null,
+
+                notes: notes || null,
+                shipmentDurationDays: shipmentDurationDays ? Number(shipmentDurationDays) : null,
+
+                items: {
+                    create: (materials || []).map((m: any) => ({
+                        type: m.type,
+                        customType: m.customType || null,
+                        weight: Number(m.weight || 0),
+                        unit: m.unit || "kg",
+                        isAccurate: m.isAccurate !== false // default true
+                    }))
+                },
+                documents: termsFiles && termsFiles.length > 0 ? {
+                    create: termsFiles.map((doc: any) => ({
+                        fileName: doc.name || "مستند",
+                        fileUrl: doc.url || "", // Currently frontend doesn't upload to S3 yet in page.tsx, assuming URL is passed or blank
+                        fileType: doc.type || null,
+                        fileSize: doc.size ? Number(doc.size) : null
+                    }))
+                } : undefined,
+                images: images && images.length > 0 ? {
+                    create: images.map((img: any, idx: number) => ({
+                        imageUrl: img.url || "",
+                        order: idx
+                    }))
+                } : undefined
             },
         });
 

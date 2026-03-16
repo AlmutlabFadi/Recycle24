@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import {
@@ -114,18 +114,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
         };
       }
 
-      if (payoutRequest.currency !== Currency.SYP) {
+      if (payoutRequest.currency !== Currency.SYP && payoutRequest.currency !== Currency.USD) {
         return {
           kind: "error" as const,
           response: NextResponse.json(
-            { error: "Only SYP payout approvals are supported currently" },
+            { error: "Only SYP and USD payout approvals are supported currently" },
             { status: 400 }
           ),
         };
       }
 
       const approvalDecision = getPayoutApprovalDecision(
-        Currency.SYP,
+        payoutRequest.currency as Currency,
         payoutRequest.amount
       );
 
@@ -265,13 +265,13 @@ export async function POST(request: NextRequest, context: RouteContext) {
         where: {
           userId: payoutRequest.userId,
         },
-        update: {
-          balanceSYP: updatedAccount?.balance ?? payoutRequest.account.balance,
-        },
+        update: payoutRequest.currency === Currency.SYP
+          ? { balanceSYP: updatedAccount?.balance ?? payoutRequest.account.balance }
+          : { balanceUSD: updatedAccount?.balance ?? payoutRequest.account.balance },
         create: {
           userId: payoutRequest.userId,
-          balanceSYP: updatedAccount?.balance ?? payoutRequest.account.balance,
-          balanceUSD: 0,
+          balanceSYP: payoutRequest.currency === Currency.SYP ? (updatedAccount?.balance ?? payoutRequest.account.balance) : 0,
+          balanceUSD: payoutRequest.currency === Currency.USD ? (updatedAccount?.balance ?? payoutRequest.account.balance) : 0,
         },
       });
 

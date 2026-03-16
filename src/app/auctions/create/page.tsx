@@ -13,6 +13,7 @@ export default function CreateAuctionPage() {
     const router = useRouter();
     const { activeRole } = useAuth();
     const [step, setStep] = useState(1);
+    const [createdAuctionId, setCreatedAuctionId] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         title: "",
         auctionType: "private", // private or government
@@ -35,6 +36,10 @@ export default function CreateAuctionPage() {
         previewEndDate: "",
         previewStartTime: "",
         previewEndTime: "",
+
+        // Pricing mode
+        pricingMode: "unified" as "unified" | "per_material",
+        materialPrices: [] as { id: string; amount: string; unit: "kg" | "ton" | "piece" | "total" | "L" | "m2" | "m3" | "dunum" | "hectare"; currency: "SYP" | "USD" }[],
 
         // Advanced Pricing
         startingBidAmount: "",
@@ -120,6 +125,8 @@ export default function CreateAuctionPage() {
                 throw new Error(err.error || "فشل إنشاء المزاد");
             }
             
+            const data = await response.json();
+            setCreatedAuctionId(data.auction?.id || null);
             // Show Success UI
             setStep(4);
         } catch (error) {
@@ -156,14 +163,18 @@ export default function CreateAuctionPage() {
                     <div className="size-24 rounded-full bg-green-500 text-white flex items-center justify-center mb-6 shadow-lg shadow-green-500/30 animate-bounce">
                         <span className="material-symbols-outlined !text-[48px]">check</span>
                     </div>
-                    <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">تم إنشاء المزاد بنجاح!</h2>
-                    <p className="text-slate-500 dark:text-slate-400 mb-8">سيظهر المزاد في الصالة العامة خلال لحظات.</p>
+                    <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">تم إرسال طلب المزاد!</h2>
+                    <p className="text-slate-500 dark:text-slate-400 mb-2">سيتم مراجعة المزاد من قبل لجنة الإدارة قبل نشره.</p>
+                    <div className="inline-flex items-center gap-2 text-xs font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-500 px-4 py-2 rounded-full mb-6">
+                        <span className="material-symbols-outlined !text-[16px]">schedule</span>
+                        غالباً خلال 24-48 ساعة
+                    </div>
                     <div className="flex flex-col gap-3 w-full max-w-sm">
-                        <Link href="/auctions/402" className="w-full bg-primary text-white py-4 rounded-xl font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20">
-                            مشاهدة المزاد
+                        <Link href="/auctions/my-auctions" className="w-full bg-primary text-white py-4 rounded-xl font-bold hover:bg-primary/90 transition shadow-lg shadow-primary/20 text-center">
+                            مزاداتي
                         </Link>
-                        <Link href="/auctions" className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white py-4 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">
-                            العودة للرئيسية
+                        <Link href="/auctions" className="w-full bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white py-4 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition text-center">
+                            العودة للصالة
                         </Link>
                     </div>
                 </div>
@@ -786,6 +797,46 @@ export default function CreateAuctionPage() {
                             </p>
                         </div>
 
+                        {/* ===== Pricing Mode Toggle ===== */}
+                        <div className="space-y-3">
+                            <label className="text-sm font-bold text-slate-900 dark:text-white">طريقة التسعير</label>
+                            <div className="flex bg-slate-100 dark:bg-surface-highlight rounded-xl p-1 gap-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, pricingMode: "unified" })}
+                                    className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                                        formData.pricingMode === "unified"
+                                            ? "bg-white dark:bg-primary text-primary dark:text-white shadow"
+                                            : "text-slate-500 hover:text-slate-700"
+                                    }`}
+                                >
+                                    سعر موحد لكل المواد
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        // Initialize per-material prices from the materials list
+                                        const prices = formData.materials.map(m => ({
+                                            id: m.id,
+                                            amount: "",
+                                            unit: "ton" as const,
+                                            currency: formData.startingBidCurrency,
+                                        }));
+                                        setFormData({ ...formData, pricingMode: "per_material", materialPrices: prices });
+                                    }}
+                                    className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                                        formData.pricingMode === "per_material"
+                                            ? "bg-white dark:bg-primary text-primary dark:text-white shadow"
+                                            : "text-slate-500 hover:text-slate-700"
+                                    }`}
+                                >
+                                    سعر منفصل لكل مادة
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* ===== Unified Starting Price ===== */}
+                        {formData.pricingMode === "unified" && (
                         <div className="space-y-2">
                             <label className="text-sm font-bold text-slate-900 dark:text-white">سعر بداية المزاد</label>
                             <div className="grid grid-cols-3 gap-2">
@@ -836,6 +887,72 @@ export default function CreateAuctionPage() {
                                 </div>
                             </div>
                         </div>
+                        )}
+
+                        {/* ===== Per-Material Pricing ===== */}
+                        {formData.pricingMode === "per_material" && (
+                            <div className="space-y-3">
+                                <label className="text-sm font-bold text-slate-900 dark:text-white">سعر بداية المزاد لكل مادة</label>
+                                {formData.materials.map((material, index) => {
+                                    const priceEntry = (formData.materialPrices || []).find(p => p.id === material.id) || { id: material.id, amount: "", unit: "ton" as const, currency: "SYP" as const };
+                                    const materialLabel = material.type === "أخرى" ? material.customType : material.type;
+                                    return (
+                                        <div key={material.id} className="bg-white dark:bg-surface-highlight rounded-xl p-4 shadow-sm space-y-2">
+                                            <p className="text-xs font-bold text-primary">{materialLabel || `مادة ${index + 1}`} — {material.weight} {material.unit === 'ton' ? 'طن' : material.unit === 'kg' ? 'كغ' : material.unit}</p>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <input
+                                                    type="number"
+                                                    value={priceEntry.amount}
+                                                    placeholder="السعر"
+                                                    onChange={(e) => {
+                                                        const existing = formData.materialPrices.filter(p => p.id !== material.id);
+                                                        setFormData({
+                                                            ...formData,
+                                                            materialPrices: [...existing, { ...priceEntry, amount: e.target.value }]
+                                                        });
+                                                    }}
+                                                    className="bg-slate-50 dark:bg-slate-900 border-none rounded-lg py-3 px-3 text-sm font-mono text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none"
+                                                />
+                                                <div className="relative">
+                                                    <select
+                                                        value={priceEntry.unit}
+                                                        onChange={(e) => {
+                                                            const existing = formData.materialPrices.filter(p => p.id !== material.id);
+                                                            setFormData({ ...formData, materialPrices: [...existing, { ...priceEntry, unit: e.target.value as "kg" | "ton" | "piece" | "total" | "L" | "m2" | "m3" | "dunum" | "hectare" }] });
+                                                        }}
+                                                        className="w-full h-full appearance-none rounded-lg bg-slate-50 dark:bg-slate-900 border-none px-2 pl-6 text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none cursor-pointer"
+                                                    >
+                                                        <option value="kg">كيلو</option>
+                                                        <option value="ton">طن</option>
+                                                        <option value="piece">قطعة</option>
+                                                        <option value="total">كامل</option>
+                                                    </select>
+                                                    <div className="pointer-events-none absolute left-1 top-1/2 -translate-y-1/2 text-slate-400">
+                                                        <span className="material-symbols-outlined !text-[13px]">expand_more</span>
+                                                    </div>
+                                                </div>
+                                                <div className="relative">
+                                                    <select
+                                                        value={priceEntry.currency}
+                                                        onChange={(e) => {
+                                                            const existing = formData.materialPrices.filter(p => p.id !== material.id);
+                                                            setFormData({ ...formData, materialPrices: [...existing, { ...priceEntry, currency: e.target.value as "SYP" | "USD" }] });
+                                                        }}
+                                                        className="w-full h-full appearance-none rounded-lg bg-slate-50 dark:bg-slate-900 border-none px-2 pl-6 text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-primary outline-none cursor-pointer"
+                                                    >
+                                                        <option value="SYP">SYP</option>
+                                                        <option value="USD">$</option>
+                                                    </select>
+                                                    <div className="pointer-events-none absolute left-1 top-1/2 -translate-y-1/2 text-slate-400">
+                                                        <span className="material-symbols-outlined !text-[13px]">expand_more</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
 
                         <div className="space-y-2">
                             <label className="text-sm font-bold text-slate-900 dark:text-white">سعر البيع المباشر (اختياري)</label>

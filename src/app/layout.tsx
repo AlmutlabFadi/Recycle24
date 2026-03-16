@@ -6,6 +6,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { VerificationProvider } from "@/contexts/VerificationContext";
 import ResponsiveWrapper from "@/components/ResponsiveWrapper";
+import AuctionChatPopup from "@/components/auctions/AuctionChatPopup";
 
 const notoSansArabic = Noto_Sans_Arabic({
   subsets: ["arabic"],
@@ -65,6 +66,7 @@ export default function RootLayout({
                 <ErrorBoundary>
                   <ResponsiveWrapper>
                     {children}
+                    <AuctionChatPopup />
                   </ResponsiveWrapper>
                 </ErrorBoundary>
               </VerificationProvider>

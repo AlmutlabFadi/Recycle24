@@ -317,9 +317,9 @@ export default function ProfilePage() {
 
     const handleRoleSwitch = (role: ActiveRole) => {
         if (role === "TRADER") {
-            // If user is not an approved trader, always go to verification landing page first.
-            // The landing page will handle whether to show instructions or redirect to status.
-            if (user?.userType !== "TRADER" || user?.status !== "APPROVED") {
+            // User is an approved/active trader — allow role switch directly.
+            const isApproved = user?.userType === "TRADER" && (user?.status === "APPROVED" || user?.status === "ACTIVE");
+            if (!isApproved) {
                 router.push("/verification?role=TRADER");
                 return;
             }
@@ -327,7 +327,7 @@ export default function ProfilePage() {
         switchRole(role);
     };
 
-    const isTraderApproved = user?.userType === "TRADER" && user?.status === "APPROVED";
+    const isTraderApproved = user?.userType === "TRADER" && (user?.status === "APPROVED" || user?.status === "ACTIVE");
 
     if (isLoading) {
         return (
@@ -573,8 +573,8 @@ export default function ProfilePage() {
                                         <h2 className="text-xl font-bold text-white">
                                             {getTitleLabel(profile.titleId, profile.gender)} {profile.firstName || profile.lastName || user?.name || "مستخدم"}
                                         </h2>
-                                        {user?.status === "APPROVED" && (
-                                            <span className="material-symbols-outlined text-green-500 !text-[20px] filled" title="موثق">verified</span>
+                                        {(user?.status === "APPROVED" || user?.status === "ACTIVE") && (
+                                            <span className="material-symbols-outlined text-blue-500 !text-[20px] filled" title="حساب موثق">verified</span>
                                         )}
                                     </div>
                                     
