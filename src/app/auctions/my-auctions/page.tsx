@@ -282,9 +282,9 @@ export default function MyAuctionsPage() {
                     const canCancel = auction.workflowStatus === "PENDING_APPROVAL";
                     return (
                         <div key={auction.id} className="dark:bg-surface-highlight bg-white rounded-2xl border border-slate-700/50 overflow-hidden shadow-sm">
-                            {auction.images?.length > 0 && (
+                            {(((auction as typeof auction & { images?: { id: string; imageUrl: string }[] }).images?.length) ?? 0) > 0 && (
                                 <div className="flex gap-1 p-2 bg-slate-900/50 overflow-x-auto no-scrollbar">
-                                    {auction.images.map(img => <img key={img.id} src={img.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover shrink-0" />)}
+                                    {(auction as typeof auction & { images?: { id: string; imageUrl: string }[] }).images!.map((img: { id: string; imageUrl: string }) => <img key={img.id} src={img.imageUrl} alt="" className="w-16 h-16 rounded-lg object-cover shrink-0" />)}
                                 </div>
                             )}
                             <div className="p-4 space-y-3">
@@ -487,3 +487,5 @@ export default function MyAuctionsPage() {
         </div>
     );
 }
+
+
