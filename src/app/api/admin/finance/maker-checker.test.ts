@@ -101,9 +101,9 @@ describe("finance maker-checker approvals", () => {
       { params: { id: depositRequest.id } } as never
     );
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
 
-    const payload = await response.json();
+    const payload = await response!.json();
     expect(payload.message).toContain("final approval stage");
 
     const updatedRequest = await db.depositRequest.findUniqueOrThrow({
@@ -151,9 +151,9 @@ describe("finance maker-checker approvals", () => {
       { params: { id: depositRequest.id } } as never
     );
 
-    expect(response.status).toBe(409);
+    expect(response!.status).toBe(409);
 
-    const payload = await response.json();
+    const payload = await response!.json();
     expect(payload.error).toContain("second finance admin");
   });
 
@@ -191,7 +191,7 @@ describe("finance maker-checker approvals", () => {
       { params: { id: depositRequest.id } } as never
     );
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
 
     const updatedRequest = await db.depositRequest.findUniqueOrThrow({
       where: { id: depositRequest.id },
@@ -236,9 +236,9 @@ describe("finance maker-checker approvals", () => {
       { params: { id: payoutRequest.id } } as never
     );
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
 
-    const payload = await response.json();
+    const payload = await response!.json();
     expect(payload.message).toContain("final approval stage");
 
     const updatedRequest = await db.payoutRequest.findUniqueOrThrow({
@@ -285,7 +285,7 @@ describe("finance maker-checker approvals", () => {
       { params: { id: payoutRequest.id } } as never
     );
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
 
     const updatedRequest = await db.payoutRequest.findUniqueOrThrow({
       where: { id: payoutRequest.id },
@@ -304,3 +304,4 @@ describe("finance maker-checker approvals", () => {
     expect(updatedAccount.balance).toBe(60_000_000);
   });
 });
+

@@ -71,7 +71,7 @@ export async function PATCH(
 
         const updated = await db.auction.update({
             where: { id },
-            data: { workflowStatus: newWorkflowStatus, status: newStatus },
+            data: { workflowStatus: newWorkflowStatus as import("@prisma/client").AuctionWorkflowStatus, status: newStatus },
         });
 
         // Notify seller
@@ -101,3 +101,4 @@ export async function PATCH(
         return NextResponse.json({ error: "حدث خطأ أثناء معالجة الطلب" }, { status: 500 });
     }
 }
+

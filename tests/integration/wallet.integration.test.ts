@@ -1,4 +1,4 @@
-﻿import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 import { db } from "@/lib/db";
@@ -155,7 +155,7 @@ describe("wallet end-to-end integration", () => {
       { params: Promise.resolve({ id: depositRequestId }) } as never
     );
 
-    expect(approveResponse.status).toBe(200);
+    expect(approveResponse!.status).toBe(200);
 
     const approvedRequest = await db.depositRequest.findUniqueOrThrow({
       where: { id: depositRequestId },
@@ -237,7 +237,7 @@ describe("wallet end-to-end integration", () => {
       { params: Promise.resolve({ id: payoutRequestId }) } as never
     );
 
-    expect(approveResponse.status).toBe(200);
+    expect(approveResponse!.status).toBe(200);
 
     const approvedRequest = await db.payoutRequest.findUniqueOrThrow({
       where: { id: payoutRequestId },
@@ -425,7 +425,7 @@ describe("wallet end-to-end integration", () => {
       { params: Promise.resolve({ id: depositRequestId }) } as never
     );
 
-    expect(firstApprovalResponse.status).toBe(200);
+    expect(firstApprovalResponse!.status).toBe(200);
 
     const stagedRequest = await db.depositRequest.findUniqueOrThrow({
       where: { id: depositRequestId },
@@ -452,7 +452,7 @@ describe("wallet end-to-end integration", () => {
       { params: Promise.resolve({ id: depositRequestId }) } as never
     );
 
-    expect(finalApprovalResponse.status).toBe(200);
+    expect(finalApprovalResponse!.status).toBe(200);
 
     const completedRequest = await db.depositRequest.findUniqueOrThrow({
       where: { id: depositRequestId },
@@ -476,4 +476,5 @@ describe("wallet end-to-end integration", () => {
     expect(walletAfterFinalApproval.balanceSYP).toBe(50_000_000);
   });
 });
+
 

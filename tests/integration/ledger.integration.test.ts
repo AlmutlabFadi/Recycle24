@@ -100,9 +100,9 @@ describe("Ledger integration", () => {
       { params: { id: depositRequest.id } } as never
     );
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
 
-    const payload = await response.json();
+    const payload = await response!.json();
     expect(payload.success).toBe(true);
 
     const updatedRequest = await db.depositRequest.findUniqueOrThrow({
@@ -171,9 +171,9 @@ describe("Ledger integration", () => {
       { params: { id: payoutRequest.id } } as never
     );
 
-    expect(response.status).toBe(200);
+    expect(response!.status).toBe(200);
 
-    const payload = await response.json();
+    const payload = await response!.json();
     expect(payload.success).toBe(true);
 
     const updatedRequest = await db.payoutRequest.findUniqueOrThrow({
@@ -242,16 +242,16 @@ describe("Ledger integration", () => {
       { params: { id: depositRequest.id } } as never
     );
 
-    expect(firstResponse.status).toBe(200);
+    expect(firstResponse!.status).toBe(200);
 
     const secondResponse = await approveDepositRoute(
       makeJsonRequest({ reviewNote: "Second approval" }),
       { params: { id: depositRequest.id } } as never
     );
 
-    expect(secondResponse.status).toBe(200);
+    expect(secondResponse!.status).toBe(200);
 
-    const secondPayload = await secondResponse.json();
+    const secondPayload = await secondResponse!.json();
     expect(secondPayload.message).toBe("Deposit request already completed");
 
     const journalEntries = await db.journalEntry.findMany({
@@ -289,9 +289,9 @@ describe("Ledger integration", () => {
       { params: { id: payoutRequest.id } } as never
     );
 
-    expect(response.status).toBe(409);
+    expect(response!.status).toBe(409);
 
-    const payload = await response.json();
+    const payload = await response!.json();
     expect(payload.error).toContain("Insufficient ledger balance");
 
     const updatedRequest = await db.payoutRequest.findUniqueOrThrow({
