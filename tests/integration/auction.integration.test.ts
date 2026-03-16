@@ -227,6 +227,7 @@ describe("Auction integration", () => {
     const bidAResponse = await bidAuctionRoute(
       makeJsonRequest(`http://localhost/api/auctions/${auction.id}/bid`, {
         amount: 1100,
+        requestKey: uniqueValue("bid-a"),
       }),
       { params: Promise.resolve({ id: auction.id }) }
     );
@@ -241,6 +242,7 @@ describe("Auction integration", () => {
     const bidBResponse = await bidAuctionRoute(
       makeJsonRequest(`http://localhost/api/auctions/${auction.id}/bid`, {
         amount: 1200,
+        requestKey: uniqueValue("bid-b"),
       }),
       { params: Promise.resolve({ id: auction.id }) }
     );
@@ -410,5 +412,4 @@ describe("Auction integration", () => {
     expect(eventTypes).toContain("AUCTION_WINNER_DISCHARGED");
   });
 });
-
 
