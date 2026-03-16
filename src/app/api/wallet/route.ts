@@ -33,13 +33,20 @@ interface WalletSnapshot {
     createdAt: Date;
     updatedAt: Date;
   };
-  ledgerAccount: {
+  ledgerAccountSYP: {
     id: string;
     slug: string;
     balance: number;
   };
-  totalHeld: number;
-  availableBalance: number;
+  ledgerAccountUSD: {
+    id: string;
+    slug: string;
+    balance: number;
+  };
+  totalHeldSYP: number;
+  totalHeldUSD: number;
+  availableBalanceSYP: number;
+  availableBalanceUSD: number;
   debtSnapshot: Awaited<
     ReturnType<typeof LedgerEnforcementService.getDebtSnapshot>
   >;
@@ -99,24 +106,40 @@ function enforceWalletActionRateLimit(
 }
 
 async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
-  const ledgerAccount = await LedgerPostingService.getOrCreateAccount(
+  const ledgerAccountSYP = await LedgerPostingService.getOrCreateAccount(
     `USER_${userId}_SYP`,
     userId,
     Currency.SYP
   );
 
-  const activeHolds = await db.ledgerHold.aggregate({
-    where: {
-      accountId: ledgerAccount.id,
-      status: HoldStatus.OPEN,
-    },
-    _sum: {
-      amount: true,
-    },
-  });
+  const ledgerAccountUSD = await LedgerPostingService.getOrCreateAccount(
+    `USER_${userId}_USD`,
+    userId,
+    Currency.USD
+  );
 
-  const totalHeld = activeHolds._sum.amount ?? 0;
-  const availableBalance = ledgerAccount.balance - totalHeld;
+  const [activeHoldsSYP, activeHoldsUSD] = await Promise.all([
+    db.ledgerHold.aggregate({
+      where: {
+        accountId: ledgerAccountSYP.id,
+        status: HoldStatus.OPEN,
+      },
+      _sum: { amount: true },
+    }),
+    db.ledgerHold.aggregate({
+      where: {
+        accountId: ledgerAccountUSD.id,
+        status: HoldStatus.OPEN,
+      },
+      _sum: { amount: true },
+    })
+  ]);
+
+  const totalHeldSYP = activeHoldsSYP._sum.amount ?? 0;
+  const availableBalanceSYP = ledgerAccountSYP.balance - totalHeldSYP;
+
+  const totalHeldUSD = activeHoldsUSD._sum.amount ?? 0;
+  const availableBalanceUSD = ledgerAccountUSD.balance - totalHeldUSD;
 
   let wallet = await db.wallet.findUnique({
     where: {
@@ -128,17 +151,18 @@ async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
     wallet = await db.wallet.create({
       data: {
         userId,
-        balanceSYP: ledgerAccount.balance,
-        balanceUSD: 0,
+        balanceSYP: ledgerAccountSYP.balance,
+        balanceUSD: ledgerAccountUSD.balance,
       },
     });
-  } else if (wallet.balanceSYP !== ledgerAccount.balance) {
+  } else if (wallet.balanceSYP !== ledgerAccountSYP.balance || wallet.balanceUSD !== ledgerAccountUSD.balance) {
     wallet = await db.wallet.update({
       where: {
         id: wallet.id,
       },
       data: {
-        balanceSYP: ledgerAccount.balance,
+        balanceSYP: ledgerAccountSYP.balance,
+        balanceUSD: ledgerAccountUSD.balance,
       },
     });
   }
@@ -147,9 +171,12 @@ async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
 
   return {
     wallet,
-    ledgerAccount,
-    totalHeld,
-    availableBalance,
+    ledgerAccountSYP,
+    ledgerAccountUSD,
+    totalHeldSYP,
+    totalHeldUSD,
+    availableBalanceSYP,
+    availableBalanceUSD,
     debtSnapshot,
   };
 }
@@ -207,9 +234,12 @@ export async function GET(_request: NextRequest) {
       userId: auth.userId,
       sessionMs,
       snapshotMs,
-      ledgerBalance: snapshot.ledgerAccount.balance,
-      heldAmount: snapshot.totalHeld,
-      availableBalance: snapshot.availableBalance,
+      ledgerBalanceSYP: snapshot.ledgerAccountSYP.balance,
+      ledgerBalanceUSD: snapshot.ledgerAccountUSD.balance,
+      heldAmountSYP: snapshot.totalHeldSYP,
+      heldAmountUSD: snapshot.totalHeldUSD,
+      availableBalanceSYP: snapshot.availableBalanceSYP,
+      availableBalanceUSD: snapshot.availableBalanceUSD,
       locked: snapshot.debtSnapshot.isLocked,
       debtCount: snapshot.debtSnapshot.details.length,
     });
@@ -218,9 +248,12 @@ export async function GET(_request: NextRequest) {
       success: true,
       wallet: {
         ...snapshot.wallet,
-        verifiedBalance: snapshot.ledgerAccount.balance,
-        availableBalance: snapshot.availableBalance,
-        heldAmount: snapshot.totalHeld,
+        verifiedBalanceSYP: snapshot.ledgerAccountSYP.balance,
+        availableBalanceSYP: snapshot.availableBalanceSYP,
+        heldAmountSYP: snapshot.totalHeldSYP,
+        verifiedBalanceUSD: snapshot.ledgerAccountUSD.balance,
+        availableBalanceUSD: snapshot.availableBalanceUSD,
+        heldAmountUSD: snapshot.totalHeldUSD,
         debtDetails:
           snapshot.debtSnapshot.details.length > 0
             ? snapshot.debtSnapshot.details
@@ -461,16 +494,19 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    if (snapshot.availableBalance < amount) {
+    const availableBalance = currency === Currency.SYP ? snapshot.availableBalanceSYP : snapshot.availableBalanceUSD;
+    const ledgerAccountId = currency === Currency.SYP ? snapshot.ledgerAccountSYP.id : snapshot.ledgerAccountUSD.id;
+
+    if (availableBalance < amount) {
       return NextResponse.json(
-        { error: "Insufficient available balance" },
+        { error: `Insufficient available ${currency} balance (${availableBalance} ${currency})` },
         { status: 400 }
       );
     }
 
     const duplicateRequest = await findRecentDuplicatePayoutRequest({
       userId: auth.userId,
-      accountId: snapshot.ledgerAccount.id,
+      accountId: ledgerAccountId,
       amount,
       currency,
       method,
@@ -490,7 +526,7 @@ export async function PUT(request: NextRequest) {
 
     const createdRequest = await db.payoutRequest.create({
       data: {
-        accountId: snapshot.ledgerAccount.id,
+        accountId: ledgerAccountId,
         userId: auth.userId,
         amount,
         currency,
@@ -529,7 +565,7 @@ export async function PUT(request: NextRequest) {
       method,
       currency,
       requestId: createdRequest.id,
-      availableBalance: snapshot.availableBalance,
+      availableBalance,
     });
 
     return NextResponse.json({

@@ -328,26 +328,92 @@ export class LedgerPostingService {
       });
     });
   }
-static async releaseHold(holdId: string) {
-  return await this.runSerializableTransaction(async (tx) => {
-    const hold = await tx.ledgerHold.findUnique({
+
+  static async releaseHoldInTransaction(
+    client: LedgerClient,
+    holdId: string,
+    options?: {
+      expectedReferenceType?: string;
+      expectedReferenceId?: string;
+      allowMissing?: boolean;
+    }
+  ): Promise<{
+    holdId: string;
+    releasedNow: boolean;
+    alreadyReleased: boolean;
+  }> {
+    const hold = await client.ledgerHold.findUnique({
       where: { id: holdId },
+      select: {
+        id: true,
+        status: true,
+        referenceType: true,
+        referenceId: true,
+      },
     });
 
     if (!hold) {
+      if (options?.allowMissing) {
+        return {
+          holdId,
+          releasedNow: false,
+          alreadyReleased: false,
+        };
+      }
+
       throw new Error("Hold not found.");
+    }
+
+    if (
+      options?.expectedReferenceType &&
+      hold.referenceType !== options.expectedReferenceType
+    ) {
+      throw new Error("Hold reference type mismatch.");
+    }
+
+    if (
+      options?.expectedReferenceId &&
+      hold.referenceId !== options.expectedReferenceId
+    ) {
+      throw new Error("Hold reference id mismatch.");
+    }
+
+    if (hold.status === HoldStatus.RELEASED) {
+      return {
+        holdId: hold.id,
+        releasedNow: false,
+        alreadyReleased: true,
+      };
     }
 
     if (hold.status !== HoldStatus.OPEN) {
       throw new Error("Only OPEN holds can be released.");
     }
 
-    return await tx.ledgerHold.update({
-      where: { id: holdId },
+    await client.ledgerHold.update({
+      where: { id: hold.id },
       data: { status: HoldStatus.RELEASED },
     });
-  });
-}
+
+    return {
+      holdId: hold.id,
+      releasedNow: true,
+      alreadyReleased: false,
+    };
+  }
+
+  static async releaseHold(
+    holdId: string,
+    options?: {
+      expectedReferenceType?: string;
+      expectedReferenceId?: string;
+      allowMissing?: boolean;
+    }
+  ) {
+    return await this.runSerializableTransaction(async (tx) => {
+      return await this.releaseHoldInTransaction(tx, holdId, options);
+    });
+  }
 
   static async captureHold(
     holdId: string,
@@ -412,5 +478,3 @@ static async releaseHold(holdId: string) {
     return aggregation._sum.amount || 0;
   }
 }
-
-

@@ -331,61 +331,101 @@ export default function WalletPage() {
           </div>
         )}
 
-        <div className="mx-4 mt-4 rounded-2xl bg-gradient-to-br from-primary to-blue-600 p-6 text-white relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-40 h-40 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-          <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3"></div>
+        <div className="mx-4 mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-2xl bg-gradient-to-br from-primary to-blue-600 p-6 text-white relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-40 h-40 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3"></div>
 
-          <div className="relative z-10">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm text-white/70 font-medium font-display">
-                  الرصيد القابل للاستخدام
-                </p>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <p className="text-4xl font-bold font-english dir-ltr tracking-tight">
-                    {wallet?.availableBalance?.toLocaleString() || "0"}
+            <div className="relative z-10">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm text-white/70 font-medium font-display">
+                    الرصيد القابل للاستخدام (ل.س)
                   </p>
-                  <span className="text-lg font-bold text-white/80">ل.س</span>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <p className="text-4xl font-bold font-english dir-ltr tracking-tight">
+                      {wallet?.availableBalanceSYP?.toLocaleString() || "0"}
+                    </p>
+                    <span className="text-lg font-bold text-white/80">ل.س</span>
+                  </div>
+                </div>
+
+                <div className="text-left bg-white/10 rounded-lg p-2 px-3 backdrop-blur-sm border border-white/10">
+                  <p className="text-[10px] text-white/60 mb-1 font-display">
+                    رصيد محجوز (تأمينات)
+                  </p>
+                  <p className="text-sm font-bold font-english dir-ltr">
+                    {wallet?.heldAmountSYP?.toLocaleString() || "0"} ل.س
+                  </p>
                 </div>
               </div>
 
-              <div className="text-left bg-white/10 rounded-lg p-2 px-3 backdrop-blur-sm border border-white/10">
-                <p className="text-[10px] text-white/60 mb-1 font-display">
-                  رصيد محجوز (تأمينات)
-                </p>
-                <p className="text-sm font-bold font-english dir-ltr">
-                  {wallet?.heldAmount?.toLocaleString() || "0"} ل.س
+              <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
+                <p className="text-xs text-white/60 font-display">إجمالي الرصيد الموثق:</p>
+                <p className="text-xs font-bold font-english dir-ltr text-white/90">
+                  {wallet?.verifiedBalanceSYP?.toLocaleString() || "0"} ل.س
                 </p>
               </div>
             </div>
+          </div>
 
-            <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
-              <p className="text-xs text-white/60 font-display">إجمالي الرصيد الموثق:</p>
-              <p className="text-xs font-bold font-english dir-ltr text-white/90">
-                {wallet?.verifiedBalance?.toLocaleString() || "0"} ل.س
-              </p>
-            </div>
+          <div className="rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-6 text-white relative overflow-hidden shadow-sm">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full translate-x-1/3 -translate-y-1/2"></div>
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -translate-x-1/3 translate-y-1/3"></div>
 
-            <div className="flex gap-3 mt-6">
-              <Link
-                href="/wallet/deposit"
-                className="flex-1 h-10 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-bold flex items-center justify-center gap-1 transition active:scale-95"
-              >
-                <span className="material-symbols-outlined !text-[18px]">arrow_downward</span>
-                إيداع
-              </Link>
-              <Link
-                href="/wallet/withdraw"
-                className="flex-1 h-10 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-bold flex items-center justify-center gap-1 transition active:scale-95"
-              >
-                <span className="material-symbols-outlined !text-[18px]">arrow_upward</span>
-                سحب
-              </Link>
-              <button className="flex-1 h-10 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-bold flex items-center justify-center gap-1 transition active:scale-95">
-                <span className="material-symbols-outlined !text-[18px]">send</span>
-                تحويل
-              </button>
+            <div className="relative z-10">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm text-emerald-100 font-medium font-display">
+                    الرصيد القابل للاستخدام (USD)
+                  </p>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <p className="text-4xl font-bold font-english dir-ltr tracking-tight text-white drop-shadow-md">
+                      ${wallet?.availableBalanceUSD?.toLocaleString() || "0"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-left bg-white/10 rounded-lg p-2 px-3 backdrop-blur-sm border border-emerald-400/30">
+                  <p className="text-[10px] text-emerald-100 mb-1 font-display">
+                    رصيد محجوز (تأمينات)
+                  </p>
+                  <p className="text-sm font-bold font-english dir-ltr drop-shadow-sm">
+                    ${wallet?.heldAmountUSD?.toLocaleString() || "0"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-emerald-400/30 flex justify-between items-center">
+                <p className="text-xs text-emerald-100 font-display">إجمالي الرصيد الموثق:</p>
+                <p className="text-xs font-bold font-english dir-ltr text-white drop-shadow-sm">
+                  ${wallet?.verifiedBalanceUSD?.toLocaleString() || "0"}
+                </p>
+              </div>
             </div>
+          </div>
+        </div>
+
+        <div className="mx-4">
+          <div className="flex gap-3 mt-6">
+            <Link
+              href="/wallet/deposit"
+              className="flex-1 h-12 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl text-sm font-bold flex items-center justify-center gap-1 transition active:scale-95 border border-primary/20"
+            >
+              <span className="material-symbols-outlined !text-[18px]">arrow_downward</span>
+              إيداع
+            </Link>
+            <Link
+              href="/wallet/withdraw"
+              className="flex-1 h-12 bg-primary text-white hover:bg-primary-dark rounded-xl text-sm font-bold flex items-center justify-center gap-1 transition active:scale-95 shadow-sm shadow-primary/30"
+            >
+              <span className="material-symbols-outlined !text-[18px]">arrow_upward</span>
+              سحب
+            </Link>
+            <Link href="/wallet/transfer" className="flex-1 h-12 bg-slate-800 text-white hover:bg-slate-700 border border-slate-700 rounded-xl text-sm font-bold flex items-center justify-center gap-1 transition active:scale-95 shadow-sm">
+              <span className="material-symbols-outlined !text-[18px]">send</span>
+              تحويل
+            </Link>
           </div>
         </div>
 

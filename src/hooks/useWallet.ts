@@ -37,10 +37,12 @@ interface Wallet {
   id: string;
   userId: string;
   balanceSYP: number;
-  balanceUSD: number;
-  verifiedBalance: number;
-  availableBalance: number;
-  heldAmount: number;
+  verifiedBalanceSYP: number;
+  availableBalanceSYP: number;
+  heldAmountSYP: number;
+  verifiedBalanceUSD: number;
+  availableBalanceUSD: number;
+  heldAmountUSD: number;
   transactions: Transaction[];
   history: LedgerHistory[];
   debtDetails?: DebtDetails[] | null;
