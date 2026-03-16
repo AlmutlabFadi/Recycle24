@@ -15,7 +15,7 @@ type SettlementNotification = {
   message: string;
   type: "INFO" | "SUCCESS";
   link: string;
-  metadata?: Record<string, unknown>;
+  metadata?: Prisma.InputJsonValue;
 };
 
 class AuctionSettlementError extends Error {
@@ -361,7 +361,7 @@ export class AuctionSettlementService {
         });
       }
 
-      let nextWorkflowStatus = AuctionWorkflowStatus.FAILED;
+      let nextWorkflowStatus: AuctionWorkflowStatus = AuctionWorkflowStatus.FAILED;
 
       if (winnerId && winningBid && finalPrice !== null) {
         const winnerParticipant = auction.participants.find(
@@ -635,3 +635,4 @@ export class AuctionSettlementService {
 }
 
 export { AuctionSettlementError };
+
