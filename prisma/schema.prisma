@@ -471,6 +471,7 @@ model Bid {
   auctionId String
   bidderId  String
   amount    Float
+  requestKey String? @unique
 
   participantId String?
   status        BidWorkflowStatus @default(ACTIVE)
@@ -1577,3 +1578,4 @@ model KillSwitch {
 
   @@index([state])
 }
+

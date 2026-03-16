@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import {
-  AuctionDepositWorkflowStatus,
-  AuctionParticipantWorkflowStatus,
-  BidWorkflowStatus,
-} from "@prisma/client";
 
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NotificationService } from "@/lib/notifications/service";
-import { sseManager } from "@/lib/realtime/sse-server";
 import { placeBid } from "@/core/auction/auction-engine";
 
 interface SessionUser {
@@ -23,6 +17,7 @@ interface SessionUser {
 
 type BidRequestBody = {
   amount?: number;
+  requestKey?: string;
 };
 
 function roundMoney(value: number) {
@@ -62,6 +57,19 @@ export async function POST(
     const body = (await request.json()) as BidRequestBody;
     const amount = Number(body.amount);
 
+    const requestKey =
+      request.headers.get("x-idempotency-key") ??
+      request.headers.get("idempotency-key") ??
+      body.requestKey ??
+      null;
+
+    if (!requestKey || requestKey.trim().length === 0) {
+      return NextResponse.json(
+        { error: "Idempotency key is required." },
+        { status: 400 }
+      );
+    }
+
     if (!Number.isFinite(amount) || amount <= 0) {
       return NextResponse.json(
         { error: "Bid amount must be a positive number." },
@@ -76,9 +84,6 @@ export async function POST(
       },
       select: {
         id: true,
-        isExempt: true,
-        depositStatus: true,
-        workflowStatus: true,
       },
     });
 
@@ -89,34 +94,12 @@ export async function POST(
       );
     }
 
-    const participantOpen =
-      participant.workflowStatus === AuctionParticipantWorkflowStatus.ACTIVE ||
-      participant.workflowStatus === AuctionParticipantWorkflowStatus.APPROVED;
-
-    if (!participantOpen) {
-      return NextResponse.json(
-        { error: "Your auction participation is not active." },
-        { status: 403 }
-      );
-    }
-
-    const depositSatisfied =
-      participant.isExempt ||
-      participant.depositStatus === AuctionDepositWorkflowStatus.HELD ||
-      participant.depositStatus === AuctionDepositWorkflowStatus.WAIVED;
-
-    if (!depositSatisfied) {
-      return NextResponse.json(
-        { error: "Security deposit must be held before bidding." },
-        { status: 403 }
-      );
-    }
-
     const result = await placeBid({
       auctionId,
       bidderId: user.id,
       participantId: participant.id,
       amount: roundMoney(amount),
+      requestKey,
     });
 
     if (!result.ok) {
@@ -124,18 +107,6 @@ export async function POST(
         { error: result.message, code: result.code },
         { status: mapFailureToStatus(result.code) }
       );
-    }
-
-    if (result.previousHighestBidId) {
-      await db.bid.updateMany({
-        where: {
-          id: result.previousHighestBidId,
-          status: BidWorkflowStatus.WINNING,
-        },
-        data: {
-          status: BidWorkflowStatus.OUTBID,
-        },
-      });
     }
 
     const auction = await db.auction.findUnique({
@@ -159,67 +130,31 @@ export async function POST(
       );
     }
 
-    await db.auctionEventLog.create({
-      data: {
-        auctionId,
-        actorId: user.id,
-        eventType: "AUCTION_BID_PLACED",
-        payload: {
-          bidId: result.bidId,
-          amount: result.amount,
-          bidderId: result.bidderId,
-          previousHighestBidId: result.previousHighestBidId,
-          previousHighestBidderId: result.previousHighestBidderId,
-          currentBid: result.currentBid,
-          winningBidId: result.winningBidId,
-          effectiveEndsAt: result.effectiveEndsAt,
-          extensionCount: result.extensionCount,
-          extended: result.extended,
-          version: auction.version,
-        },
-      },
-    });
+    if (!result.replayed) {
+      if (auction.sellerId !== user.id) {
+        await NotificationService.create({
+          userId: auction.sellerId,
+          title: "New bid received",
+          message: `A new bid of ${result.amount} was placed on ${auction.title}.`,
+        });
+      }
 
-    if (auction.sellerId !== user.id) {
-      await NotificationService.create({
-        userId: auction.sellerId,
-        title: "New bid received",
-        message: `A new bid of ${result.amount} was placed on ${auction.title}.`,
-        type: "AUCTION_BID",
-      });
+      if (
+        result.previousHighestBidderId &&
+        result.previousHighestBidderId !== user.id
+      ) {
+        await NotificationService.create({
+          userId: result.previousHighestBidderId,
+          title: "You have been outbid",
+          message: `You have been outbid on ${auction.title}.`,
+        });
+      }
     }
-
-    if (
-      result.previousHighestBidderId &&
-      result.previousHighestBidderId !== user.id
-    ) {
-      await NotificationService.create({
-        userId: result.previousHighestBidderId,
-        title: "You have been outbid",
-        message: `You have been outbid on ${auction.title}.`,
-        type: "AUCTION_OUTBID",
-      });
-    }
-
-    sseManager.broadcast(`auction:${auctionId}`, {
-      type: "AUCTION_BID_PLACED",
-      data: {
-        auctionId,
-        bidId: result.bidId,
-        amount: result.amount,
-        bidderId: result.bidderId,
-        currentBid: auction.currentBid,
-        winningBidId: auction.winningBidId,
-        effectiveEndsAt: auction.effectiveEndsAt,
-        extensionCount: auction.extensionCount,
-        extended: result.extended,
-        version: auction.version,
-      },
-    });
 
     return NextResponse.json(
       {
         success: true,
+        replayed: result.replayed,
         bid: {
           id: result.bidId,
           amount: result.amount,

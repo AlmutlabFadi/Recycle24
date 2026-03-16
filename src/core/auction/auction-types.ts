@@ -16,6 +16,7 @@ export type PlaceBidInput = {
   bidderId: string;
   participantId: string;
   amount: number;
+  requestKey?: string | null;
   now?: Date;
 };
 
@@ -61,6 +62,7 @@ export type PlaceBidSuccess = {
   effectiveEndsAt: Date | null;
   extensionCount: number;
   extended: boolean;
+  replayed: boolean;
 };
 
 export type PlaceBidFailureCode =
