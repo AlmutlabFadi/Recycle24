@@ -38,6 +38,12 @@ function hasAcceptedOffer(offers: StoredOffer[]): boolean {
   return offers.some((offer) => offer.status === "ACCEPTED");
 }
 
+function isDriverOnline(lastSeenAt?: Date | null) {
+  if (!lastSeenAt) return false;
+  const diffMs = Date.now() - lastSeenAt.getTime();
+  return diffMs <= 10 * 60 * 1000;
+}
+
 // GET: fetch all offers by trackingId
 export async function GET(request: NextRequest) {
   try {

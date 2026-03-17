@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import HeaderWithBack from "@/components/HeaderWithBack";
 
 interface DriverDelivery {
@@ -61,6 +62,20 @@ export default function DriverHistoryPage() {
             <HeaderWithBack title="سجل التوصيل" />
 
             <main className="flex-1 p-4 pb-24">
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                    <Link href="/driver/dashboard" className="flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-surface-dark py-2 text-[11px] font-bold text-slate-200 hover:border-primary/50 transition">
+                        <span className="material-symbols-outlined !text-[16px] text-primary">dashboard</span>
+                        لوحة السائق
+                    </Link>
+                    <Link href="/driver/profile" className="flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-surface-dark py-2 text-[11px] font-bold text-slate-200 hover:border-primary/50 transition">
+                        <span className="material-symbols-outlined !text-[16px] text-primary">badge</span>
+                        الملف
+                    </Link>
+                    <Link href="/driver/support" className="flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-surface-dark py-2 text-[11px] font-bold text-slate-200 hover:border-primary/50 transition">
+                        <span className="material-symbols-outlined !text-[16px] text-primary">support_agent</span>
+                        الدعم
+                    </Link>
+                </div>
                 {loading ? (
                     <div className="bg-surface-dark rounded-xl p-4 border border-slate-800 text-center text-slate-400 text-sm">
                         جاري تحميل السجل...

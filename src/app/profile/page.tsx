@@ -88,8 +88,13 @@ export default function ProfilePage() {
         ? (user as { deals?: unknown[] }).deals?.length ?? 0
         : 0;
     const driverMenuItems = activeRole === "DRIVER" ? [
+        { icon: "dashboard", label: "لوحة السائق", href: "/driver/dashboard" },
+        { icon: "badge", label: "حساب السائق", href: "/driver/profile" },
         { icon: "route", label: "طلبات النقل", href: "/driver/bookings" },
+        { icon: "local_shipping", label: "الأحمال المتاحة", href: "/transport/driver/loads" },
         { icon: "history", label: "سجل التوصيل", href: "/driver/history" },
+        { icon: "loyalty", label: "مكافآتي", href: "/driver/rewards" },
+        { icon: "support_agent", label: "دعم السائق", href: "/driver/support" },
         { icon: "verified", label: "توثيق السائق", href: "/verification/status?role=DRIVER" },
     ] : [];
 
@@ -317,10 +322,16 @@ export default function ProfilePage() {
 
     const handleRoleSwitch = (role: ActiveRole) => {
         if (role === "TRADER") {
-            // User is an approved/active trader — allow role switch directly.
             const isApproved = user?.userType === "TRADER" && (user?.status === "APPROVED" || user?.status === "ACTIVE");
             if (!isApproved) {
                 router.push("/verification?role=TRADER");
+                return;
+            }
+        }
+        if (role === "DRIVER") {
+            const isApproved = user?.userType === "DRIVER" && (user?.status === "APPROVED" || user?.status === "ACTIVE");
+            if (!isApproved) {
+                router.push("/verification?role=DRIVER");
                 return;
             }
         }
@@ -701,14 +712,22 @@ export default function ProfilePage() {
                 )}
 
                 {/* Verification Alert */}
-                {user?.status === "PENDING" && !isEditing && (
+                {(user?.status === "PENDING" || user?.isVerified === false) && !isEditing && (
                     <div className="px-4 mt-4">
-                        <Link href="/verification" className="block bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
+                        <Link href={user?.status === "PENDING" ? "/verification/status" : "/verification"} className="block bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
                             <div className="flex items-start gap-3">
-                                <span className="material-symbols-outlined text-yellow-500 !text-[24px]">warning</span>
+                                <span className="material-symbols-outlined text-yellow-500 !text-[24px]">
+                                    {user?.status === "PENDING" ? "hourglass_top" : "warning"}
+                                </span>
                                 <div className="flex-1">
-                                    <p className="text-sm font-bold text-yellow-500">أكمل التوثيق</p>
-                                    <p className="text-xs text-slate-400 mt-1">يرجى إكمال توثيق حسابك للوصول لجميع الميزات</p>
+                                    <p className="text-sm font-bold text-yellow-500">
+                                        {user?.status === "PENDING" ? "التوثيق قيد المراجعة" : "أكمل التوثيق"}
+                                    </p>
+                                    <p className="text-xs text-slate-400 mt-1">
+                                        {user?.status === "PENDING" 
+                                            ? "طلبك قيد المراجعة، سيتم تفعيل جميع الميزات فور الموافقة" 
+                                            : "يرجى إكمال توثيق حسابك للوصول لجميع الميزات"}
+                                    </p>
                                 </div>
                                 <span className="material-symbols-outlined text-yellow-500 !text-[20px]">chevron_left</span>
                             </div>

@@ -221,6 +221,8 @@ model User {
   wallet                     Wallet?
   depositRequests            DepositRequest[]
   payoutRequests             PayoutRequest[]
+  sentTransfers              TransferRequest[]           @relation("SenderTransfers")
+  receivedTransfers          TransferRequest[]           @relation("ReceiverTransfers")
   reviewsReceived            Review[]                    @relation("reviewee")
   reviewsGiven               Review[]                    @relation("reviewer")
   auctionPenalties           AuctionPenalty[]
@@ -348,12 +350,12 @@ model Auction {
   govWaiverFileUrl  String?
 
   // Financial fields
-  pricingMode             String  @default("unified") // unified, per_material
-  startingBidCurrency     String  @default("SYP")
-  startingBidUnit         String  @default("total") // total, ton, kg, piece
-  buyNowPriceCurrency     String  @default("SYP")
-  securityDepositCurrency String  @default("SYP")
-  securityDepositMethod   String  @default("platform")
+  pricingMode             String @default("unified") // unified, per_material
+  startingBidCurrency     String @default("SYP")
+  startingBidUnit         String @default("total") // total, ton, kg, piece
+  buyNowPriceCurrency     String @default("SYP")
+  securityDepositCurrency String @default("SYP")
+  securityDepositMethod   String @default("platform")
 
   // Preview fields
   allowPreview     Boolean   @default(false)
@@ -379,6 +381,7 @@ model Auction {
   events       AuctionEventLog[]
   disputes     AuctionDispute[]
   penalties    AuctionPenalty[]
+  version      Int                  @default(0)
 
   @@index([sellerId])
   @@index([category])
@@ -388,33 +391,32 @@ model Auction {
   @@index([effectiveEndsAt])
   @@index([winnerId])
   @@index([winningBidId])
-  version         Int      @default(0)
 }
 
 model AuctionItem {
-  id          String   @id @default(cuid())
-  auctionId   String
-  type        String
-  customType  String?
-  weight      Float
-  unit        String   @default("kg")
-  isAccurate  Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  auction     Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  auctionId  String
+  type       String
+  customType String?
+  weight     Float
+  unit       String   @default("kg")
+  isAccurate Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  auction    Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
 
   @@index([auctionId])
 }
 
 model AuctionDocument {
-  id          String   @id @default(cuid())
-  auctionId   String
-  fileUrl     String
-  fileName    String?
-  fileType    String?
-  fileSize    Int?     // Size in bytes
-  createdAt   DateTime @default(now())
-  auction     Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  auctionId String
+  fileUrl   String
+  fileName  String?
+  fileType  String?
+  fileSize  Int? // Size in bytes
+  createdAt DateTime @default(now())
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
 
   @@index([auctionId])
 }
@@ -467,10 +469,10 @@ model AuctionImage {
 }
 
 model Bid {
-  id        String @id @default(cuid())
-  auctionId String
-  bidderId  String
-  amount    Float
+  id         String  @id @default(cuid())
+  auctionId  String
+  bidderId   String
+  amount     Float
   requestKey String? @unique
 
   participantId String?
@@ -1074,26 +1076,28 @@ model StaffInvite {
 }
 
 model LedgerAccount {
-  id              String                @id @default(cuid())
-  ownerId         String?
-  slug            String                @unique
-  currency        String                @default("SYP")
-  balance         Float                 @default(0)
-  metadata        Json?
-  status          String                @default("ACTIVE")
-  debtStartedAt   DateTime?
-  debtDueAt       DateTime?
-  debtStatus      String                @default("CLEAR")
-  lockedByDebt    Boolean               @default(false)
-  debtLockReason  String?
-  creditLimit     Float                 @default(0)
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-  lines           JournalLine[]
-  holds           LedgerHold[]
-  depositRequests DepositRequest[]
-  payoutRequests  PayoutRequest[]
-  waiverPolicies  AccountWaiverPolicy[]
+  id                String                @id @default(cuid())
+  ownerId           String?
+  slug              String                @unique
+  currency          String                @default("SYP")
+  balance           Float                 @default(0)
+  metadata          Json?
+  status            String                @default("ACTIVE")
+  debtStartedAt     DateTime?
+  debtDueAt         DateTime?
+  debtStatus        String                @default("CLEAR")
+  lockedByDebt      Boolean               @default(false)
+  debtLockReason    String?
+  creditLimit       Float                 @default(0)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  lines             JournalLine[]
+  holds             LedgerHold[]
+  depositRequests   DepositRequest[]
+  payoutRequests    PayoutRequest[]
+  outgoingTransfers TransferRequest[]     @relation("SenderAccountTransfers")
+  incomingTransfers TransferRequest[]     @relation("ReceiverAccountTransfers")
+  waiverPolicies    AccountWaiverPolicy[]
 
   @@index([ownerId])
   @@index([slug])
@@ -1210,6 +1214,35 @@ model PayoutRequest {
   @@index([createdAt])
 }
 
+model TransferRequest {
+  id                String    @id @default(cuid())
+  senderId          String
+  receiverId        String
+  senderAccountId   String?
+  receiverAccountId String?
+  amount            Float
+  currency          String    @default("SYP")
+  status            String    @default("PENDING") // PENDING, APPROVED, REJECTED, FAILED
+  referenceNote     String?
+  reviewNote        String?
+  reviewedById      String?
+  reviewedAt        DateTime?
+  completedAt       DateTime?
+  failedAt          DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  sender          User           @relation("SenderTransfers", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver        User           @relation("ReceiverTransfers", fields: [receiverId], references: [id], onDelete: Cascade)
+  senderAccount   LedgerAccount? @relation("SenderAccountTransfers", fields: [senderAccountId], references: [id], onDelete: Cascade)
+  receiverAccount LedgerAccount? @relation("ReceiverAccountTransfers", fields: [receiverAccountId], references: [id], onDelete: Cascade)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
+  @@index([createdAt])
+}
+
 model AccountWaiverPolicy {
   id                   String        @id @default(cuid())
   accountId            String
@@ -1241,6 +1274,7 @@ model Driver {
   sessions     DriverSession[]
   assignments  DeliveryAssignment[]
   deliveries   Delivery[]
+  locationLogs DriverLocationLog[]
   rewards      DriverReward[]
   ratings      DriverRating[]
   trustScore   Float                @default(0.0)
@@ -1299,6 +1333,7 @@ model DriverSession {
   lastLat    Float?
   lastLng    Float?
   lastSeenAt DateTime?
+  isAvailable Boolean  @default(true)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   driver     Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
@@ -1306,6 +1341,19 @@ model DriverSession {
   @@index([driverId])
   @@index([deviceId])
   @@index([lastSeenAt])
+}
+
+model DriverLocationLog {
+  id         String   @id @default(cuid())
+  driverId   String
+  lat        Float
+  lng        Float
+  recordedAt DateTime @default(now())
+  driver     Driver   @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId])
+  @@index([recordedAt])
+  @@index([driverId, recordedAt])
 }
 
 model Order {
@@ -1579,3 +1627,23 @@ model KillSwitch {
   @@index([state])
 }
 
+model Dealer {
+  id               String   @id @default(cuid())
+  name             String   // Name of the shop/agent
+  governorate      String   // e.g. دمشق، حلب، حمص
+  region           String   // e.g. المزة، حي السبيل
+  address          String   // Detailed address
+  lat              Float?   // Latitude
+  lng              Float?   // Longitude
+  contactPhone     String?
+  contactWhatsapp  String?
+  isActive         Boolean  @default(true)
+  services         String[] @default(["DEPOSIT", "WITHDRAW"]) // Types of services offered
+  workingHours     String?  // e.g. 9:00 AM - 6:00 PM
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([governorate])
+  @@index([region])
+  @@index([isActive])
+}
