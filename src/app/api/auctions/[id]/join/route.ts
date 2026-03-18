@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import {
   AuctionDepositWorkflowStatus,
   AuctionParticipantWorkflowStatus,
+  AuctionParticipantLotWorkflowStatus,
   AuctionType,
   AuctionWorkflowStatus,
 } from "@prisma/client";
@@ -19,6 +20,7 @@ type JoinAuctionBody = {
   agreedToDataSharing?: boolean;
   hasInspectedGoods?: boolean;
   agreedToInvoice?: boolean;
+  lotIds?: string[];
 };
 
 function roundMoney(value: number) {
@@ -53,7 +55,7 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  let createdHoldId: string | null = null;
+  let createdHoldIds: string[] = [];
 
   try {
     const resolvedParams = await context.params;
@@ -97,12 +99,23 @@ export async function POST(
         status: true,
         workflowStatus: true,
         isFinallyClosed: true,
-        startingBid: true,
-        securityDeposit: true,
-        depositPercent: true,
+        currency: true,
         entryFee: true,
-        endsAt: true,
         effectiveEndsAt: true,
+        endsAt: true,
+        lots: {
+          select: {
+            id: true,
+            lineNo: true,
+            title: true,
+            startingPrice: true,
+            depositModeOverride: true,
+            depositAmountOverride: true,
+            status: true,
+            currency: true,
+          },
+          orderBy: { lineNo: "asc" },
+        },
       },
     });
 
@@ -172,72 +185,120 @@ export async function POST(
       });
     }
 
-    const computedDeposit =
-      auction.depositPercent > 0
-        ? roundMoney((auction.startingBid * auction.depositPercent) / 100)
-        : roundMoney(auction.securityDeposit || 0);
-
-    if (computedDeposit <= 0) {
+    const eligibleLots = (auction.lots || []).filter((lot) => lot.status !== "CANCELLED");
+    if (eligibleLots.length === 0) {
       return NextResponse.json(
-        {
-          error:
-            "Auction configuration is invalid. A positive security deposit is required before joining.",
-        },
+        { error: "No available lots to join in this auction." },
         { status: 400 }
       );
     }
 
-    const entryFeeToCharge = roundMoney(auction.entryFee || 0);
+    const selectedLotIds = Array.isArray(body.lotIds) && body.lotIds.length > 0
+      ? body.lotIds
+      : eligibleLots.map((lot) => lot.id);
 
-    const userAccountSlug = `USER_${userId}_SYP`;
-    const ledgerAccount = await LedgerPostingService.getOrCreateAccount(
-      userAccountSlug,
-      userId,
-      "SYP"
-    );
+    const selectedLots = eligibleLots.filter((lot) => selectedLotIds.includes(lot.id));
 
-    const totalHolds = await prisma.ledgerHold.aggregate({
-      where: {
-        accountId: ledgerAccount.id,
-        status: "OPEN",
-      },
-      _sum: {
-        amount: true,
-      },
-    });
-
-    const heldAmount = totalHolds._sum.amount || 0;
-    const availableBalance = ledgerAccount.balance - heldAmount;
-
-    const totalRequiredUpfront = computedDeposit + entryFeeToCharge;
-
-    if (availableBalance < totalRequiredUpfront) {
+    if (selectedLots.length === 0) {
       return NextResponse.json(
-        {
-          error: "Insufficient funds to join auction.",
-          required: totalRequiredUpfront,
-          requiredDeposit: computedDeposit,
-          requiredEntryFee: entryFeeToCharge,
-          available: availableBalance,
-        },
-        { status: 402 }
+        { error: "You must select at least one lot to join." },
+        { status: 400 }
       );
     }
 
-    const hold = await LedgerPostingService.createHold(
-      userAccountSlug,
-      computedDeposit,
-      "AUCTION_DEPOSIT",
-      auctionId,
-      auction.effectiveEndsAt ?? auction.endsAt ?? undefined
+    const computeLotDeposit = (lot: any) => {
+      const mode = lot.depositModeOverride || "NONE";
+      const value = lot.depositAmountOverride || 0;
+      if (mode === "PERCENTAGE") {
+        return roundMoney(((lot.startingPrice || 0) * value) / 100);
+      }
+      if (mode === "FIXED") {
+        return roundMoney(value);
+      }
+      return 0;
+    };
+
+    const lotDeposits = selectedLots.map((lot) => ({
+      lot,
+      depositAmount: computeLotDeposit(lot),
+      currency: lot.currency || (auction as any).currency || "SYP",
+    }));
+
+    const totalDepositCommitted = roundMoney(
+      lotDeposits.reduce((sum, d) => sum + d.depositAmount, 0)
     );
 
-    createdHoldId = hold.id;
+    const entryFeeToCharge = roundMoney((auction as any).entryFee || 0);
+    const auctionCurrency = (auction as any).currency || "SYP";
+
+    // Group deposits by currency
+    const depositsByCurrency: Record<string, number> = {};
+    for (const d of lotDeposits) {
+      depositsByCurrency[d.currency] = (depositsByCurrency[d.currency] || 0) + d.depositAmount;
+    }
+    // Add entry fee to the auction currency group
+    if (entryFeeToCharge > 0) {
+      depositsByCurrency[auctionCurrency] = (depositsByCurrency[auctionCurrency] || 0) + entryFeeToCharge;
+    }
+
+    // Check balances for each involved currency
+    for (const [curr, totalRequired] of Object.entries(depositsByCurrency)) {
+      if (totalRequired <= 0) continue;
+
+      const userAccountSlug = `USER_${userId}_${curr}`;
+      const ledgerAccount = await LedgerPostingService.getOrCreateAccount(
+        userAccountSlug,
+        userId,
+        curr
+      );
+
+      const totalHolds = await prisma.ledgerHold.aggregate({
+        where: {
+          accountId: ledgerAccount.id,
+          status: "OPEN",
+        },
+        _sum: {
+          amount: true,
+        },
+      });
+
+      const heldAmount = totalHolds._sum.amount || 0;
+      const availableBalance = ledgerAccount.balance - heldAmount;
+
+      if (availableBalance < totalRequired) {
+        return NextResponse.json(
+          {
+            error: `Insufficient ${curr} funds to join auction.`,
+            currency: curr,
+            required: totalRequired,
+            available: availableBalance,
+          },
+          { status: 402 }
+        );
+      }
+    }
+
+    const lotHoldMap = new Map<string, string>();
+    for (const entry of lotDeposits) {
+      if (entry.depositAmount <= 0) continue;
+      
+      const userAccountSlug = `USER_${userId}_${entry.currency}`;
+      const hold = await LedgerPostingService.createHold(
+        userAccountSlug,
+        entry.depositAmount,
+        "AUCTION_DEPOSIT",
+        entry.lot.id,
+        (auction as any).effectiveEndsAt ?? (auction as any).endsAt ?? undefined
+      );
+      createdHoldIds.push(hold.id);
+      lotHoldMap.set(entry.lot.id, hold.id);
+    }
 
     if (entryFeeToCharge > 0) {
+      const userAccountSlug = `USER_${userId}_${auctionCurrency}`;
       await LedgerPostingService.postEntry({
         type: TransactionType.AUCTION_JOIN_FEE,
-        description: `Auction entry fee for: ${auction.title}`,
+        description: `Auction entry fee for: ${auction.title} (${auctionCurrency})`,
         lines: [
           {
             accountSlug: userAccountSlug,
@@ -245,7 +306,7 @@ export async function POST(
             description: `Auction entry fee for auction ${auctionId}`,
           },
           {
-            accountSlug: LedgerAccountSlug.SYSTEM_FEE_COLLECTION,
+            accountSlug: `SYSTEM_FEE_COLLECTION_${auctionCurrency}`,
             amount: entryFeeToCharge,
             description: `Auction entry fee collected from user ${userId}`,
           },
@@ -254,31 +315,48 @@ export async function POST(
           auctionId,
           userId,
           entryFee: entryFeeToCharge,
+          currency: auctionCurrency,
         },
       });
     }
 
     const participant = await prisma.$transaction(async (tx) => {
-      const createdParticipant = await tx.auctionParticipant.create({
-        data: {
-          auctionId,
-          userId,
-          depositPaid: computedDeposit,
-          entryFeePaid: entryFeeToCharge,
-          isExempt: false,
-          depositStatus: "HELD",
-          workflowStatus: AuctionParticipantWorkflowStatus.APPROVED,
-          depositWorkflowStatus: AuctionDepositWorkflowStatus.HELD,
-          depositHoldId: hold.id,
-          approvedAt: new Date(),
-          agreedToTerms: true,
-          agreedToPrivacy: true,
-          agreedToCommission: true,
-          agreedToDataSharing: true,
-          hasInspectedGoods: true,
-          agreedToInvoice: true,
-        },
-      });
+        const createdParticipant = await tx.auctionParticipant.create({
+          data: {
+            auctionId,
+            userId,
+            depositPaid: totalDepositCommitted,
+            entryFeePaid: entryFeeToCharge,
+            isExempt: false,
+            depositStatus: totalDepositCommitted > 0 ? "HELD" : "NONE",
+            workflowStatus: AuctionParticipantWorkflowStatus.APPROVED,
+            depositWorkflowStatus: totalDepositCommitted > 0 ? AuctionDepositWorkflowStatus.HELD : AuctionDepositWorkflowStatus.NONE,
+            depositHoldId: null,
+            approvedAt: new Date(),
+            agreedToTerms: true,
+            agreedToPrivacy: true,
+            agreedToCommission: true,
+            agreedToDataSharing: true,
+            hasInspectedGoods: true,
+            agreedToInvoice: true,
+          },
+        });
+
+        await tx.auctionParticipantLot.createMany({
+          data: lotDeposits.map((entry) => ({
+            participantId: createdParticipant.id,
+            auctionId: auctionId,
+            lotId: entry.lot.id,
+            isSelected: true,
+            depositRequired: entry.depositAmount,
+            depositHoldId: lotHoldMap.get(entry.lot.id) ?? null,
+            depositWorkflowStatus:
+              entry.depositAmount > 0
+                ? AuctionDepositWorkflowStatus.HELD
+                : AuctionDepositWorkflowStatus.NONE,
+            workflowStatus: AuctionParticipantLotWorkflowStatus.APPROVED,
+          })),
+        });
 
       await tx.auctionEventLog.create({
         data: {
@@ -289,10 +367,14 @@ export async function POST(
             participantId: createdParticipant.id,
             userId,
             auctionType: auction.type,
-            depositPercent: auction.depositPercent,
-            depositAmount: computedDeposit,
+            depositAmount: totalDepositCommitted,
             entryFeeAmount: entryFeeToCharge,
-            holdId: hold.id,
+            currency: auctionCurrency,
+            lotDeposits: lotDeposits.map((entry) => ({
+              lotId: entry.lot.id,
+              amount: entry.depositAmount,
+              currency: entry.currency,
+            })),
             verificationPath: isGovernmentVerified
               ? "GOVERNMENT_VERIFIED"
               : "TRADER_VERIFIED",
@@ -320,17 +402,24 @@ export async function POST(
       message: "Successfully joined the auction",
       participant,
       financials: {
-        depositLocked: computedDeposit,
+        depositLocked: totalDepositCommitted,
         entryFeeCharged: entryFeeToCharge,
-        totalCommitted: totalRequiredUpfront,
+        currency: auctionCurrency,
+        breakdown: lotDeposits.map(d => ({
+          lotId: d.lot.id,
+          amount: d.depositAmount,
+          currency: d.currency
+        }))
       },
     });
   } catch (error) {
-    if (createdHoldId) {
-      try {
-        await LedgerPostingService.releaseHold(createdHoldId);
-      } catch (releaseError) {
-        console.error("[JOIN_AUCTION_HOLD_ROLLBACK_ERROR]", releaseError);
+    if (createdHoldIds.length > 0) {
+      for (const holdId of createdHoldIds) {
+        try {
+          await LedgerPostingService.releaseHold(holdId);
+        } catch (releaseError) {
+          console.error("[JOIN_AUCTION_HOLD_ROLLBACK_ERROR]", releaseError);
+        }
       }
     }
 

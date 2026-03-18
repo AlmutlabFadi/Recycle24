@@ -22,6 +22,15 @@ vi.mock("@/lib/db", () => {
     findUnique: vi.fn(),
   };
 
+  const auctionLot = {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  };
+
+  const auctionParticipantLot = {
+    findUnique: vi.fn(),
+  };
+
   const ledgerHold = {
     findUnique: vi.fn(),
   };
@@ -39,14 +48,18 @@ vi.mock("@/lib/db", () => {
   return {
     db: {
       auction,
+      auctionLot,
       auctionParticipant,
+      auctionParticipantLot,
       ledgerHold,
       bid,
       auctionEventLog,
       $transaction: async (fn: (tx: any) => Promise<any>) => {
         return fn({
           auction,
+          auctionLot,
           auctionParticipant,
+          auctionParticipantLot,
           ledgerHold,
           bid,
           auctionEventLog,
@@ -73,9 +86,31 @@ describe("auction engine", () => {
       auctionId: "a1",
       userId: "u1",
       isExempt: false,
+      depositPaid: 5000,
       workflowStatus: "APPROVED",
       depositWorkflowStatus: "HELD",
       depositHoldId: "hold-1",
+    } as any);
+
+    vi.mocked(db.auctionLot.findUnique).mockResolvedValue({
+      id: "lot-1",
+      auctionId: "a1",
+      startingPrice: 1000,
+      currentBestBid: 1000,
+      winningBidId: "b9",
+      status: "OPEN",
+      direction: "FORWARD",
+    } as any);
+
+    vi.mocked(db.auctionLot.update).mockResolvedValue({} as any);
+
+    vi.mocked((db as any).auctionParticipantLot.findUnique).mockResolvedValue({
+      id: "pl-1",
+      isSelected: true,
+      depositRequired: 0,
+      depositWorkflowStatus: "HELD",
+      depositHoldId: null,
+      workflowStatus: "APPROVED",
     } as any);
 
     vi.mocked(db.ledgerHold.findUnique).mockResolvedValue({
@@ -94,6 +129,7 @@ describe("auction engine", () => {
 
     const result = await placeBid({
       auctionId: "a1",
+      lotId: "lot-1",
       bidderId: "u1",
       participantId: "p1",
       amount: 100,
@@ -125,6 +161,7 @@ describe("auction engine", () => {
 
     const result = await placeBid({
       auctionId: "a1",
+      lotId: "lot-1",
       bidderId: "u1",
       participantId: "p1",
       amount: 1050,
@@ -137,7 +174,7 @@ describe("auction engine", () => {
     }
   });
 
-  it("rejects bid lower than minimum increment", async () => {
+  it("rejects bid lower than required increment threshold", async () => {
     vi.mocked(db.auction.findUnique).mockResolvedValueOnce({
       id: "a1",
       sellerId: "seller-1",
@@ -166,6 +203,7 @@ describe("auction engine", () => {
 
     const result = await placeBid({
       auctionId: "a1",
+      lotId: "lot-1",
       bidderId: "u1",
       participantId: "p1",
       amount: 1010,
@@ -174,7 +212,7 @@ describe("auction engine", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.code).toBe("BID_TOO_LOW");
+      expect(result.code).toBe("INVALID_BID_AMOUNT");
     }
   });
 
@@ -217,6 +255,7 @@ describe("auction engine", () => {
 
     const result = await placeBid({
       auctionId: "a1",
+      lotId: "lot-1",
       bidderId: "u1",
       participantId: "p1",
       amount: 1050,
@@ -227,6 +266,7 @@ describe("auction engine", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.bidId).toBe("b10");
+      expect(result.lotId).toBe("lot-1");
       expect(result.currentBid).toBe(1050);
       expect(result.winningBidId).toBe("b10");
       expect(result.previousHighestBidId).toBe("b9");
@@ -277,6 +317,7 @@ describe("auction engine", () => {
 
     const result = await placeBid({
       auctionId: "a1",
+      lotId: "lot-1",
       bidderId: "u1",
       participantId: "p1",
       amount: 1050,
@@ -334,6 +375,7 @@ describe("auction engine", () => {
 
     const result = await placeBid({
       auctionId: "a1",
+      lotId: "lot-1",
       bidderId: "u1",
       participantId: "p1",
       amount: 1050,
@@ -351,6 +393,7 @@ describe("auction engine", () => {
     vi.mocked(db.bid.findFirst).mockResolvedValueOnce({
       id: "b10",
       auctionId: "a1",
+      lotId: "lot-1",
       bidderId: "u1",
       amount: 1050,
       createdAt: new Date("2026-03-14T10:00:00.000Z"),
@@ -365,6 +408,7 @@ describe("auction engine", () => {
 
     const result = await placeBid({
       auctionId: "a1",
+      lotId: "lot-1",
       bidderId: "u1",
       participantId: "p1",
       amount: 1050,
@@ -375,6 +419,7 @@ describe("auction engine", () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.bidId).toBe("b10");
+      expect(result.lotId).toBe("lot-1");
       expect(result.replayed).toBe(true);
       expect(result.currentBid).toBe(1050);
       expect(result.winningBidId).toBe("b10");
@@ -385,5 +430,3 @@ describe("auction engine", () => {
     expect(db.auctionEventLog.create).not.toHaveBeenCalled();
   });
 });
-
-

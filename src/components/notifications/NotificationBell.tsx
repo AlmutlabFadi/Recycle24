@@ -3,10 +3,20 @@
 import { useState } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export function NotificationBell() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, loading } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+
+  const handleNotificationClick = (notification: any) => {
+    markAsRead(notification.id);
+    setIsOpen(false);
+    if (notification.link) {
+      router.push(notification.link);
+    }
+  };
 
   return (
     <div className="relative">
@@ -71,7 +81,7 @@ export function NotificationBell() {
                   notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      onClick={() => markAsRead(notification.id)}
+                      onClick={() => handleNotificationClick(notification)}
                       className={`p-4 border-b border-gray-800/50 cursor-pointer transition-colors ${
                         notification.isRead ? 'opacity-60 grayscale' : 'bg-blue-500/5 hover:bg-blue-500/10'
                       }`}

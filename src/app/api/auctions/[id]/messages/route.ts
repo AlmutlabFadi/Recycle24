@@ -82,7 +82,7 @@ export async function POST(
                     title: "📩 رسالة جديدة من الإدارة بشأن مزادك",
                     message: `${sessionUser.name || "الإدارة"}: ${text?.substring(0, 80) || "أرسل مرفقاً"}`,
                     type: "INFO",
-                    link: `/auctions/my-auctions`,
+                    link: `/auctions/my-auctions?aucId=${id}`,
                 },
             });
         }

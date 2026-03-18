@@ -57,12 +57,14 @@ interface UseWalletReturn {
   deposit: (
     amount: number,
     method: string,
-    referenceNumber: string
+    referenceNumber: string,
+    currency?: string
   ) => Promise<boolean>;
   withdraw: (
     amount: number,
     method: string,
-    accountNumber: string
+    accountNumber: string,
+    currency?: string
   ) => Promise<boolean>;
   refresh: () => void;
 }
@@ -108,7 +110,8 @@ export function useWallet(): UseWalletReturn {
     async (
       amount: number,
       method: string,
-      referenceNumber: string
+      referenceNumber: string,
+      currency: string = "SYP"
     ): Promise<boolean> => {
       if (!user) {
         return false;
@@ -128,7 +131,7 @@ export function useWallet(): UseWalletReturn {
             amount,
             method,
             proofUrl: referenceNumber,
-            currency: "SYP",
+            currency,
           }),
         });
 
@@ -156,7 +159,8 @@ export function useWallet(): UseWalletReturn {
     async (
       amount: number,
       method: string,
-      accountNumber: string
+      accountNumber: string,
+      currency: string = "SYP"
     ): Promise<boolean> => {
       if (!user) {
         return false;
@@ -176,7 +180,7 @@ export function useWallet(): UseWalletReturn {
             amount,
             method,
             destination: accountNumber,
-            currency: "SYP",
+            currency,
           }),
         });
 

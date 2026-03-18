@@ -331,6 +331,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     if (result.kind === "committed") {
       await LedgerPostingService.dispatchNotifications(result.notifications);
+      
+      const { NotificationService } = await import("@/lib/notifications/service");
+      await NotificationService.create({
+        userId: result.completedRequest.userId,
+        title: "✅ تم قبول طلب الإيداع",
+        message: `تم إضافة ${result.completedRequest.amount.toLocaleString()} ${result.completedRequest.currency} إلى محفظتك بنجاح.`,
+        type: "SUCCESS",
+        link: "/wallet",
+      });
     }
 
     if (result.kind === "staged") {

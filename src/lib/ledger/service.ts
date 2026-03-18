@@ -92,7 +92,7 @@ export class LedgerPostingService {
     client: LedgerClient,
     slug: string,
     ownerId?: string,
-    currency: string = Currency.SYP
+    currency?: string
   ) {
     const existing = await this.findAccountWith(client, slug);
 
@@ -100,8 +100,11 @@ export class LedgerPostingService {
       return existing;
     }
 
+    // Infer currency from slug if not explicitly provided
+    const effectiveCurrency = currency || (slug.endsWith("_USD") ? Currency.USD : Currency.SYP);
+
     try {
-      return await this.createAccountWith(client, slug, ownerId, currency);
+      return await this.createAccountWith(client, slug, ownerId, effectiveCurrency);
     } catch (error) {
       const existingAfterRace = await this.findAccountWith(client, slug);
 
@@ -214,11 +217,14 @@ export class LedgerPostingService {
         continue;
       }
 
+      const currencyPrefix = slug.endsWith("_USD") ? "$" : "";
+      const currencySuffix = slug.endsWith("_USD") ? " USD" : " SYP";
+
       if (transition.previousBalance >= 0 && transition.nextBalance < 0) {
         notifications.push({
           userId: transition.ownerId,
           title: "Negative wallet balance",
-          message: `Your balance on account ${slug} became negative (${transition.nextBalance.toLocaleString()} SYP). Please fund your wallet to avoid account restrictions.`,
+          message: `Your balance on account ${slug} became negative (${currencyPrefix}${transition.nextBalance.toLocaleString()}${currencySuffix}). Please fund your wallet to avoid account restrictions.`,
           type: "URGENT",
           link: "/wallet",
           metadata: {

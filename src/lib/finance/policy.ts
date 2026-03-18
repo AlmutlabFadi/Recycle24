@@ -18,9 +18,9 @@ const POLICY_BY_CURRENCY: Record<Currency, CurrencyPolicy | null> = {
   },
   [Currency.USD]: {
     depositMin: 10,
-    depositMax: 100_000,
+    depositMax: 50_000,
     payoutMin: 10,
-    payoutMax: 50_000,
+    payoutMax: 25_000,
   },
 };
 
@@ -46,7 +46,7 @@ export function ensureSupportedWalletCurrency(currency: Currency) {
   const policy = POLICY_BY_CURRENCY[currency];
 
   if (!policy) {
-    throw new Error(`Currency ${currency} is not currently supported for wallet operations`);
+    throw new Error("Only SYP wallet operations are supported currently");
   }
 
   return policy;

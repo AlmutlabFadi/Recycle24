@@ -26,12 +26,13 @@ interface Trader {
     documents: TraderDocument[];
 }
 
-const statusMap: Record<string, { label: string; color: string; bg: string }> = {
-    PENDING: { label: "قيد الانتظار", color: "text-amber-500", bg: "bg-amber-500/10" },
-    UNDER_REVIEW: { label: "قيد المعالجة", color: "text-blue-500", bg: "bg-blue-500/10" },
-    APPROVED: { label: "تم التوثيق", color: "text-emerald-500", bg: "bg-emerald-500/10" },
-    REJECTED: { label: "مرفوض", color: "text-red-500", bg: "bg-red-500/10" },
-};
+    const statusMap: Record<string, { label: string; color: string; bg: string }> = {
+        PENDING: { label: "قيد الانتظار", color: "text-amber-500", bg: "bg-amber-500/10" },
+        UNDER_REVIEW: { label: "قيد المعالجة", color: "text-blue-500", bg: "bg-blue-500/10" },
+        APPROVED: { label: "تم التوثيق", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+        VERIFIED: { label: "تم التوثيق", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+        REJECTED: { label: "مرفوض", color: "text-red-500", bg: "bg-red-500/10" },
+    };
 
 const docTypeMap: Record<string, string> = {
     IDENTITY_FRONT: "الهوية (وجه)",
@@ -327,6 +328,7 @@ export default function AdminVerificationPage() {
                         {filteredTraders.map((trader) => {
                             const isUserFallback = activeType === "CLIENT" || activeType === "GOVERNMENT";
                             let vStatus = trader.verificationStatus || trader.status || "PENDING";
+                            if (vStatus === "VERIFIED") vStatus = "APPROVED";
                             if (isUserFallback && trader.isVerified) vStatus = "APPROVED";
                             
                             const tStatus = statusMap[vStatus] || statusMap["PENDING"];

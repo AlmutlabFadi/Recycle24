@@ -170,6 +170,16 @@ export async function POST(request: NextRequest) {
             endDate,
             materials,
             pricingMode,
+            auctionDomain,
+            auctionDirection,
+            currency,
+            pricingModeV2,
+            winnerSelectionMode,
+            jurisdictionCountry,
+            governingLaw,
+            disputeWindowHours,
+            lots,
+            jurisdictionCity,
             startingBidCurrency,
             startingBidUnit,
             buyNowPriceCurrency,
@@ -194,6 +204,57 @@ export async function POST(request: NextRequest) {
         const startD = startDate ? new Date(startDate) : new Date();
         const durationHours = Math.max(1, Math.ceil((endD.getTime() - startD.getTime()) / (1000 * 60 * 60)));
 
+        const materialPriceMap = new Map<string, any>();
+        if (Array.isArray(body.materialPrices)) {
+            for (const price of body.materialPrices) {
+                if (price?.id) materialPriceMap.set(price.id, price);
+            }
+        }
+
+        const resolvedCurrency = currency || startingBidCurrency || "SYP";
+        const resolvedPricingMode = pricingModeV2 || "BUNDLE_BASED"; // Default to BUNDLE_BASED if not specified
+
+        const lotsPayload = Array.isArray(lots) && lots.length > 0
+            ? lots.map((l: any, index: number) => ({
+                lineNo: l.lineNo || index + 1,
+                title: l.title || `Lot ${index + 1}`,
+                description: l.description || null,
+                category: l.category || (materials && materials[0] ? materials[0].type : "أخرى"),
+                quantity: Number(l.quantity || 0),
+                unit: l.unit || "kg",
+                pricingUnit: l.pricingUnit || l.unit || "kg",
+                startingPrice: Number(l.startingPrice || 0),
+                reservePrice: l.reservePrice ? Number(l.reservePrice) : null,
+                buyNowPrice: l.buyNowPrice ? Number(l.buyNowPrice) : null,
+                depositModeOverride: l.depositModeOverride || l.depositMode || "NONE",
+                depositAmountOverride: Number(l.depositAmountOverride || l.depositValue || 0),
+                currency: l.currency || resolvedCurrency,
+                direction: l.direction || auctionDirection || "FORWARD",
+                status: "DRAFT" as const,
+            }))
+            : (materials || []).map((m: any, index: number) => {
+                const price = materialPriceMap.get(m.id);
+                const startAmount = pricingMode === "per_material" && price?.amount ? price.amount : startingPrice;
+                const unit = price?.unit || startingBidUnit || m.unit || "kg";
+                return {
+                    lineNo: index + 1,
+                    title: m.type === "أخرى" ? m.customType || "مادة" : m.type || "مادة",
+                    description: null,
+                    category: m.type === "أخرى" ? m.customType || "أخرى" : m.type || "أخرى",
+                    quantity: Number(m.weight || 0),
+                    unit: m.unit || "kg",
+                    pricingUnit: unit,
+                    startingPrice: Number(startAmount || 0),
+                    reservePrice: null,
+                    buyNowPrice: buyNowPrice ? Number(buyNowPrice) : null,
+                    depositModeOverride: Number(securityDepositAmount || 0) > 0 ? "FIXED" : "NONE",
+                    depositAmountOverride: Number(securityDepositAmount || 0),
+                    currency: resolvedCurrency,
+                    direction: auctionDirection || "FORWARD",
+                    status: "DRAFT" as const,
+                };
+            });
+
         const auction = await db.auction.create({
             data: {
                 sellerId,
@@ -215,6 +276,16 @@ export async function POST(request: NextRequest) {
                 type: auctionType === "government" ? "GOVERNMENT" : "PRIVATE",
                 organization: auctionType === "government" ? organization : null,
 
+                auctionDomain: auctionDomain || "ASSET_SALE",
+                auctionDirection: auctionDirection || "FORWARD",
+                currency: resolvedCurrency,
+                pricingModeV2: resolvedPricingMode,
+                winnerSelectionMode: winnerSelectionMode || "SINGLE_WINNER",
+                jurisdictionCountry: jurisdictionCountry || null,
+                jurisdictionCity: jurisdictionCity || null,
+                governingLaw: governingLaw || null,
+                disputeWindowHours: disputeWindowHours ? Number(disputeWindowHours) : null,
+
                 pricingMode: pricingMode || "unified",
                 startingBidCurrency: startingBidCurrency || "SYP",
                 startingBidUnit: startingBidUnit || "total",
@@ -231,6 +302,25 @@ export async function POST(request: NextRequest) {
                 notes: notes || null,
                 shipmentDurationDays: shipmentDurationDays ? Number(shipmentDurationDays) : null,
 
+                lots: lotsPayload.length > 0 ? {
+                    create: lotsPayload.map((lot: any) => ({
+                        lineNo: Number(lot.lineNo || 0),
+                        title: lot.title,
+                        description: lot.description || null,
+                        category: lot.category || "أخرى",
+                        quantity: Number(lot.quantity || 0),
+                        unit: lot.unit || "kg",
+                        pricingUnit: lot.pricingUnit || lot.unit || "kg",
+                        startingPrice: Number(lot.startingPrice || 0),
+                        reservePrice: lot.reservePrice ? Number(lot.reservePrice) : null,
+                        buyNowPrice: lot.buyNowPrice ? Number(lot.buyNowPrice) : null,
+                        direction: lot.direction || "FORWARD",
+                        currency: lot.currency || "SYP",
+                        depositModeOverride: lot.depositModeOverride || "NONE",
+                        depositAmountOverride: Number(lot.depositAmountOverride || 0),
+                        status: lot.status || "DRAFT",
+                    }))
+                } : undefined,
                 items: {
                     create: (materials || []).map((m: any) => ({
                         type: m.type,

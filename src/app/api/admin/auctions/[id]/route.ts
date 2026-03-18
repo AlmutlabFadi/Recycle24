@@ -81,7 +81,7 @@ export async function PATCH(
                 title: notifTitle,
                 message: notifMessage,
                 type: notifType,
-                link: `/auctions/my-auctions`,
+                link: `/auctions/my-auctions?aucId=${id}`,
             },
         });
 

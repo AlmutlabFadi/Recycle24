@@ -29,6 +29,9 @@ export async function GET(
                 images: {
                     orderBy: { order: "asc" },
                 },
+                lots: {
+                    orderBy: { lineNo: "asc" },
+                },
             },
         });
 
@@ -71,6 +74,7 @@ export async function GET(
             entryFee: auction.entryFee,
             currentBid: highestBid,
             status: auction.status,
+            workflowStatus: auction.workflowStatus,
             duration: auction.duration,
             scheduledAt: auction.scheduledAt,
             startedAt: auction.startedAt,
@@ -80,6 +84,7 @@ export async function GET(
             createdAt: auction.createdAt,
             seller: auction.seller,
             images: auction.images,
+            lots: auction.lots,
             bidsCount,
             hasJoined,
             recentBids: auction.bids.map((bid: { id: string; amount: number; bidder: { id: string; name: string | null }; createdAt: Date }) => ({

@@ -16,6 +16,7 @@ export enum TransactionType {
   FEE_COLLECTION = "FEE_COLLECTION",
   PLATFORM_COMMISSION = "PLATFORM_COMMISSION",
   REWARD_PAYMENT = "REWARD_PAYMENT",
+  EXCHANGE = "EXCHANGE",
 }
 
 export enum Currency {

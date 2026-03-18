@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
             { email: receiverPhoneOrEmail }
           ]
         },
-        select: { id: true, name: true, phone: true }
+        select: { id: true, name: true, phone: true, email: true }
       });
 
       if (!receiver) {
@@ -129,78 +129,46 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // 5. Post Journal Entry internally across tx boundary or manually handling
-      const journalEntry = await tx.journalEntry.create({
+      // 5. Create Ledger Hold on Sender's Account
+      const hold = await tx.ledgerHold.create({
         data: {
-          type: "P2P_TRANSFER",
-          description: `Internal P2P transfer from ${senderId} to ${receiver.id}`,
-          idempotencyKey: safeIdempotencyKey,
-          metadata: { referenceId: `P2P-${safeIdempotencyKey}` },
-          lines: {
-            create: [
-              {
-                accountId: senderAccount.id,
-                amount: -amount,
-                description: `Transfer to ${receiver.name || receiver.phone}`
-              },
-              {
-                accountId: receiverAccount.id,
-                amount: amount,
-                description: `Transfer from user ID: ${senderId.slice(0, 8)}...`
-              }
-            ]
-          }
-        },
-        include: { lines: true }
-      });
-
-      // Update Ledger Balances atomically
-      await tx.ledgerAccount.update({
-        where: { id: senderAccount.id },
-        data: { balance: { decrement: amount } }
-      });
-
-      await tx.ledgerAccount.update({
-        where: { id: receiverAccount.id },
-        data: { balance: { increment: amount } }
-      });
-
-      // Update Quick Wallets (for quick dashboard rendering UI)
-      const currencyField = currency === Currency.SYP ? "balanceSYP" : "balanceUSD";
-      await tx.wallet.updateMany({
-        where: { userId: senderId },
-        data: {
-           [currencyField]: { decrement: amount }
+          accountId: senderAccount.id,
+          amount: amount,
+          status: "OPEN",
+          referenceType: "TRANSFER_REQUEST",
         }
       });
-      
-      const receiverWallet = await tx.wallet.findUnique({ where: { userId: receiver.id }});
-      if (!receiverWallet) {
-         await tx.wallet.create({
-           data: {
-             userId: receiver.id,
-             balanceSYP: currency === Currency.SYP ? amount : 0,
-             balanceUSD: currency === Currency.USD ? amount : 0
-           }
-         });
-      } else {
-         await tx.wallet.update({
-          where: { id: receiverWallet.id },
-          data: {
-            [currencyField]: { increment: amount }
-          }
-        });
-      }
+
+      // 6. Create Transfer Request for Admin Approval
+      const transferReq = await tx.transferRequest.create({
+        data: {
+          senderId,
+          receiverId: receiver.id,
+          senderAccountId: senderAccount.id,
+          receiverAccountId: receiverAccount.id,
+          amount,
+          currency,
+          status: "PENDING",
+          referenceNote: `P2P Transfer to ${receiver.phone || receiver.email || receiver.id}`
+        }
+      });
+
+      // Link Hold to Transfer Request
+      await tx.ledgerHold.update({
+        where: { id: hold.id },
+        data: { referenceId: transferReq.id }
+      });
 
       return {
-        transactionId: journalEntry.id,
-        receiverName: receiver.name || receiver.phone
+        transferRequestId: transferReq.id,
+        receiverName: receiver.name || receiver.phone,
+        status: "PENDING"
       };
     });
 
     return NextResponse.json({
       success: true,
-      message: "Transfer completed successfully",
+      message: "Transfer request submitted successfully and is pending admin approval.",
       data: result
     });
 

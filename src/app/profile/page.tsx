@@ -321,20 +321,20 @@ export default function ProfilePage() {
     };
 
     const handleRoleSwitch = (role: ActiveRole) => {
-        if (role === "TRADER") {
-            const isApproved = user?.userType === "TRADER" && (user?.status === "APPROVED" || user?.status === "ACTIVE");
-            if (!isApproved) {
-                router.push("/verification?role=TRADER");
-                return;
-            }
+        if (role === "CLIENT" || role === "ADMIN") {
+            switchRole(role);
+            return;
         }
-        if (role === "DRIVER") {
-            const isApproved = user?.userType === "DRIVER" && (user?.status === "APPROVED" || user?.status === "ACTIVE");
-            if (!isApproved) {
-                router.push("/verification?role=DRIVER");
-                return;
-            }
+
+        const isApprovedValue = (user?.userType === role || user?.role === role) && 
+                               (user?.status === "APPROVED" || user?.status === "ACTIVE");
+        
+        if (!isApprovedValue) {
+            addToast(`يجب توثيق حسابك كـ ${getUserTypeLabel(role)} للتبديل لهذا الوضع`, "error");
+            router.push(`/verification?role=${role}`);
+            return;
         }
+        
         switchRole(role);
     };
 
@@ -692,44 +692,70 @@ export default function ProfilePage() {
                                     { role: "DRIVER", label: "سائق", icon: "local_shipping" },
                                     { role: "GOVERNMENT", label: "حكومي", icon: "account_balance" },
                                     ...(isAdmin ? [{ role: "ADMIN", label: "أدمن", icon: "admin_panel_settings" }] : [])
-                                ].map((r) => (
-                                    <button
-                                        key={r.role}
-                                        onClick={() => handleRoleSwitch(r.role as ActiveRole)}
-                                        className={`flex-1 min-w-[70px] py-2.5 rounded-xl text-[10px] font-bold transition-all flex flex-col items-center gap-1 ${
-                                            activeRole === r.role 
-                                                ? "bg-primary text-white shadow-lg shadow-orange-500/20 scale-[1.02]" 
-                                                : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
-                                        }`}
-                                    >
-                                        <span className="material-symbols-outlined !text-[18px]">{r.icon}</span>
-                                        {r.label}
-                                    </button>
-                                ))}
+                                ].map((r) => {
+                                    const isRoleApproved = r.role === "CLIENT" || r.role === "ADMIN" || 
+                                                         ((user?.userType === r.role || user?.role === r.role) && 
+                                                          (user?.status === "APPROVED" || user?.status === "ACTIVE"));
+                                    
+                                    return (
+                                        <button
+                                            key={r.role}
+                                            onClick={() => handleRoleSwitch(r.role as ActiveRole)}
+                                            className={`flex-1 min-w-[70px] py-2.5 rounded-xl text-[10px] font-bold transition-all flex flex-col items-center gap-1 relative ${
+                                                activeRole === r.role 
+                                                    ? "bg-primary text-white shadow-lg shadow-orange-500/20 scale-[1.02]" 
+                                                    : isRoleApproved
+                                                        ? "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+                                                        : "text-slate-600 opacity-60 grayscale cursor-not-allowed"
+                                            }`}
+                                        >
+                                            {!isRoleApproved && (
+                                                <span className="absolute top-1 right-1 material-symbols-outlined !text-[12px] text-slate-500">lock</span>
+                                            )}
+                                            <span className="material-symbols-outlined !text-[18px]">{r.icon}</span>
+                                            {r.label}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* Verification Alert */}
-                {(user?.status === "PENDING" || user?.isVerified === false) && !isEditing && (
+                {/* Verification Alert (Phase 5 Refinement) */}
+                {(!user?.isVerified || user?.status === "REJECTED" || user?.status === "PENDING") && !isEditing && (
                     <div className="px-4 mt-4">
-                        <Link href={user?.status === "PENDING" ? "/verification/status" : "/verification"} className="block bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4">
+                        <Link 
+                            href={user?.status === "PENDING" ? "/verification/status" : "/verification"} 
+                            className={`block border rounded-xl p-4 ${
+                                user?.status === "REJECTED" 
+                                    ? "bg-red-500/10 border-red-500/30" 
+                                    : user?.status === "PENDING"
+                                        ? "bg-yellow-500/10 border-yellow-500/30"
+                                        : "bg-primary/10 border-primary/30"
+                            }`}
+                        >
                             <div className="flex items-start gap-3">
-                                <span className="material-symbols-outlined text-yellow-500 !text-[24px]">
-                                    {user?.status === "PENDING" ? "hourglass_top" : "warning"}
+                                <span className={`material-symbols-outlined !text-[24px] ${
+                                    user?.status === "REJECTED" ? "text-red-500" : "text-yellow-500"
+                                }`}>
+                                    {user?.status === "REJECTED" ? "error" : user?.status === "PENDING" ? "hourglass_top" : "verified_user"}
                                 </span>
                                 <div className="flex-1">
-                                    <p className="text-sm font-bold text-yellow-500">
-                                        {user?.status === "PENDING" ? "التوثيق قيد المراجعة" : "أكمل التوثيق"}
+                                    <p className={`text-sm font-bold ${
+                                        user?.status === "REJECTED" ? "text-red-500" : "text-yellow-500"
+                                    }`}>
+                                        {user?.status === "REJECTED" ? "تم رفض التوثيق" : user?.status === "PENDING" ? "التوثيق قيد المراجعة" : "أكمل توثيق حسابك"}
                                     </p>
                                     <p className="text-xs text-slate-400 mt-1">
-                                        {user?.status === "PENDING" 
-                                            ? "طلبك قيد المراجعة، سيتم تفعيل جميع الميزات فور الموافقة" 
-                                            : "يرجى إكمال توثيق حسابك للوصول لجميع الميزات"}
+                                        {user?.status === "REJECTED" 
+                                            ? "يرجى مراجعة الملاحظات وإعادة تقديم الطلب للوصول لجميع الميزات"
+                                            : user?.status === "PENDING" 
+                                                ? "طلبك قيد المراجعة، سيتم تفعيل جميع الميزات فور الموافقة" 
+                                                : "يرجى إكمال توثيق حسابك للمشاركة في المزادات والصفقات"}
                                     </p>
                                 </div>
-                                <span className="material-symbols-outlined text-yellow-500 !text-[20px]">chevron_left</span>
+                                <span className="material-symbols-outlined text-slate-500 !text-[20px]">chevron_left</span>
                             </div>
                         </Link>
                     </div>

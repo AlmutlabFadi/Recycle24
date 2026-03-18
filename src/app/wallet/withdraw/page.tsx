@@ -20,20 +20,14 @@ export default function WalletWithdrawPage() {
   const [accountNumber, setAccountNumber] = useState<string>("");
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currency, setCurrency] = useState<"SYP" | "USD">("SYP");
 
   const { wallet, withdraw } = useWallet();
   const { addToast } = useToast();
   const router = useRouter();
 
-  const walletAny = wallet as Record<string, unknown> | null | undefined;
-  const balance = Number(
-    walletAny?.availableBalance ??
-      walletAny?.balance ??
-      walletAny?.balanceSYP ??
-      walletAny?.currentBalance ??
-      walletAny?.amount ??
-      0
-  );
+  const balanceTarget = currency === "SYP" ? wallet?.availableBalanceSYP : wallet?.availableBalanceUSD;
+  const balance = Number(balanceTarget ?? 0);
 
   const numericAmount = Number.parseInt(amount || "0", 10) || 0;
   const selectedMethodMeta = withdrawalMethods.find((method) => method.id === selectedMethod);
@@ -74,7 +68,7 @@ export default function WalletWithdrawPage() {
     setIsSubmitting(true);
 
     try {
-      const success = await withdraw(numericAmount, selectedMethod, accountNumber);
+      const success = await withdraw(numericAmount, selectedMethod, accountNumber, currency);
 
       if (!success) {
         addToast("Failed to post withdrawal.", "error");
@@ -133,13 +127,33 @@ export default function WalletWithdrawPage() {
         <div className="mb-6 rounded-xl border border-slate-700 bg-surface-highlight p-4">
           <span className="text-sm text-slate-400">Available balance</span>
           <div className="text-2xl font-bold text-white">
-            {balance.toLocaleString()} <span className="text-sm">SYP</span>
+            {currency === "USD" ? "$" : ""}
+            {balance.toLocaleString()} <span className="text-sm">{currency}</span>
           </div>
         </div>
 
         {step === 1 && (
           <section className="mb-6">
-            <h2 className="mb-4 text-lg font-bold text-white">Withdrawal amount</h2>
+            <h2 className="mb-4 text-lg font-bold text-white">Withdrawal amount & currency</h2>
+
+            <div className="mb-4 flex rounded-xl bg-slate-800 p-1">
+              <button
+                onClick={() => { setCurrency("SYP"); setAmount(""); }}
+                className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
+                  currency === "SYP" ? "bg-primary text-white shadow-sm" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                SYP (ل.س)
+              </button>
+              <button
+                onClick={() => { setCurrency("USD"); setAmount(""); }}
+                className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
+                  currency === "USD" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                USD ($)
+              </button>
+            </div>
 
             <div className="rounded-xl border border-slate-700 bg-surface-highlight p-4">
               <input
@@ -151,7 +165,7 @@ export default function WalletWithdrawPage() {
               />
 
               <div className="mt-3 flex gap-2">
-                {[50000, 100000, 250000].map((preset) => (
+                {(currency === "SYP" ? [50000, 100000, 250000] : [10, 50, 100]).map((preset) => (
                   <button
                     key={preset}
                     onClick={() => setAmount(String(preset))}
@@ -169,7 +183,8 @@ export default function WalletWithdrawPage() {
                   <div className="flex justify-between">
                     <span className="text-slate-400">Amount</span>
                     <span className="text-white">
-                      {numericAmount.toLocaleString()} SYP
+                      {currency === "USD" ? "$" : ""}
+                      {numericAmount.toLocaleString()} {currency}
                     </span>
                   </div>
 
@@ -177,7 +192,8 @@ export default function WalletWithdrawPage() {
                     <div className="flex justify-between">
                       <span className="text-slate-400">Ledger deduction</span>
                       <span className="font-bold text-primary">
-                        {numericAmount.toLocaleString()} SYP
+                        {currency === "USD" ? "$" : ""}
+                        {numericAmount.toLocaleString()} {currency}
                       </span>
                     </div>
                   </div>
@@ -212,7 +228,8 @@ export default function WalletWithdrawPage() {
                     <div className="flex-1">
                       <h3 className="font-bold text-white">{method.name}</h3>
                       <p className="text-sm text-slate-400">
-                        Minimum: {method.minAmount.toLocaleString()} SYP
+                        Minimum: {currency === "USD" ? "$" : ""}
+                        {method.minAmount.toLocaleString()} {currency}
                       </p>
                     </div>
 
@@ -248,7 +265,10 @@ export default function WalletWithdrawPage() {
 
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Amount</span>
-              <span className="text-white">{numericAmount.toLocaleString()} SYP</span>
+              <span className="text-white">
+                {currency === "USD" ? "$" : ""}
+                {numericAmount.toLocaleString()} {currency}
+              </span>
             </div>
 
             <div className="flex justify-between text-sm">
@@ -264,7 +284,10 @@ export default function WalletWithdrawPage() {
             <div className="border-t border-slate-700 pt-3">
               <div className="flex justify-between text-sm font-bold">
                 <span className="text-slate-300">Posted withdrawal</span>
-                <span className="text-primary">{numericAmount.toLocaleString()} SYP</span>
+                <span className="text-primary">
+                  {currency === "USD" ? "$" : ""}
+                  {numericAmount.toLocaleString()} {currency}
+                </span>
               </div>
             </div>
           </section>

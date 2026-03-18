@@ -4,10 +4,14 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/contexts/ToastContext";
+import { useWallet } from "@/hooks/useWallet";
 
 export default function WalletTransferPage() {
   const router = useRouter();
   const { token, isAuthenticated } = useAuth();
+  const { addToast } = useToast();
+  const { wallet } = useWallet();
   
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
@@ -15,6 +19,9 @@ export default function WalletTransferPage() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const availableBalance = currency === "SYP" ? wallet?.availableBalanceSYP : wallet?.availableBalanceUSD;
+  const balance = Number(availableBalance ?? 0);
 
   if (!isAuthenticated) {
     return (
@@ -56,7 +63,11 @@ export default function WalletTransferPage() {
         throw new Error(data.error || "حدث خطأ غير معروف أثناء التحويل.");
       }
 
-      router.push("/wallet");
+      addToast("تم إرسال طلب التحويل بنجاح، بانتظار موافقة الإدارة.", "success");
+      
+      setTimeout(() => {
+        router.push("/wallet");
+      }, 1500);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -102,16 +113,46 @@ export default function WalletTransferPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-white block">المبلغ</label>
-              <input 
-                type="number" 
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="أدخل المبلغ"
-                min="10"
-                className="w-full bg-surface-dark border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition dir-ltr" 
-                required
-              />
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-bold text-white block">المبلغ</label>
+                <span className="text-xs text-slate-400">
+                  المتاح: <span className="font-english font-bold text-white">{balance.toLocaleString()} {currency}</span>
+                </span>
+              </div>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="أدخل المبلغ"
+                  min="10"
+                  className="w-full bg-surface-dark border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition dir-ltr pr-16" 
+                  required
+                />
+                <button 
+                  type="button"
+                  onClick={() => setAmount(balance.toString())}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-primary hover:text-white transition bg-primary/10 px-2 py-1 rounded-lg"
+                >
+                  MAX
+                </button>
+              </div>
+              
+              <div className="mt-2 flex gap-2">
+                {[25, 50, 75, 100].map((percent) => (
+                  <button
+                    key={percent}
+                    type="button"
+                    onClick={() => {
+                      const calculated = (balance * percent) / 100;
+                      setAmount(calculated.toString());
+                    }}
+                    className="flex-1 py-2 text-xs font-bold rounded-xl border border-slate-700 bg-slate-800/50 text-slate-400 hover:border-slate-500 hover:text-white transition"
+                  >
+                    {percent}%
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-2">

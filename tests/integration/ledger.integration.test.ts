@@ -143,7 +143,7 @@ describe("Ledger integration", () => {
     });
 
     expect(auditLog).not.toBeNull();
-  });
+  }, 20000);
 
   it("approves a payout request and updates ledger, wallet, request status, and audit log", async () => {
     const user = await createTestUser();

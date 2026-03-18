@@ -30,9 +30,7 @@ class AuctionSettlementError extends Error {
 
 type CloseAuctionFinancialsResult = {
   success: true;
-  winnerId: string | null;
-  winningBidId: string | null;
-  finalPrice: number | null;
+  winnersCount: number;
   workflowStatus: AuctionWorkflowStatus;
 };
 
@@ -69,6 +67,8 @@ export class AuctionSettlementService {
       winnerId: string;
       winningAmount: number;
       isGovernment: boolean;
+      currency: string;
+      lotId?: string;
     }
   ) {
     const commissionAmount = this.roundMoney(params.winningAmount * 0.01);
@@ -77,17 +77,17 @@ export class AuctionSettlementService {
     await LedgerPostingService.postEntryInTransaction(tx, {
       type: TransactionType.PLATFORM_COMMISSION,
       description: params.isGovernment
-        ? `Winner commission exempted for auction "${params.auctionTitle}"`
-        : `Winner commission for auction "${params.auctionTitle}"`,
-      idempotencyKey: `auction-close:winner-commission:${params.auctionId}`,
+        ? `Winner commission exempted for auction "${params.auctionTitle}"${params.lotId ? ` (Lot ${params.lotId})` : ""}`
+        : `Winner commission for auction "${params.auctionTitle}"${params.lotId ? ` (Lot ${params.lotId})` : ""}`,
+      idempotencyKey: `auction-close:winner-commission:${params.auctionId}${params.lotId ? `:${params.lotId}` : ""}`,
       lines: [
         {
-          accountSlug: `USER_${params.winnerId}_SYP`,
+          accountSlug: `USER_${params.winnerId}_${params.currency}`,
           amount: -effectiveAmount,
           description: `Winner commission for auction ${params.auctionId}`,
         },
         {
-          accountSlug: "SYSTEM_FEE_COLLECTION",
+          accountSlug: `SYSTEM_FEE_COLLECTION_${params.currency}`,
           amount: effectiveAmount,
           description: `Winner commission collected from ${params.winnerId}`,
         },
@@ -110,6 +110,8 @@ export class AuctionSettlementService {
       sellerId: string;
       winningAmount: number;
       isGovernment: boolean;
+      currency: string;
+      lotId?: string;
     }
   ) {
     const commissionAmount = this.roundMoney(params.winningAmount * 0.01);
@@ -118,17 +120,17 @@ export class AuctionSettlementService {
     await LedgerPostingService.postEntryInTransaction(tx, {
       type: TransactionType.PLATFORM_COMMISSION,
       description: params.isGovernment
-        ? `Seller commission exempted for auction "${params.auctionTitle}"`
-        : `Seller commission for auction "${params.auctionTitle}"`,
-      idempotencyKey: `auction-close:seller-commission:${params.auctionId}`,
+        ? `Seller commission exempted for auction "${params.auctionTitle}"${params.lotId ? ` (Lot ${params.lotId})` : ""}`
+        : `Seller commission for auction "${params.auctionTitle}"${params.lotId ? ` (Lot ${params.lotId})` : ""}`,
+      idempotencyKey: `auction-close:seller-commission:${params.auctionId}${params.lotId ? `:${params.lotId}` : ""}`,
       lines: [
         {
-          accountSlug: `USER_${params.sellerId}_SYP`,
+          accountSlug: `USER_${params.sellerId}_${params.currency}`,
           amount: -effectiveAmount,
           description: `Seller commission for auction ${params.auctionId}`,
         },
         {
-          accountSlug: "SYSTEM_FEE_COLLECTION",
+          accountSlug: `SYSTEM_FEE_COLLECTION_${params.currency}`,
           amount: effectiveAmount,
           description: `Seller commission collected from ${params.sellerId}`,
         },
@@ -155,21 +157,43 @@ export class AuctionSettlementService {
           id: true,
           title: true,
           sellerId: true,
-          status: true,
+          winnerId: true,
+          finalPrice: true,
+          currency: true,
           workflowStatus: true,
+          isFinallyClosed: true,
           endsAt: true,
           effectiveEndsAt: true,
-          currentBid: true,
-          winningBidId: true,
-          winnerId: true,
-          isFinallyClosed: true,
-          type: true,
+          winnerSelectionMode: true,
+          lots: {
+            select: {
+              id: true,
+              winnerId: true,
+              finalPrice: true,
+              currency: true,
+              winningBidId: true,
+            },
+          },
+          bids: {
+            orderBy: { amount: "desc" },
+            take: 1,
+            select: { id: true, bidderId: true, amount: true },
+          },
           participants: {
             select: {
+              id: true,
               userId: true,
               depositStatus: true,
               depositWorkflowStatus: true,
               depositHoldId: true,
+              selectedLots: {
+                select: {
+                  lotId: true,
+                  depositHoldId: true,
+                  depositWorkflowStatus: true,
+                  depositRequired: true,
+                },
+              },
               user: {
                 select: {
                   id: true,
@@ -238,59 +262,78 @@ export class AuctionSettlementService {
       });
 
       if (!seller) {
-        throw new AuctionSettlementError("Seller not found", 500);
+        throw new AuctionSettlementError("Auction seller not found", 404);
       }
 
-      let winningBid:
-        | {
-            id: string;
-            bidderId: string;
-            amount: number;
+      const lotWinningBidIds = auction.lots
+        .map((lot) => lot.winningBidId)
+        .filter((id): id is string => Boolean(id));
+
+      const winningBids = lotWinningBidIds.length > 0
+        ? await tx.bid.findMany({
+            where: { id: { in: lotWinningBidIds } },
+            select: {
+              id: true,
+              bidderId: true,
+              amount: true,
+            },
+          })
+        : [];
+
+      const winningBidMap = new Map(
+        winningBids.map((bid) => [bid.id, bid])
+      );
+
+      // 1. Identify all winners
+      const winnersMap = new Map<string, { totalAmount: number; currency: string; lotId?: string }[]>();
+
+      if (auction.winnerSelectionMode === "PER_LOT") {
+        for (const lot of auction.lots) {
+          const winningBid = lot.winningBidId
+            ? winningBidMap.get(lot.winningBidId)
+            : undefined;
+          const resolvedWinnerId = lot.winnerId ?? winningBid?.bidderId ?? null;
+          const resolvedFinalPrice =
+            lot.finalPrice ?? (winningBid ? winningBid.amount : null);
+
+          if (resolvedWinnerId && resolvedFinalPrice !== null) {
+            if (!lot.winnerId || lot.finalPrice === null) {
+              await tx.auctionLot.update({
+                where: { id: lot.id },
+                data: {
+                  winnerId: resolvedWinnerId,
+                  finalPrice: resolvedFinalPrice,
+                },
+              });
+            }
+
+            const list = winnersMap.get(resolvedWinnerId) || [];
+            list.push({
+              totalAmount: resolvedFinalPrice,
+              currency: lot.currency || auction.currency,
+              lotId: lot.id,
+            });
+            winnersMap.set(resolvedWinnerId, list);
           }
-        | null = null;
-
-      if (auction.winningBidId) {
-        winningBid = await tx.bid.findUnique({
-          where: { id: auction.winningBidId },
-          select: {
-            id: true,
-            bidderId: true,
-            amount: true,
-          },
-        });
-
-        if (!winningBid) {
-          throw new AuctionSettlementError(
-            "Winning bid reference is invalid",
-            409
-          );
         }
-
-        if (
-          auction.currentBid !== null &&
-          winningBid.amount !== auction.currentBid
-        ) {
-          throw new AuctionSettlementError(
-            "Winning bid amount does not match current bid",
-            409
-          );
-        }
+      } else if (auction.winnerId) {
+        winnersMap.set(auction.winnerId, [
+          { totalAmount: auction.finalPrice!, currency: auction.currency },
+        ]);
       }
 
-      const winnerId = winningBid?.bidderId ?? null;
-      const finalPrice = winningBid?.amount ?? null;
+      const allWinnerIds = new Set(winnersMap.keys());
 
+      // 2. Iterate participants to release/hold deposits
       for (const participant of auction.participants) {
-        const isWinner = winnerId !== null && participant.userId === winnerId;
+        const isWinner = allWinnerIds.has(participant.userId);
 
         if (isWinner) {
-          if (!participant.depositHoldId) {
-            throw new AuctionSettlementError(
-              "Winner deposit hold reference is missing",
-              409
-            );
-          }
-
+          // Keep deposits held for winners
+          // They will be released manually or on payment confirmation (Discharge)
+          // For PER_LOT, we might want to release specific lots they DIDN'T win, 
+          // but for simplicity, if they won ANY lot, we keep their auction-level and won-lot deposits.
+          
           await tx.auctionParticipant.update({
             where: {
               auctionId_userId: {
@@ -307,6 +350,38 @@ export class AuctionSettlementService {
           continue;
         }
 
+        const participantLots = participant.selectedLots || [];
+        const releasedLotIds: string[] = [];
+
+        for (const lot of participantLots) {
+          if (!lot.depositHoldId) {
+            continue;
+          }
+
+          await LedgerPostingService.releaseHoldInTransaction(
+            tx,
+            lot.depositHoldId,
+            {
+              expectedReferenceType: "AUCTION_DEPOSIT",
+              expectedReferenceId: lot.lotId,
+            }
+          );
+
+          releasedLotIds.push(lot.lotId);
+
+          await tx.auctionParticipantLot.update({
+            where: {
+              participantId_lotId: {
+                participantId: participant.id,
+                lotId: lot.lotId,
+              },
+            },
+            data: {
+              depositWorkflowStatus: AuctionDepositWorkflowStatus.RELEASED,
+            },
+          });
+        }
+
         if (participant.depositHoldId) {
           await LedgerPostingService.releaseHoldInTransaction(
             tx,
@@ -315,14 +390,6 @@ export class AuctionSettlementService {
               expectedReferenceType: "AUCTION_DEPOSIT",
               expectedReferenceId: auctionId,
             }
-          );
-        } else if (
-          participant.depositWorkflowStatus !==
-          AuctionDepositWorkflowStatus.RELEASED
-        ) {
-          throw new AuctionSettlementError(
-            `Missing deposit hold reference for participant ${participant.userId}`,
-            409
           );
         }
 
@@ -347,14 +414,15 @@ export class AuctionSettlementService {
             payload: {
               userId: participant.userId,
               depositHoldId: participant.depositHoldId,
+              releasedLotIds,
             },
           },
         });
 
         notifications.push({
           userId: participant.userId,
-          title: "????? ??????",
-          message: `????? ???? "${auction.title}". ?? ??? ??? ????? ??? ????? ???? ??????? ????? ??.`,
+          title: "انتهى المزاد",
+          message: `لقد انتهى المزاد "${auction.title}". تم فك حجز مبالغ التأمين الخاصة بك لهذا المزاد.`,
           type: "INFO",
           link: `/auctions/${auctionId}`,
           metadata: { auctionId },
@@ -362,45 +430,72 @@ export class AuctionSettlementService {
       }
 
       let nextWorkflowStatus: AuctionWorkflowStatus = AuctionWorkflowStatus.FAILED;
+      let resolvedAuctionWinnerId: string | null = null;
+      let resolvedAuctionFinalPrice: number | null = null;
 
-      if (winnerId && winningBid && finalPrice !== null) {
-        const winnerParticipant = auction.participants.find(
-          (participant) => participant.userId === winnerId
-        );
-
-        if (!winnerParticipant) {
-          throw new AuctionSettlementError("Winner participant record not found", 409);
-        }
-
-        await this.postWinnerCommissionInTransaction(tx, {
-          auctionId,
-          auctionTitle: auction.title,
-          winnerId,
-          winningAmount: finalPrice,
-          isGovernment: winnerParticipant.user.userType === "GOVERNMENT",
-        });
-
-        await this.postSellerCommissionInTransaction(tx, {
-          auctionId,
-          auctionTitle: auction.title,
-          sellerId: auction.sellerId,
-          winningAmount: finalPrice,
-          isGovernment: seller.userType === "GOVERNMENT",
-        });
-
+      if (winnersMap.size > 0) {
         nextWorkflowStatus = AuctionWorkflowStatus.AWAITING_PAYMENT_PROOF;
 
-        notifications.push({
-          userId: winnerId,
-          title: "???????! ??? ??? ?? ??????",
-          message: `??? ??? ????? "${auction.title}" ????? ${finalPrice.toLocaleString()} ?.?. ?? ????? ???? ??????? ??????? ????? ????? ?? ??????.`,
-          type: "SUCCESS",
-          link: `/auctions/${auctionId}`,
-          metadata: {
-            auctionId,
-            amount: finalPrice,
-          },
-        });
+        for (const [winnerId, awards] of winnersMap.entries()) {
+          const winnerParticipant = auction.participants.find(
+            (participant) => participant.userId === winnerId
+          );
+
+          if (!winnerParticipant) continue;
+
+          for (const award of awards) {
+            // Post commission for THIS specific award (lot or full auction)
+            await this.postWinnerCommissionInTransaction(tx, {
+              auctionId,
+              auctionTitle: auction.title,
+              winnerId,
+              winningAmount: award.totalAmount,
+              isGovernment: winnerParticipant.user.userType === "GOVERNMENT",
+              currency: award.currency,
+              lotId: award.lotId,
+            });
+
+            await this.postSellerCommissionInTransaction(tx, {
+              auctionId,
+              auctionTitle: auction.title,
+              sellerId: auction.sellerId,
+              winningAmount: award.totalAmount,
+              isGovernment: seller.userType === "GOVERNMENT",
+              currency: award.currency,
+              lotId: award.lotId,
+            });
+          }
+
+          // Single notification per winner (or per award if preferred, let's do once)
+          const totalWon = awards.reduce((sum, a) => sum + a.totalAmount, 0);
+          notifications.push({
+            userId: winnerId,
+            title: "تهانينا! لقد فزت في المزاد",
+            message: `لقد فزت في المزاد "${auction.title}". عدد الأجزاء الفائزة: ${awards.length}. إجمالي المبلغ: ${totalWon.toLocaleString()} ${auction.currency}. يرجى إتمام السداد.`,
+            type: "SUCCESS",
+            link: `/auctions/${auctionId}`,
+            metadata: {
+              auctionId,
+              amount: totalWon,
+              currency: auction.currency,
+            },
+          });
+        }
+      }
+
+      if (auction.winnerSelectionMode === "PER_LOT" && auction.lots.length === 1) {
+        const onlyLot = auction.lots[0];
+        const winningBid = onlyLot.winningBidId
+          ? winningBidMap.get(onlyLot.winningBidId)
+          : undefined;
+        const lotWinnerId = onlyLot.winnerId ?? winningBid?.bidderId ?? null;
+        const lotFinalPrice =
+          onlyLot.finalPrice ?? (winningBid ? winningBid.amount : null);
+
+        if (lotWinnerId && lotFinalPrice !== null) {
+          resolvedAuctionWinnerId = lotWinnerId;
+          resolvedAuctionFinalPrice = lotFinalPrice;
+        }
       }
 
       const updateResult = await tx.auction.updateMany({
@@ -412,9 +507,11 @@ export class AuctionSettlementService {
         data: {
           status: "CLOSED",
           workflowStatus: nextWorkflowStatus,
-          winnerId,
-          winningBidId: winningBid?.id ?? null,
-          finalPrice,
+          ...(resolvedAuctionWinnerId
+            ? { winnerId: resolvedAuctionWinnerId, finalPrice: resolvedAuctionFinalPrice }
+            : {}),
+          // Note: in multi-winner mode, auction.winnerId might only be the FIRST winner or NULL.
+          // We rely on lot.winnerId and separate Deals.
           finalClosedAt: new Date(),
           isFinallyClosed: true,
           extensionStage: AuctionExtensionStage.FINAL_CLOSED,
@@ -434,12 +531,8 @@ export class AuctionSettlementService {
           actorId: auction.sellerId,
           eventType: "AUCTION_FINANCIALS_CLOSED",
           payload: {
-            winnerId,
-            winningBidId: winningBid?.id ?? null,
-            finalPrice,
-            releasedLoserDepositsCount: auction.participants.filter(
-              (participant) => participant.userId !== winnerId
-            ).length,
+            winnersCount: winnersMap.size,
+            winnerIds: Array.from(allWinnerIds),
             workflowStatus: nextWorkflowStatus,
           },
         },
@@ -448,9 +541,7 @@ export class AuctionSettlementService {
       return {
         result: {
           success: true as const,
-          winnerId,
-          winningBidId: winningBid?.id ?? null,
-          finalPrice,
+          winnersCount: winnersMap.size,
           workflowStatus: nextWorkflowStatus,
         },
         notifications,
@@ -464,7 +555,8 @@ export class AuctionSettlementService {
 
   static async dischargeWinner(
     auctionId: string,
-    sellerId: string
+    sellerId: string,
+    winnerId?: string
   ): Promise<DischargeWinnerResult> {
     const result = await db.$transaction(async (tx) => {
       const notifications: SettlementNotification[] = [];
@@ -488,9 +580,11 @@ export class AuctionSettlementService {
         throw new AuctionSettlementError("Unauthorized discharge attempt", 403);
       }
 
-      if (!auction.winnerId) {
+      const targetWinnerId = winnerId || auction.winnerId;
+
+      if (!targetWinnerId) {
         throw new AuctionSettlementError(
-          "No winner assigned to this auction",
+          "No winner specified or assigned to this auction",
           409
         );
       }
@@ -523,7 +617,7 @@ export class AuctionSettlementService {
         where: {
           auctionId_userId: {
             auctionId,
-            userId: auction.winnerId,
+            userId: targetWinnerId as string,
           },
         },
         select: {
@@ -531,6 +625,13 @@ export class AuctionSettlementService {
           depositStatus: true,
           depositWorkflowStatus: true,
           depositHoldId: true,
+          selectedLots: {
+            select: {
+              lotId: true,
+              depositHoldId: true,
+              depositWorkflowStatus: true,
+            },
+          },
         },
       });
 
@@ -554,24 +655,52 @@ export class AuctionSettlementService {
         };
       }
 
-      if (!participant.depositHoldId) {
-        throw new AuctionSettlementError("Winner hold reference not found", 409);
+      const releasedLotIds: string[] = [];
+      for (const lot of participant.selectedLots || []) {
+        if (!lot.depositHoldId) {
+          continue;
+        }
+
+        await LedgerPostingService.releaseHoldInTransaction(
+          tx,
+          lot.depositHoldId,
+          {
+            expectedReferenceType: "AUCTION_DEPOSIT",
+            expectedReferenceId: lot.lotId,
+          }
+        );
+
+        releasedLotIds.push(lot.lotId);
+
+        await tx.auctionParticipantLot.update({
+          where: {
+            participantId_lotId: {
+              participantId: participant.id,
+              lotId: lot.lotId,
+            },
+          },
+          data: {
+            depositWorkflowStatus: AuctionDepositWorkflowStatus.RELEASED,
+          },
+        });
       }
 
-      const releaseResult = await LedgerPostingService.releaseHoldInTransaction(
-        tx,
-        participant.depositHoldId,
-        {
-          expectedReferenceType: "AUCTION_DEPOSIT",
-          expectedReferenceId: auctionId,
-        }
-      );
+      if (participant.depositHoldId) {
+        await LedgerPostingService.releaseHoldInTransaction(
+          tx,
+          participant.depositHoldId,
+          {
+            expectedReferenceType: "AUCTION_DEPOSIT",
+            expectedReferenceId: auctionId,
+          }
+        );
+      }
 
       await tx.auctionParticipant.update({
         where: {
           auctionId_userId: {
             auctionId,
-            userId: auction.winnerId,
+            userId: targetWinnerId as string,
           },
         },
         data: {
@@ -580,22 +709,38 @@ export class AuctionSettlementService {
         },
       });
 
-      const updateResult = await tx.auction.updateMany({
+      // 3. Conditional status transition (only if ALL winners are discharged)
+      const allLotWinners = await tx.auctionLot.findMany({
+        where: { auctionId, winnerId: { not: null } },
+        select: { winnerId: true },
+      });
+      
+      // If no lot winners (shouldn't happen here usually), check auction-level winner
+      const uniqueWinnerIds = allLotWinners.length > 0 
+        ? new Set(allLotWinners.map(l => l.winnerId!))
+        : new Set(auction.winnerId ? [auction.winnerId] : []);
+
+      const releasedWinnersCount = await tx.auctionParticipant.count({
         where: {
-          id: auctionId,
-          workflowStatus: AuctionWorkflowStatus.AWAITING_PAYMENT_PROOF,
-        },
-        data: {
-          workflowStatus: AuctionWorkflowStatus.COMPLETED,
-          status: "CLOSED",
-        },
+          auctionId,
+          userId: { in: Array.from(uniqueWinnerIds) },
+          depositWorkflowStatus: AuctionDepositWorkflowStatus.RELEASED
+        }
       });
 
-      if (updateResult.count === 0) {
-        throw new AuctionSettlementError(
-          "Auction state changed during discharge",
-          409
-        );
+      const allDischarged = releasedWinnersCount >= uniqueWinnerIds.size;
+
+      if (allDischarged) {
+        await tx.auction.updateMany({
+          where: {
+            id: auctionId,
+            workflowStatus: AuctionWorkflowStatus.AWAITING_PAYMENT_PROOF,
+          },
+          data: {
+            workflowStatus: AuctionWorkflowStatus.COMPLETED,
+            status: "CLOSED",
+          },
+        });
       }
 
       await tx.auctionEventLog.create({
@@ -604,16 +749,17 @@ export class AuctionSettlementService {
           actorId: sellerId,
           eventType: "AUCTION_WINNER_DISCHARGED",
           payload: {
-            winnerId: auction.winnerId,
+            winnerId: targetWinnerId,
             holdId: participant.depositHoldId,
+            releasedLotIds,
           },
         },
       });
 
       notifications.push({
-        userId: auction.winnerId,
-        title: "?? ???? ????? ???",
-        message: `??? ?????? ????? ????? ??? ????? "${auction.title}". ?? ????? ???? ??????? ????? ??.`,
+        userId: targetWinnerId,
+        title: "تم فك حجز التأمين",
+        message: `تم تحرير مبلغ التأمين الخاص بك في المزاد "${auction.title}". يمكنك الآن استخدامه في محفظتك.`,
         type: "SUCCESS",
         link: "/wallet",
         metadata: { auctionId },
@@ -622,7 +768,7 @@ export class AuctionSettlementService {
       return {
         result: {
           success: true as const,
-          holdReleased: releaseResult.releasedNow,
+          holdReleased: releasedLotIds.length > 0,
         },
         notifications,
       };

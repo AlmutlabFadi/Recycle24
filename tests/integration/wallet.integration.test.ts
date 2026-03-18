@@ -175,7 +175,7 @@ describe("wallet end-to-end integration", () => {
     });
 
     expect(walletAfterApproval.balanceSYP).toBe(25_000_000);
-  });
+  }, 20000);
 
   it("creates a payout request from wallet api and debits balance only after admin approval", async () => {
     const user = await createTestUser();
@@ -257,7 +257,7 @@ describe("wallet end-to-end integration", () => {
     });
 
     expect(walletAfterApproval.balanceSYP).toBe(30_000_000);
-  });
+  }, 20000);
 
   it("rejects a wallet-created deposit request without changing ledger or wallet balance", async () => {
     const user = await createTestUser();

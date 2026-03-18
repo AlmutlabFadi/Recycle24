@@ -20,8 +20,10 @@ export async function POST(
 
     const { id: auctionId } = await context.params;
     const sellerId = session.user.id;
+    const body = await request.json().catch(() => ({}));
+    const userId = body.userId;
 
-    const result = await AuctionSettlementService.dischargeWinner(auctionId, sellerId);
+    const result = await AuctionSettlementService.dischargeWinner(auctionId, sellerId, userId);
 
     return NextResponse.json({
       success: true,

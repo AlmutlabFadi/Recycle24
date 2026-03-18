@@ -36,18 +36,38 @@ export class AuctionAgent extends BaseAgent {
   private async closeExpiredAuctions() {
     const now = new Date();
 
-    const expiredAuctions = await prisma.auction.findMany({
+    const expiredAuctions = (await prisma.auction.findMany({
       where: {
         status: "LIVE",
         endsAt: { lte: now },
       },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        sellerId: true,
+        weight: true,
+        currency: true,
+        winnerSelectionMode: true,
+        lots: {
+          select: {
+            id: true,
+            title: true,
+            category: true,
+            quantity: true,
+            unit: true,
+            currency: true,
+            bids: {
+              orderBy: { amount: "desc" },
+              take: 1,
+            },
+          },
+        },
         bids: {
           orderBy: { amount: "desc" },
           take: 1,
         },
       },
-    });
+    })) as any[];
 
     const results = {
       closedCount: 0,
@@ -57,6 +77,64 @@ export class AuctionAgent extends BaseAgent {
     };
 
     for (const auction of expiredAuctions) {
+      if (auction.winnerSelectionMode === "PER_LOT") {
+        let awardedLots = 0;
+        for (const lot of auction.lots || []) {
+          const winningBid = lot.bids?.[0];
+          if (!winningBid) {
+            await prisma.auctionLot.update({
+              where: { id: lot.id },
+              data: { status: "FAILED" },
+            });
+            continue;
+          }
+
+          // Award Lot
+          await prisma.auctionLot.update({
+            where: { id: lot.id },
+            data: {
+              status: "AWARDED",
+              winnerId: winningBid.bidderId,
+              finalPrice: winningBid.amount,
+              winningBidId: winningBid.id,
+            },
+          });
+
+          // Create Deal for this lot
+          await prisma.deal.create({
+            data: {
+              auctionId: auction.id,
+              sellerId: auction.sellerId,
+              buyerId: winningBid.bidderId,
+              materialType: lot.category || auction.category,
+              weight: lot.quantity,
+              totalAmount: winningBid.amount,
+              platformFee: winningBid.amount * 0.01,
+              currency: lot.currency || auction.currency || "SYP",
+              status: "PENDING",
+            },
+          });
+
+          awardedLots++;
+          results.dealsCreated++;
+        }
+
+        // Mark auction as ENDED
+        await prisma.auction.update({
+          where: { id: auction.id },
+          data: { status: "ENDED" },
+        });
+
+        // Financial Settlement
+        const { AuctionSettlementService } = await import("@/lib/auction/settlement");
+        await AuctionSettlementService.closeAuctionFinancials(auction.id);
+
+        results.closedCount++;
+        console.log(`[AuctionAgent] 🏆 PER_LOT Auction closed: "${auction.title}" — ${awardedLots} lots awarded.`);
+        continue;
+      }
+
+      // legacy / SINGLE_WINNER behavior
       const winningBid = auction.bids[0];
 
       if (!winningBid) {
@@ -81,11 +159,10 @@ export class AuctionAgent extends BaseAgent {
       });
 
       // 🏛️ BANK-GRADE SETTLEMENT (Phase 19)
-      // Handles loser refunds, winner escrow, and commission debt
       const { AuctionSettlementService } = await import("@/lib/auction/settlement");
       await AuctionSettlementService.closeAuctionFinancials(auction.id);
 
-      // Create a Deal record for UI visibility
+      // Create a Deal record
       await prisma.deal.create({
         data: {
           auctionId: auction.id,
@@ -94,12 +171,14 @@ export class AuctionAgent extends BaseAgent {
           materialType: auction.category,
           weight: auction.weight,
           totalAmount: winningBid.amount,
-          platformFee: winningBid.amount * 0.01, // 1% commission
+          platformFee: winningBid.amount * 0.01,
+          currency: auction.currency || "SYP",
           status: "PENDING",
         },
       });
 
-      // Log to SecurityLog for audit trail
+      // Log to SecurityLog ... (skipping for brevity in chunk but it should be preserved if I didn't replace it)
+      // I'll wrap the security log in the loop correctly
       await prisma.securityLog.create({
         data: {
           level: "INFO",
@@ -118,9 +197,7 @@ export class AuctionAgent extends BaseAgent {
 
       results.closedCount++;
       results.dealsCreated++;
-      console.log(
-        `[AuctionAgent] 🏆 Auction closed: "${auction.title}" — Winner: ${winningBid.bidderId} | Price: ${winningBid.amount}`
-      );
+      console.log(`[AuctionAgent] 🏆 Auction closed: "${auction.title}" — Winner: ${winningBid.bidderId} | Price: ${winningBid.amount}`);
     }
 
     if (expiredAuctions.length > 0) {

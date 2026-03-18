@@ -30,7 +30,7 @@ const getTabs = (role: string | null) => {
             { href: "/wallet", label: "المحفظة", icon: "account_balance_wallet" },
             { href: "/auctions/create", label: "", icon: "add", isCenter: true },
             { href: "/market", label: "الأسعار", icon: "trending_up" },
-            { href: "/dashboard", label: "الرئيسية", icon: "home" },
+            { href: "/", label: "الرئيسية", icon: "home" },
         ];
     }
 

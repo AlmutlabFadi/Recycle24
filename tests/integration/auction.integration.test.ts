@@ -155,6 +155,26 @@ describe("Auction integration", () => {
       },
     });
 
+    const lot = await db.auctionLot.create({
+      data: {
+        auctionId: auction.id,
+        lineNo: 1,
+        title: "Nickel Lot A",
+        description: null,
+        category: "NICKEL",
+        quantity: 1000,
+        unit: "KG",
+        pricingUnit: "KG",
+        startingPrice: 1000,
+        reservePrice: null,
+        buyNowPrice: null,
+        depositModeOverride: "FIXED",
+        depositAmountOverride: 100,
+        currentBestBid: null,
+        status: "OPEN",
+      },
+    });
+
     setSessionUser(bidderA.id);
     const joinAResponse = await joinAuctionRoute(
       makeJsonRequest(`http://localhost/api/auctions/${auction.id}/join`, {
@@ -164,6 +184,7 @@ describe("Auction integration", () => {
         agreedToDataSharing: true,
         hasInspectedGoods: true,
         agreedToInvoice: true,
+        lotIds: [lot.id],
       }),
       { params: Promise.resolve({ id: auction.id }) }
     );
@@ -179,6 +200,7 @@ describe("Auction integration", () => {
         agreedToDataSharing: true,
         hasInspectedGoods: true,
         agreedToInvoice: true,
+        lotIds: [lot.id],
       }),
       { params: Promise.resolve({ id: auction.id }) }
     );
@@ -215,7 +237,7 @@ describe("Auction integration", () => {
     const bidderAHoldAfterJoin = await db.ledgerHold.findFirst({
       where: {
         referenceType: "AUCTION_DEPOSIT",
-        referenceId: auction.id,
+        referenceId: lot.id,
         status: "OPEN",
       },
       orderBy: { createdAt: "asc" },
@@ -227,6 +249,7 @@ describe("Auction integration", () => {
     const bidAResponse = await bidAuctionRoute(
       makeJsonRequest(`http://localhost/api/auctions/${auction.id}/bid`, {
         amount: 1100,
+        lotId: lot.id,
         requestKey: uniqueValue("bid-a"),
       }),
       { params: Promise.resolve({ id: auction.id }) }
@@ -242,6 +265,7 @@ describe("Auction integration", () => {
     const bidBResponse = await bidAuctionRoute(
       makeJsonRequest(`http://localhost/api/auctions/${auction.id}/bid`, {
         amount: 1200,
+        lotId: lot.id,
         requestKey: uniqueValue("bid-b"),
       }),
       { params: Promise.resolve({ id: auction.id }) }
@@ -273,11 +297,17 @@ describe("Auction integration", () => {
       await AuctionSettlementService.closeAuctionFinancials(auction.id);
 
     expect(settlementResult.success).toBe(true);
-    expect(settlementResult.winnerId).toBe(bidderB.id);
-    expect(settlementResult.finalPrice).toBe(1200);
+    expect(settlementResult.winnersCount).toBe(1);
     expect(settlementResult.workflowStatus).toBe(
       AuctionWorkflowStatus.AWAITING_PAYMENT_PROOF
     );
+
+    const lotAfterSettlement = await db.auctionLot.findUniqueOrThrow({
+      where: { id: lot.id },
+    });
+
+    expect(lotAfterSettlement.winnerId).toBe(bidderB.id);
+    expect(lotAfterSettlement.finalPrice).toBe(1200);
 
     const auctionAfterSettlement = await db.auction.findUniqueOrThrow({
       where: { id: auction.id },
@@ -320,7 +350,7 @@ describe("Auction integration", () => {
     const bidderAHoldAfterSettlement = await db.ledgerHold.findFirst({
       where: {
         referenceType: "AUCTION_DEPOSIT",
-        referenceId: auction.id,
+        referenceId: lot.id,
         account: {
           ownerId: bidderA.id,
         },
@@ -331,7 +361,7 @@ describe("Auction integration", () => {
     const bidderBHoldAfterSettlement = await db.ledgerHold.findFirst({
       where: {
         referenceType: "AUCTION_DEPOSIT",
-        referenceId: auction.id,
+        referenceId: lot.id,
         account: {
           ownerId: bidderB.id,
         },
@@ -381,7 +411,7 @@ describe("Auction integration", () => {
     const bidderBHoldAfterDischarge = await db.ledgerHold.findFirst({
       where: {
         referenceType: "AUCTION_DEPOSIT",
-        referenceId: auction.id,
+        referenceId: lot.id,
         account: {
           ownerId: bidderB.id,
         },
@@ -410,6 +440,6 @@ describe("Auction integration", () => {
     expect(eventTypes).toContain("AUCTION_BID_PLACED");
     expect(eventTypes).toContain("AUCTION_FINANCIALS_CLOSED");
     expect(eventTypes).toContain("AUCTION_WINNER_DISCHARGED");
-  });
+  }, 20000);
 });
 

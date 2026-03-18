@@ -31,10 +31,17 @@ export async function GET(request: NextRequest) {
                 orderBy: { updatedAt: "desc" },
             });
         } else if (type === "DRIVER") {
+            const driverStatusFilter = status
+                ? status === "APPROVED"
+                    ? { in: ["VERIFIED", "APPROVED"] }
+                    : status === "UNDER_REVIEW"
+                        ? { in: ["UNDER_REVIEW", "PENDING"] }
+                        : status
+                : undefined;
+
             data = await db.driver.findMany({
-                where: { 
-                    ...(status ? { status: status as any } : {}),
-                    user: { OR: [{ userType: "DRIVER" }, { role: "DRIVER" }] }
+                where: {
+                    ...(driverStatusFilter ? { status: driverStatusFilter as any } : {}),
                 },
                 include: {
                     user: {
@@ -78,7 +85,7 @@ export async function GET(request: NextRequest) {
         // Fetch counts strictly partitioned by the actual tab type
         const counts = {
             TRADER: await db.trader.count({ where: { verificationStatus: "PENDING", user: { OR: [{ userType: "TRADER" }, { role: "TRADER" }] } } }),
-            DRIVER: await db.driver.count({ where: { status: "PENDING", user: { OR: [{ userType: "DRIVER" }, { role: "DRIVER" }] } } }),
+            DRIVER: await db.driver.count({ where: { status: "PENDING" } }),
             CLIENT: await db.user.count({ where: { OR: [{ userType: "CLIENT" }, { role: "CLIENT" }], trader: { verificationStatus: "PENDING" } } }),
             GOVERNMENT: await db.user.count({ where: { OR: [{ userType: "GOVERNMENT" }, { role: "GOVERNMENT" }], trader: { verificationStatus: "PENDING" } } }),
         };

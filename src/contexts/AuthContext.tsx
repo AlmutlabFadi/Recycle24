@@ -15,6 +15,7 @@ interface User {
   lastName?: string;
   titleId?: string;
   gender?: Gender;
+  isVerified: boolean;
   userType: "TRADER" | "CLIENT" | "ADMIN" | "DRIVER" | "GOVERNMENT";
   status: string;
   role?: string;
@@ -50,7 +51,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       if (savedRole) {
         setActiveRoleState(savedRole);
       } else {
-        const defaultRole = user.userType === "ADMIN" ? "ADMIN" : "CLIENT";
+        const defaultRole = (user.userType as ActiveRole) || "CLIENT";
         setActiveRoleState(defaultRole);
         localStorage.setItem(`activeRole_${user.id}`, defaultRole);
       }

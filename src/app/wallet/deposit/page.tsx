@@ -14,9 +14,11 @@ const paymentMethods = [
   { id: "al_fouad", name: "Al Fouad", icon: "🏪", description: "Branch transfer" },
 ] as const;
 
-const presetAmounts = [50000, 100000, 250000, 500000, 1000000];
+const presetAmountsSYP = [50000, 100000, 250000, 500000, 1000000];
+const presetAmountsUSD = [10, 50, 100, 500, 1000];
 
 export default function WalletDepositPage() {
+  const [currency, setCurrency] = useState<"SYP" | "USD">("SYP");
   const [selectedMethod, setSelectedMethod] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [referenceNumber, setReferenceNumber] = useState<string>("");
@@ -58,7 +60,7 @@ export default function WalletDepositPage() {
     setIsSubmitting(true);
 
     try {
-      const success = await deposit(numericAmount, selectedMethod, referenceNumber);
+      const success = await deposit(numericAmount, selectedMethod, referenceNumber, currency);
 
       if (!success) {
         addToast("Failed to post deposit.", "error");
@@ -116,10 +118,29 @@ export default function WalletDepositPage() {
       <main className="flex-1 p-4 pb-24">
         {step === 1 && (
           <section className="mb-6">
-            <h2 className="mb-4 text-lg font-bold text-white">Choose amount</h2>
+            <h2 className="mb-4 text-lg font-bold text-white">Choose amount & currency</h2>
+
+            <div className="mb-4 flex rounded-xl bg-slate-800 p-1">
+              <button
+                onClick={() => { setCurrency("SYP"); setAmount(""); }}
+                className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
+                  currency === "SYP" ? "bg-primary text-white shadow-sm" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                SYP (ل.س)
+              </button>
+              <button
+                onClick={() => { setCurrency("USD"); setAmount(""); }}
+                className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
+                  currency === "USD" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                USD ($)
+              </button>
+            </div>
 
             <div className="mb-4 grid grid-cols-2 gap-3">
-              {presetAmounts.map((preset) => (
+              {(currency === "SYP" ? presetAmountsSYP : presetAmountsUSD).map((preset) => (
                 <button
                   key={preset}
                   onClick={() => setAmount(String(preset))}
@@ -130,15 +151,16 @@ export default function WalletDepositPage() {
                   }`}
                 >
                   <span className="text-xl font-bold text-white">
+                    {currency === "USD" ? "$" : ""}
                     {preset.toLocaleString()}
                   </span>
-                  <span className="mt-1 block text-xs text-slate-400">SYP</span>
+                  <span className="mt-1 block text-xs text-slate-400">{currency}</span>
                 </button>
               ))}
             </div>
 
             <div className="rounded-xl border border-slate-700 bg-surface-highlight p-4">
-              <label className="mb-2 block text-sm text-slate-400">Custom amount</label>
+              <label className="mb-2 block text-sm text-slate-400">Custom amount ({currency})</label>
               <input
                 type="number"
                 value={amount}
@@ -220,7 +242,7 @@ export default function WalletDepositPage() {
                 <div className="flex justify-between">
                   <span className="text-slate-400">Amount</span>
                   <span className="font-bold text-white">
-                    {numericAmount.toLocaleString()} SYP
+                    {numericAmount.toLocaleString()} {currency}
                   </span>
                 </div>
 
@@ -238,7 +260,7 @@ export default function WalletDepositPage() {
                   <div className="flex justify-between">
                     <span className="text-slate-400">Posted amount</span>
                     <span className="text-lg font-bold text-primary">
-                      {numericAmount.toLocaleString()} SYP
+                      {numericAmount.toLocaleString()} {currency}
                     </span>
                   </div>
                 </div>

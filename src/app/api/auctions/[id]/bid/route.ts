@@ -17,6 +17,7 @@ interface SessionUser {
 
 type BidRequestBody = {
   amount?: number;
+  lotId?: string;
   requestKey?: string;
 };
 
@@ -56,6 +57,14 @@ export async function POST(
     const { id: auctionId } = await context.params;
     const body = (await request.json()) as BidRequestBody;
     const amount = Number(body.amount);
+    const lotId = body.lotId;
+    
+    if (!lotId) {
+      return NextResponse.json(
+        { error: "Lot ID is required for bidding." },
+        { status: 400 }
+      );
+    }
 
     const requestKey =
       request.headers.get("x-idempotency-key") ??
@@ -96,6 +105,7 @@ export async function POST(
 
     const result = await placeBid({
       auctionId,
+      lotId,
       bidderId: user.id,
       participantId: participant.id,
       amount: roundMoney(amount),
@@ -120,6 +130,7 @@ export async function POST(
         effectiveEndsAt: true,
         extensionCount: true,
         version: true,
+        currency: true,
       },
     });
 
@@ -134,8 +145,9 @@ export async function POST(
       if (auction.sellerId !== user.id) {
         await NotificationService.create({
           userId: auction.sellerId,
-          title: "New bid received",
-          message: `A new bid of ${result.amount} was placed on ${auction.title}.`,
+          title: "زايدة جديدة على مزادك",
+          message: `تم تقديم مزايدة جديدة بقيمة ${result.amount.toLocaleString()} ${auction.currency || "SYP"} على "${auction.title}".`,
+          link: `/auctions/${auctionId}`,
         });
       }
 
@@ -145,8 +157,9 @@ export async function POST(
       ) {
         await NotificationService.create({
           userId: result.previousHighestBidderId,
-          title: "You have been outbid",
-          message: `You have been outbid on ${auction.title}.`,
+          title: "تمت المزايدة عليك",
+          message: `لقد قام شخص آخر بالمزايدة عليك في "${auction.title}". القيمة الجديدة هي ${result.amount.toLocaleString()} ${auction.currency || "SYP"}.`,
+          link: `/auctions/${auctionId}`,
         });
       }
     }
@@ -157,6 +170,7 @@ export async function POST(
         replayed: result.replayed,
         bid: {
           id: result.bidId,
+          lotId: result.lotId,
           amount: result.amount,
           bidderId: result.bidderId,
           currentBid: auction.currentBid,

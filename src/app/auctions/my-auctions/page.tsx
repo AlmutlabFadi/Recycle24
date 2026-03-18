@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useRef, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import HeaderWithBack from "@/components/HeaderWithBack";
 import BottomNavigation from "@/components/BottomNavigation";
 import Link from "next/link";
@@ -35,6 +35,16 @@ interface Auction {
     endsAt: string | null;
     createdAt: string;
     items: AuctionItem[];
+    lots?: {
+        id: string;
+        lineNo: number;
+        title: string;
+        quantity: number;
+        unit: string;
+        startPrice: number;
+        currentBestBid?: number | null;
+        status: string;
+    }[];
 }
 
 interface Message {
@@ -50,6 +60,8 @@ const TABS = [
     { key: "PENDING_APPROVAL", label: "قيد الانتظار", icon: "schedule", color: "text-amber-400", border: "border-amber-500" },
     { key: "UNDER_REVIEW",    label: "قيد المراجعة", icon: "find_in_page", color: "text-blue-400", border: "border-blue-500" },
     { key: "SCHEDULED",       label: "تم النشر",     icon: "check_circle", color: "text-green-400", border: "border-green-500" },
+    { key: "OPEN",            label: "جارٍ الآن",     icon: "gavel",        color: "text-red-400",   border: "border-red-500" },
+    { key: "COMPLETED",       label: "المنتهية",      icon: "history",      color: "text-slate-400", border: "border-slate-500" },
     { key: "CANCELED",        label: "ملغية",         icon: "cancel",       color: "text-red-400",   border: "border-red-500" },
 ];
 
@@ -59,6 +71,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: string;
     SCHEDULED:       { label: "تم النشر ✅", color: "text-green-400 bg-green-400/10 border-green-500/20", icon: "check_circle", hint: "تمت الموافقة. المزاد منشور." },
     CANCELED:        { label: "ملغي / مرفوض", color: "text-red-400 bg-red-400/10 border-red-500/20", icon: "cancel", hint: "تم إلغاء أو رفض هذا المزاد." },
     OPEN:            { label: "جارٍ الآن 🔴", color: "text-red-400 bg-red-400/10 border-red-500/20", icon: "gavel", hint: "المزاد جارٍ الآن." },
+    COMPLETED:       { label: "منتهية", color: "text-slate-400 bg-slate-400/10 border-slate-500/20", icon: "history", hint: "المزاد انتهى وتم التنفيذ." },
 };
 
 const categoryLabels: Record<string, string> = {
@@ -70,8 +83,18 @@ const categoryLabels: Record<string, string> = {
 declare global { var __chatOpen: boolean; }
 
 export default function MyAuctionsPage() {
+    return (
+        <Suspense fallback={<div className="flex-1 bg-bg-dark" />}>
+            <MyAuctionsContent />
+        </Suspense>
+    );
+}
+
+function MyAuctionsContent() {
     const { activeRole } = useAuth();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const aucIdParam = searchParams.get("aucId");
 
     const [activeTab, setActiveTab] = useState("PENDING_APPROVAL");
     const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
@@ -101,24 +124,85 @@ export default function MyAuctionsPage() {
         return () => { globalThis.__chatOpen = false; };
     }, [chatAuction]);
 
-    useEffect(() => {
-        if (activeRole && activeRole !== "TRADER") { router.push("/"); return; }
-        fetchAuctions();
-    }, [activeRole, router]);
-
-    const fetchAuctions = async () => {
+    const fetchAuctions = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch("/api/auctions/mine");
             const data = await res.json();
             setAllAuctions((data.auctions || []) as Auction[]);
-        } catch (e) { console.error(e); }
-        finally { setLoading(false); }
-    };
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-    const displayedAuctions = allAuctions.filter(a =>
-        activeTab === "CANCELED" ? a.workflowStatus === "CANCELED" : a.workflowStatus === activeTab
-    );
+    // Refresh auctions when notification param changes (ensures we have latest status)
+    useEffect(() => {
+        if (aucIdParam) {
+            fetchAuctions();
+        }
+    }, [aucIdParam, fetchAuctions]);
+
+    // Handle initial load and role check
+    useEffect(() => {
+        if (activeRole) {
+            if (activeRole !== "TRADER") {
+                router.push("/");
+                return;
+            }
+            fetchAuctions();
+        }
+    }, [activeRole, fetchAuctions, router]);
+
+    // Handle auto-opening chat or switching tab from URL params
+    useEffect(() => {
+        if (!aucIdParam) return;
+
+        // Fast path: fetch specific auction if we don't have it yet to open chat ASAP
+        const forceOpenChat = async (id: string) => {
+            try {
+                const res = await fetch(`/api/auctions/${id}`);
+                const data = await res.json();
+                if (data.success && data.auction) {
+                    const auc = data.auction as Auction;
+                    if (auc.workflowStatus === "UNDER_REVIEW") {
+                        setActiveTab("UNDER_REVIEW");
+                        setChatAuction(auc);
+                    } else {
+                        setActiveTab(auc.workflowStatus);
+                    }
+                }
+            } catch (e) {
+                console.error("Fast fetch error:", e);
+            }
+        };
+
+        // If we already have the list, use it
+        if (allAuctions.length > 0) {
+            const auc = allAuctions.find(a => a.id === aucIdParam);
+            if (auc) {
+                if (auc.workflowStatus === "UNDER_REVIEW") {
+                    setActiveTab("UNDER_REVIEW");
+                    setChatAuction(auc);
+                } else {
+                    setActiveTab(auc.workflowStatus);
+                }
+            } else {
+                // If not in list, try fast path
+                forceOpenChat(aucIdParam);
+            }
+        } else {
+            // First load or empty list, try fast path
+            forceOpenChat(aucIdParam);
+        }
+    }, [allAuctions, aucIdParam]);
+
+    const displayedAuctions = allAuctions.filter(a => {
+        if (activeTab === "CANCELED") return a.workflowStatus === "CANCELED";
+        if (activeTab === "COMPLETED") return ["COMPLETED", "AWAITING_PAYMENT_PROOF", "AWAITING_DELIVERY", "AWAITING_INSPECTION"].includes(a.workflowStatus);
+        return a.workflowStatus === activeTab;
+    });
 
     // ─── Chat polling ──────────────────────────────────────────────────────────
     const fetchMessages = useCallback(async (auctionId: string) => {
@@ -297,7 +381,9 @@ export default function MyAuctionsPage() {
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-white text-base">{auction.title}</h3>
-                                    {auction.items?.length > 0 ? (
+                                    {auction.lots && auction.lots.length > 0 ? (
+                                        <p className="text-xs text-slate-400 mt-0.5">{auction.lots.length} مواد معروضة</p>
+                                    ) : auction.items?.length > 0 ? (
                                         <p className="text-xs text-slate-400 mt-0.5">{auction.items.length} مواد معروضة</p>
                                     ) : (
                                         <p className="text-xs text-slate-400 mt-0.5">{categoryLabels[auction.category] || auction.category} — {auction.weight} {auction.weightUnit === "KG" ? "كغ" : "طن"}</p>
@@ -305,10 +391,23 @@ export default function MyAuctionsPage() {
                                     <p className="text-xs text-slate-500 mt-1 flex items-center gap-1"><span className="material-symbols-outlined !text-[13px]">location_on</span>{auction.location}</p>
                                 </div>
                                 <div className="grid grid-cols-3 gap-2 py-2 border-t border-b border-slate-700/50">
-                                    <div className="text-center"><p className="text-[10px] text-slate-500">السعر الابتدائي</p><p className="text-sm font-bold text-primary">{auction.startingBid.toLocaleString()}</p><p className="text-[9px] text-slate-600">{auction.startingBidCurrency === "USD" ? "$" : "ل.س"}</p></div>
+                                    <div className="text-center"><p className="text-[10px] text-slate-500">السعر الابتدائي</p><p className="text-sm font-bold text-primary">{auction.lots && auction.lots.length > 0 ? auction.lots[0]?.startPrice?.toLocaleString() : auction.startingBid.toLocaleString()}</p><p className="text-[9px] text-slate-600">{auction.startingBidCurrency === "USD" ? "$" : "ل.س"}</p></div>
                                     <div className="text-center"><p className="text-[10px] text-slate-500">التأمين</p><p className="text-sm font-bold text-white">{auction.securityDeposit > 0 ? auction.securityDeposit.toLocaleString() : "—"}</p><p className="text-[9px] text-slate-600">{auction.securityDepositCurrency === "USD" ? "$" : "ل.س"}</p></div>
                                     <div className="text-center"><p className="text-[10px] text-slate-500">المدة</p><p className="text-sm font-bold text-white">{auction.duration}</p><p className="text-[9px] text-slate-600">ساعة</p></div>
                                 </div>
+                                {auction.lots && auction.lots.length > 0 && (
+                                    <div className="mt-3 grid gap-2">
+                                        {auction.lots.slice(0, 3).map((lot) => (
+                                            <div key={lot.id} className="flex items-center justify-between text-[11px] text-slate-400 bg-slate-900/40 border border-slate-800 rounded-xl px-3 py-2">
+                                                <span className="text-white font-bold">{lot.title}</span>
+                                                <span>{lot.currentBestBid?.toLocaleString() || lot.startPrice?.toLocaleString()} ل.س</span>
+                                            </div>
+                                        ))}
+                                        {auction.lots.length > 3 && (
+                                            <div className="text-[10px] text-slate-500">+{auction.lots.length - 3} مواد إضافية</div>
+                                        )}
+                                    </div>
+                                )}
                                 <div className="flex gap-2">
                                     {canEdit && (
                                         <Link href={`/auctions/${auction.id}/edit`} className="flex-1 flex items-center justify-center gap-1 text-xs font-bold bg-primary/10 text-primary border border-primary/30 py-2.5 rounded-xl">

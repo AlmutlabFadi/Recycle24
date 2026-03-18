@@ -13,6 +13,7 @@ export type AuctionWorkflowState =
 
 export type PlaceBidInput = {
   auctionId: string;
+  lotId: string;
   bidderId: string;
   participantId: string;
   amount: number;
@@ -52,6 +53,7 @@ export type ExtensionUpdate = {
 export type PlaceBidSuccess = {
   ok: true;
   auctionId: string;
+  lotId: string;
   bidId: string;
   amount: number;
   bidderId: string;

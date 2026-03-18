@@ -149,6 +149,48 @@ enum AuctionDisputeStatus {
   ESCALATED
 }
 
+enum AuctionDomain {
+  ASSET_SALE
+  SERVICE_PROCUREMENT
+}
+
+enum AuctionDirection {
+  FORWARD
+  REVERSE
+}
+
+enum AuctionPricingMode {
+  LOT_BASED
+  BUNDLE_BASED
+}
+
+enum AuctionWinnerSelectionMode {
+  PER_LOT
+  SINGLE_WINNER
+}
+
+enum AuctionLotStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  AWARDED
+  FAILED
+  CANCELLED
+}
+
+enum AuctionDepositMode {
+  NONE
+  FIXED
+  PERCENTAGE
+}
+
+enum AuctionParticipantLotWorkflowStatus {
+  SELECTED
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
 model User {
   id                         String                      @id @default(cuid())
   phone                      String?                     @unique
@@ -325,6 +367,17 @@ model Auction {
   status         String                @default("SCHEDULED")
   type           AuctionType           @default(PRIVATE)
   workflowStatus AuctionWorkflowStatus @default(DRAFT)
+  
+  auctionDomain       AuctionDomain         @default(ASSET_SALE)
+  auctionDirection    AuctionDirection      @default(FORWARD)
+  currency            String                @default("SYP")
+  pricingModeV2       AuctionPricingMode    @default(LOT_BASED)
+  winnerSelectionMode AuctionWinnerSelectionMode @default(PER_LOT)
+
+  jurisdictionCountry String?
+  jurisdictionCity    String?
+  governingLaw        String?
+  disputeWindowHours  Int?
 
   scheduledAt     DateTime?
   startedAt       DateTime?
@@ -373,10 +426,12 @@ model Auction {
   updatedAt DateTime @updatedAt
 
   seller       User                 @relation(fields: [sellerId], references: [id])
+  lots         AuctionLot[]
   items        AuctionItem[]
   documents    AuctionDocument[]
   images       AuctionImage[]
   participants AuctionParticipant[]
+  participantLots AuctionParticipantLot[]
   bids         Bid[]
   events       AuctionEventLog[]
   disputes     AuctionDispute[]
@@ -389,6 +444,45 @@ model Auction {
   @@index([type, workflowStatus])
   @@index([endsAt])
   @@index([effectiveEndsAt])
+  @@index([winnerId])
+  @@index([winningBidId])
+}
+
+model AuctionLot {
+  id             String            @id @default(cuid())
+  auctionId      String
+  lineNo         Int
+  title          String
+  description    String?
+  category       String
+  quantity       Float
+  unit           String
+  pricingUnit    String
+  startingPrice  Float
+  reservePrice   Float?
+  buyNowPrice    Float?
+  
+  direction      AuctionDirection  @default(FORWARD)
+  currency       String            @default("SYP")
+
+  depositModeOverride   AuctionDepositMode @default(NONE)
+  depositAmountOverride Float              @default(0)
+  
+  currentBestBid Float?
+  winningBidId   String?
+  winnerId       String?
+  finalPrice     Float?
+  status         AuctionLotStatus  @default(DRAFT)
+  version        Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  auction         Auction               @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  bids            Bid[]
+  participantLots AuctionParticipantLot[]
+
+  @@index([auctionId])
+  @@index([status])
   @@index([winnerId])
   @@index([winningBidId])
 }
@@ -448,6 +542,7 @@ model AuctionParticipant {
 
   auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id])
+  selectedLots AuctionParticipantLot[]
 
   @@unique([auctionId, userId])
   @@index([auctionId])
@@ -455,6 +550,31 @@ model AuctionParticipant {
   @@index([workflowStatus])
   @@index([depositWorkflowStatus])
   @@index([depositHoldId])
+}
+
+model AuctionParticipantLot {
+  id                     String                             @id @default(cuid())
+  participantId          String
+  auctionId              String
+  lotId                  String
+  isSelected             Boolean                            @default(true)
+  depositRequired        Float                              @default(0)
+  depositHoldId          String?
+  depositWorkflowStatus  AuctionDepositWorkflowStatus       @default(NONE)
+  workflowStatus         AuctionParticipantLotWorkflowStatus @default(SELECTED)
+  createdAt              DateTime                           @default(now())
+  updatedAt              DateTime                           @updatedAt
+
+  participant AuctionParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  auction     Auction            @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  lot         AuctionLot         @relation(fields: [lotId], references: [id], onDelete: Cascade)
+
+  @@unique([participantId, lotId])
+  @@index([participantId])
+  @@index([lotId])
+  @@index([depositHoldId])
+  @@index([depositWorkflowStatus])
+  @@index([workflowStatus])
 }
 
 model AuctionImage {
@@ -471,6 +591,7 @@ model AuctionImage {
 model Bid {
   id         String  @id @default(cuid())
   auctionId  String
+  lotId      String?
   bidderId   String
   amount     Float
   requestKey String? @unique
@@ -483,11 +604,13 @@ model Bid {
   rejectionReason String?
   createdAt       DateTime  @default(now())
 
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  bidder  User    @relation(fields: [bidderId], references: [id])
+  auction Auction    @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  lot     AuctionLot? @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  bidder  User       @relation(fields: [bidderId], references: [id])
 
   @@index([auctionId, createdAt])
   @@index([auctionId, amount])
+  @@index([lotId])
   @@index([bidderId, createdAt])
   @@index([status])
 }
@@ -548,6 +671,7 @@ model Deal {
   weight         Float
   totalAmount    Float
   platformFee    Float
+  currency       String        @default("SYP")
   status         String        @default("PENDING")
   contractSigned Boolean       @default(false)
   signedAt       DateTime?

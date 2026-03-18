@@ -331,102 +331,121 @@ export default function WalletPage() {
           </div>
         )}
 
-        <div className="mx-4 mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl bg-gradient-to-br from-primary to-blue-600 p-6 text-white relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-40 h-40 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3"></div>
+        <div className="mx-4 mt-4">
+          <div className="rounded-3xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 p-6 shadow-2xl relative overflow-hidden">
+            {/* Background design elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl translate-y-1/3 -translate-x-1/3"></div>
 
-            <div className="relative z-10">
+            <div className="relative z-10 flex flex-col gap-6">
+              {/* SYP Balance */}
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-white/70 font-medium font-display">
-                    الرصيد القابل للاستخدام (ل.س)
-                  </p>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <p className="text-4xl font-bold font-english dir-ltr tracking-tight">
+                  <p className="text-slate-400 text-xs font-display mb-1 tracking-wide">الرصيد المتاح (ليرة سورية)</p>
+                  <div className="flex items-baseline gap-2">
+                    <h2 className="text-4xl sm:text-5xl font-bold text-white font-english tracking-tight drop-shadow-md">
                       {wallet?.availableBalanceSYP?.toLocaleString() || "0"}
-                    </p>
-                    <span className="text-lg font-bold text-white/80">ل.س</span>
+                    </h2>
+                    <span className="text-white/60 text-sm font-bold">SYP</span>
                   </div>
                 </div>
-
-                <div className="text-left bg-white/10 rounded-lg p-2 px-3 backdrop-blur-sm border border-white/10">
-                  <p className="text-[10px] text-white/60 mb-1 font-display">
-                    رصيد محجوز (تأمينات)
-                  </p>
-                  <p className="text-sm font-bold font-english dir-ltr">
-                    {wallet?.heldAmountSYP?.toLocaleString() || "0"} ل.س
-                  </p>
-                </div>
+                
+                {wallet?.heldAmountSYP && wallet.heldAmountSYP > 0 ? (
+                  <div className="text-left bg-white/5 rounded-xl p-2 px-3 backdrop-blur-sm border border-white/10">
+                    <p className="text-[10px] text-white/50 mb-1 font-display uppercase tracking-wider">محجوز (تأمينات)</p>
+                    <p className="text-sm font-bold text-white/80 font-english dir-ltr">
+                      {wallet.heldAmountSYP.toLocaleString()} SYP
+                    </p>
+                  </div>
+                ) : null}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
-                <p className="text-xs text-white/60 font-display">إجمالي الرصيد الموثق:</p>
-                <p className="text-xs font-bold font-english dir-ltr text-white/90">
-                  {wallet?.verifiedBalanceSYP?.toLocaleString() || "0"} ل.س
-                </p>
-              </div>
-            </div>
-          </div>
+              {/* Divider */}
+              <div className="w-full h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent opacity-50"></div>
 
-          <div className="rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 p-6 text-white relative overflow-hidden shadow-sm">
-            <div className="absolute top-0 right-0 w-40 h-40 bg-white/5 rounded-full translate-x-1/3 -translate-y-1/2"></div>
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full -translate-x-1/3 translate-y-1/3"></div>
-
-            <div className="relative z-10">
+              {/* USD Balance */}
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="text-sm text-emerald-100 font-medium font-display">
-                    الرصيد القابل للاستخدام (USD)
-                  </p>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <p className="text-4xl font-bold font-english dir-ltr tracking-tight text-white drop-shadow-md">
+                  <p className="text-slate-400 text-xs font-display mb-1 tracking-wide">الرصيد المتاح (دولار أمريكي)</p>
+                  <div className="flex items-baseline gap-2">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-emerald-400 font-english tracking-tight drop-shadow-md">
                       ${wallet?.availableBalanceUSD?.toLocaleString() || "0"}
-                    </p>
+                    </h2>
+                    <span className="text-emerald-400/60 text-xs font-bold">USD</span>
                   </div>
                 </div>
 
-                <div className="text-left bg-white/10 rounded-lg p-2 px-3 backdrop-blur-sm border border-emerald-400/30">
-                  <p className="text-[10px] text-emerald-100 mb-1 font-display">
-                    رصيد محجوز (تأمينات)
-                  </p>
-                  <p className="text-sm font-bold font-english dir-ltr drop-shadow-sm">
-                    ${wallet?.heldAmountUSD?.toLocaleString() || "0"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-emerald-400/30 flex justify-between items-center">
-                <p className="text-xs text-emerald-100 font-display">إجمالي الرصيد الموثق:</p>
-                <p className="text-xs font-bold font-english dir-ltr text-white drop-shadow-sm">
-                  ${wallet?.verifiedBalanceUSD?.toLocaleString() || "0"}
-                </p>
+                {wallet?.heldAmountUSD && wallet.heldAmountUSD > 0 ? (
+                  <div className="text-left bg-emerald-500/5 rounded-xl p-2 px-3 backdrop-blur-sm border border-emerald-500/10">
+                    <p className="text-[10px] text-emerald-400/60 mb-1 font-display uppercase tracking-wider">محجوز (تأمينات)</p>
+                    <p className="text-sm font-bold text-emerald-400/90 font-english dir-ltr">
+                      ${wallet.heldAmountUSD.toLocaleString()}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="mx-4">
-          <div className="flex gap-3 mt-6">
-            <Link
-              href="/wallet/deposit"
-              className="flex-1 h-12 bg-primary/10 text-primary hover:bg-primary/20 rounded-xl text-sm font-bold flex items-center justify-center gap-1 transition active:scale-95 border border-primary/20"
-            >
-              <span className="material-symbols-outlined !text-[18px]">arrow_downward</span>
-              إيداع
-            </Link>
-            <Link
-              href="/wallet/withdraw"
-              className="flex-1 h-12 bg-primary text-white hover:bg-primary-dark rounded-xl text-sm font-bold flex items-center justify-center gap-1 transition active:scale-95 shadow-sm shadow-primary/30"
-            >
-              <span className="material-symbols-outlined !text-[18px]">arrow_upward</span>
-              سحب
-            </Link>
-            <Link href="/wallet/transfer" className="flex-1 h-12 bg-slate-800 text-white hover:bg-slate-700 border border-slate-700 rounded-xl text-sm font-bold flex items-center justify-center gap-1 transition active:scale-95 shadow-sm">
-              <span className="material-symbols-outlined !text-[18px]">send</span>
-              تحويل
-            </Link>
-          </div>
+        {/* Quick Actions Grid */}
+        <div className="mx-4 mt-6 grid grid-cols-4 gap-3">
+          <Link href="/wallet/deposit" className="group flex flex-col items-center justify-center gap-2 py-4 px-2 bg-surface-dark border border-slate-700/50 rounded-2xl hover:bg-surface-highlight hover:border-slate-600 transition-all active:scale-95 shadow-lg shadow-black/20">
+            <div className="size-12 rounded-full bg-blue-500/10 text-blue-400 group-hover:bg-blue-500/20 group-hover:scale-110 flex items-center justify-center transition-all">
+              <span className="material-symbols-outlined !text-[22px]">arrow_downward</span>
+            </div>
+            <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">إيداع</span>
+          </Link>
+
+          <Link href="/wallet/withdraw" className="group flex flex-col items-center justify-center gap-2 py-4 px-2 bg-surface-dark border border-slate-700/50 rounded-2xl hover:bg-surface-highlight hover:border-slate-600 transition-all active:scale-95 shadow-lg shadow-black/20">
+            <div className="size-12 rounded-full bg-emerald-500/10 text-emerald-400 group-hover:bg-emerald-500/20 group-hover:scale-110 flex items-center justify-center transition-all">
+              <span className="material-symbols-outlined !text-[22px]">arrow_upward</span>
+            </div>
+            <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">سحب</span>
+          </Link>
+
+          <Link href="/wallet/transfer" className="group flex flex-col items-center justify-center gap-2 py-4 px-2 bg-surface-dark border border-slate-700/50 rounded-2xl hover:bg-surface-highlight hover:border-slate-600 transition-all active:scale-95 shadow-lg shadow-black/20">
+            <div className="size-12 rounded-full bg-purple-500/10 text-purple-400 group-hover:bg-purple-500/20 group-hover:scale-110 flex items-center justify-center transition-all">
+              <span className="material-symbols-outlined !text-[22px]">send</span>
+            </div>
+            <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">تحويل</span>
+          </Link>
+
+          <Link href="/wallet/exchange" className="group flex flex-col items-center justify-center gap-2 py-4 px-2 bg-surface-dark border border-slate-700/50 rounded-2xl hover:bg-surface-highlight hover:border-slate-600 transition-all active:scale-95 shadow-lg shadow-black/20">
+            <div className="size-12 rounded-full bg-amber-500/10 text-amber-400 group-hover:bg-amber-500/20 group-hover:scale-110 flex items-center justify-center transition-all">
+              <span className="material-symbols-outlined !text-[22px]">currency_exchange</span>
+            </div>
+            <span className="text-xs font-bold text-slate-300 group-hover:text-white transition-colors">صرافة</span>
+          </Link>
+        </div>
+
+        {/* Monthly Statement & Detailed Ledger Link */}
+        <div className="mx-4 mt-6 grid grid-cols-2 gap-3">
+          <Link
+            href="/wallet/statement"
+            className="group flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 hover:border-indigo-500/40 transition-all active:scale-[0.98]"
+          >
+            <div className="size-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+              <span className="material-symbols-outlined text-indigo-400 !text-[20px]">description</span>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-white">كشف الحساب</p>
+              <p className="text-[10px] text-slate-400">شهري مفصل بالعملتين</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/wallet/transactions"
+            className="group flex items-center gap-3 p-4 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border border-cyan-500/20 hover:border-cyan-500/40 transition-all active:scale-[0.98]"
+          >
+            <div className="size-10 rounded-full bg-cyan-500/20 flex items-center justify-center">
+              <span className="material-symbols-outlined text-cyan-400 !text-[20px]">history</span>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-white">سجل المعاملات</p>
+              <p className="text-[10px] text-slate-400">كافة الحركات المالية</p>
+            </div>
+          </Link>
         </div>
 
         <div className="mt-6 px-4">
@@ -518,9 +537,9 @@ export default function WalletPage() {
               <p className="text-xs text-slate-400">إيداع وسحب نقدي عبر أقرب وكيل</p>
             </div>
           </div>
-          <button className="w-full h-10 bg-secondary/10 text-secondary border border-secondary/20 rounded-lg text-sm font-bold hover:bg-secondary/20 transition active:scale-[0.98]">
+          <Link href="/wallet/dealers" className="block w-full h-10 bg-secondary/10 text-secondary border border-secondary/20 rounded-lg text-sm font-bold hover:bg-secondary/20 transition active:scale-[0.98] flex items-center justify-center">
             البحث عن أقرب وكيل
-          </button>
+          </Link>
         </div>
       </main>
 

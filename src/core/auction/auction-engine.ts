@@ -12,7 +12,7 @@ import { HoldStatus } from "@/lib/ledger/types";
 
 import { computeExtendedEndAt } from "./anti-sniping";
 import { bidFailure } from "./auction-errors";
-import { getMinimumAllowedBid } from "./increment-policy";
+import { isValidNextBid } from "./increment-policy";
 import type {
   AuctionRuntimeSnapshot,
   HighestBidSnapshot,
@@ -68,23 +68,25 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
   try {
     return await db.$transaction(async (tx) => {
       if (input.requestKey) {
-        const existingBid = await tx.bid.findFirst({
+        const existingBid = await (tx as any).bid.findFirst({
           where: {
             requestKey: input.requestKey,
           },
           select: {
             id: true,
             auctionId: true,
+            lotId: true,
             bidderId: true,
             amount: true,
             createdAt: true,
           },
-        });
+        }) as any;
 
         if (existingBid) {
           if (
             existingBid.auctionId !== input.auctionId ||
-            existingBid.bidderId !== input.bidderId
+            existingBid.bidderId !== input.bidderId ||
+            (existingBid.lotId && existingBid.lotId !== input.lotId)
           ) {
             return bidFailure(
               "BID_CONFLICT",
@@ -109,6 +111,7 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
           return {
             ok: true,
             auctionId: input.auctionId,
+            lotId: input.lotId,
             bidId: existingBid.id,
             amount: existingBid.amount,
             bidderId: existingBid.bidderId,
@@ -157,6 +160,27 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
         return bidFailure("AUCTION_ENDED", "Auction already ended.");
       }
 
+      const lot = await (tx as any).auctionLot.findUnique({
+        where: { id: input.lotId },
+        select: {
+          id: true,
+          auctionId: true,
+          startingPrice: true,
+          currentBestBid: true,
+          winningBidId: true,
+          status: true,
+          direction: true,
+        },
+      });
+
+      if (!lot || lot.auctionId !== input.auctionId) {
+        return bidFailure("AUCTION_NOT_FOUND", "Auction lot not found.");
+      }
+
+      if (lot.status !== "OPEN") {
+        return bidFailure("AUCTION_NOT_OPEN", "Auction lot is not open for bidding.");
+      }
+
       const participant = await tx.auctionParticipant.findUnique({
         where: { id: input.participantId },
         select: {
@@ -164,6 +188,7 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
           auctionId: true,
           userId: true,
           isExempt: true,
+          depositPaid: true,
           workflowStatus: true,
           depositWorkflowStatus: true,
           depositHoldId: true,
@@ -204,7 +229,7 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
         );
       }
 
-      if (!participant.isExempt) {
+      if (!participant.isExempt && participant.depositWorkflowStatus !== AuctionDepositWorkflowStatus.NONE) {
         const depositWorkflowSatisfied =
           participant.depositWorkflowStatus ===
           AuctionDepositWorkflowStatus.HELD;
@@ -216,45 +241,38 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
           );
         }
 
-        if (!participant.depositHoldId) {
+        if (participant.depositHoldId) {
+          const hold = await tx.ledgerHold.findUnique({
+            where: { id: participant.depositHoldId },
+            select: {
+              id: true,
+              status: true,
+              referenceType: true,
+              referenceId: true,
+              amount: true,
+            },
+          });
+
+          if (!hold) {
+            return bidFailure(
+              "BID_CONFLICT",
+              "Deposit hold was not found."
+            );
+          }
+
+          if (hold.status !== HoldStatus.OPEN) {
+            return bidFailure(
+              "AUCTION_NOT_OPEN",
+              "Security deposit hold is no longer active."
+            );
+          }
+        } else if (!participant.depositPaid || participant.depositPaid <= 0) {
           return bidFailure(
             "BID_CONFLICT",
             "Missing deposit hold for participant."
           );
         }
-
-        const hold = await tx.ledgerHold.findUnique({
-          where: { id: participant.depositHoldId },
-          select: {
-            id: true,
-            status: true,
-            referenceType: true,
-            referenceId: true,
-            amount: true,
-          },
-        });
-
-        if (!hold) {
-          return bidFailure(
-            "BID_CONFLICT",
-            "Deposit hold was not found."
-          );
-        }
-
-        if (hold.status !== HoldStatus.OPEN) {
-          return bidFailure(
-            "AUCTION_NOT_OPEN",
-            "Security deposit hold is no longer active."
-          );
-        }
-
-        if (hold.referenceId !== input.auctionId) {
-          return bidFailure(
-            "BID_CONFLICT",
-            "Deposit hold does not belong to this auction."
-          );
-        }
-      } else {
+      } else if (participant.isExempt) {
         const depositWorkflowSatisfied =
           participant.depositWorkflowStatus ===
             AuctionDepositWorkflowStatus.EXEMPT ||
@@ -269,9 +287,42 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
         }
       }
 
-      const currentWinningBid = auction.winningBidId
+      const participantLot = await (tx as any).auctionParticipantLot.findUnique({
+        where: { participantId_lotId: { participantId: participant.id, lotId: input.lotId } },
+        select: {
+          id: true,
+          isSelected: true,
+          depositRequired: true,
+          depositWorkflowStatus: true,
+          depositHoldId: true,
+          workflowStatus: true,
+        },
+      });
+
+      if (!participantLot || !participantLot.isSelected) {
+        return bidFailure("AUCTION_NOT_OPEN", "You are not approved for this lot.");
+      }
+
+      if (participantLot.workflowStatus !== "SELECTED" && participantLot.workflowStatus !== "APPROVED") {
+        return bidFailure("AUCTION_NOT_OPEN", "Your lot participation is not approved.");
+      }
+
+      if (participantLot.depositRequired > 0) {
+        const lotDepositSatisfied =
+          participantLot.depositWorkflowStatus === AuctionDepositWorkflowStatus.HELD;
+
+        if (!lotDepositSatisfied) {
+          return bidFailure("AUCTION_NOT_OPEN", "Lot deposit must be held before bidding.");
+        }
+
+        if (!participantLot.depositHoldId) {
+          return bidFailure("BID_CONFLICT", "Missing deposit hold for lot.");
+        }
+      }
+
+      const currentWinningBid = lot.winningBidId
         ? ((await tx.bid.findFirst({
-            where: { id: auction.winningBidId },
+            where: { id: lot.winningBidId },
             select: {
               id: true,
               bidderId: true,
@@ -289,13 +340,13 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
         );
       }
 
-      const currentAmount = resolveCurrentBidAmount(auction, currentWinningBid);
-      const minimumAllowedBid = getMinimumAllowedBid(currentAmount);
+      const currentAmount = lot.currentBestBid ?? lot.startingPrice;
+      const bidValidation = isValidNextBid(currentAmount, input.amount, lot.direction as "FORWARD" | "REVERSE");
 
-      if (input.amount < minimumAllowedBid) {
+      if (!bidValidation.isValid) {
         return bidFailure(
-          "BID_TOO_LOW",
-          `Bid must be at least ${minimumAllowedBid}.`
+          input.amount < currentAmount ? "BID_TOO_LOW" : "INVALID_BID_AMOUNT",
+          bidValidation.message ?? "عرض غير صالح."
         );
       }
 
@@ -317,19 +368,28 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
       const newBid = await tx.bid.create({
         data: {
           auctionId: input.auctionId,
+          lotId: input.lotId,
           bidderId: input.bidderId,
           participantId: input.participantId,
           amount: input.amount,
           requestKey: input.requestKey ?? null,
           status: BidWorkflowStatus.WINNING,
           acceptedAt: now,
-        },
+        } as any,
         select: {
           id: true,
           bidderId: true,
           amount: true,
           status: true,
           createdAt: true,
+        },
+      });
+
+      await (tx as any).auctionLot.update({
+        where: { id: input.lotId },
+        data: {
+          currentBestBid: input.amount,
+          winningBidId: newBid.id,
         },
       });
 
@@ -364,6 +424,7 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
           eventType: "AUCTION_BID_PLACED",
           payload: {
             bidId: newBid.id,
+            lotId: input.lotId,
             amount: input.amount,
             bidderId: input.bidderId,
             participantId: input.participantId,
@@ -386,6 +447,7 @@ export async function placeBid(input: PlaceBidInput): Promise<PlaceBidResult> {
       return {
         ok: true,
         auctionId: input.auctionId,
+        lotId: input.lotId,
         bidId: newBid.id,
         amount: input.amount,
         bidderId: input.bidderId,

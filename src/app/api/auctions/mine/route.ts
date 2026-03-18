@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
                 
                 items: { orderBy: { createdAt: "asc" } },
                 images: { orderBy: { order: "asc" } },
+                lots: { orderBy: { lineNo: "asc" } },
             },
         });
 
