@@ -51,23 +51,6 @@ type PayoutRequestItem = {
   user: FinanceRequestUser;
 };
 
-type TransferRequestItem = {
-  id: string;
-  amount: number;
-  currency: string;
-  status: string;
-  referenceNote: string | null;
-  reviewNote: string | null;
-  reviewedById: string | null;
-  reviewedAt: string | null;
-  completedAt: string | null;
-  failedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  sender: FinanceRequestUser;
-  receiver: FinanceRequestUser;
-};
-
 type FinanceApiResponse<T> = {
   success: boolean;
   items: T[];
@@ -82,7 +65,7 @@ type FinanceApiResponse<T> = {
   error?: string;
 };
 
-type ActiveTab = "all" | "awaiting-final" | "pending-first" | "deposits" | "payouts" | "transfers";
+type ActiveTab = "all" | "awaiting-final" | "pending-first" | "deposits" | "payouts";
 
 type CurrencyFilter = "ALL" | "SYP" | "USD";
 
@@ -190,7 +173,6 @@ function ActionButton(props: {
 export default function AdminFinancePage() {
   const [depositItems, setDepositItems] = useState<DepositRequestItem[]>([]);
   const [payoutItems, setPayoutItems] = useState<PayoutRequestItem[]>([]);
-  const [transferItems, setTransferItems] = useState<TransferRequestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>("awaiting-final");
@@ -199,51 +181,37 @@ export default function AdminFinancePage() {
   const [reviewNotes, setReviewNotes] = useState<Record<string, string>>({});
 
   async function loadData() {
-    setLoading(true);
-    setError(null);
-    const errors: string[] = [];
-
-    // Fetch each endpoint independently so one failure doesn't block others
     try {
-      const depositResponse = await fetch("/api/admin/finance/deposit-requests?status=ALL&take=50", { cache: "no-store" });
+      setLoading(true);
+      setError(null);
+
+      const [depositResponse, payoutResponse] = await Promise.all([
+        fetch("/api/admin/finance/deposit-requests?status=ALL&take=50", {
+          cache: "no-store",
+        }),
+        fetch("/api/admin/finance/payout-requests?status=ALL&take=50", {
+          cache: "no-store",
+        }),
+      ]);
+
       const depositJson = (await depositResponse.json()) as FinanceApiResponse<DepositRequestItem>;
-      if (depositResponse.ok) {
-        setDepositItems(depositJson.items ?? []);
-      } else {
-        errors.push(depositJson.error ?? "Failed to load deposit requests");
-      }
-    } catch {
-      errors.push("Failed to load deposit requests");
-    }
-
-    try {
-      const payoutResponse = await fetch("/api/admin/finance/payout-requests?status=ALL&take=50", { cache: "no-store" });
       const payoutJson = (await payoutResponse.json()) as FinanceApiResponse<PayoutRequestItem>;
-      if (payoutResponse.ok) {
-        setPayoutItems(payoutJson.items ?? []);
-      } else {
-        errors.push(payoutJson.error ?? "Failed to load payout requests");
-      }
-    } catch {
-      errors.push("Failed to load payout requests");
-    }
 
-    try {
-      const transferResponse = await fetch("/api/admin/finance/transfer-requests?status=ALL&take=50", { cache: "no-store" });
-      const transferJson = (await transferResponse.json()) as FinanceApiResponse<TransferRequestItem>;
-      if (transferResponse.ok) {
-        setTransferItems(transferJson.items ?? []);
-      } else {
-        errors.push(transferJson.error ?? "Failed to load transfer requests");
+      if (!depositResponse.ok) {
+        throw new Error(depositJson.error ?? "Failed to load deposit requests");
       }
-    } catch {
-      errors.push("Failed to load transfer requests");
-    }
 
-    if (errors.length > 0) {
-      setError(errors.join(" | "));
+      if (!payoutResponse.ok) {
+        throw new Error(payoutJson.error ?? "Failed to load payout requests");
+      }
+
+      setDepositItems(depositJson.items ?? []);
+      setPayoutItems(payoutJson.items ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unknown finance admin error");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => {
@@ -258,11 +226,6 @@ export default function AdminFinancePage() {
   const filteredPayoutItems = useMemo(
     () => payoutItems.filter(i => currencyFilter === "ALL" || i.currency === currencyFilter),
     [payoutItems, currencyFilter]
-  );
-
-  const filteredTransferItems = useMemo(
-    () => transferItems.filter(i => currencyFilter === "ALL" || i.currency === currencyFilter),
-    [transferItems, currencyFilter]
   );
 
   const depositAwaitingFinal = useMemo(
@@ -295,11 +258,6 @@ export default function AdminFinancePage() {
     [filteredPayoutItems]
   );
 
-  const transferPending = useMemo(
-    () => filteredTransferItems.filter((item) => item.status === "PENDING"),
-    [filteredTransferItems]
-  );
-
   const visibleDeposits = useMemo(() => {
     switch (activeTab) {
       case "awaiting-final":
@@ -329,22 +287,6 @@ export default function AdminFinancePage() {
         return filteredPayoutItems;
     }
   }, [activeTab, payoutAwaitingFinal, payoutPending, filteredPayoutItems]);
-
-  const visibleTransfers = useMemo(() => {
-    switch (activeTab) {
-      case "awaiting-final":
-        return [];
-      case "pending-first":
-        return transferPending;
-      case "transfers":
-        return filteredTransferItems;
-      case "deposits":
-      case "payouts":
-        return [];
-      default:
-        return filteredTransferItems;
-    }
-  }, [activeTab, transferPending, filteredTransferItems]);
 
   function getReviewNote(id: string) {
     return reviewNotes[id] ?? "";
@@ -480,70 +422,6 @@ export default function AdminFinancePage() {
       await loadData();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Payout rejection failed");
-    } finally {
-      setBusyKey(null);
-    }
-  }
-
-  async function submitTransferApprove(id: string) {
-    try {
-      setBusyKey(`transfer-approve-${id}`);
-      setError(null);
-
-      const response = await fetch(`/api/admin/finance/transfer-requests/${id}/approve`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          reviewNote: getReviewNote(id) || undefined,
-        }),
-      });
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Failed to approve transfer request");
-      }
-
-      await loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Transfer approval failed");
-    } finally {
-      setBusyKey(null);
-    }
-  }
-
-  async function submitTransferReject(id: string) {
-    try {
-      setBusyKey(`transfer-reject-${id}`);
-      setError(null);
-
-      const reviewNote = getReviewNote(id);
-
-      if (!reviewNote.trim()) {
-        throw new Error("Review note is required before rejecting a transfer request");
-      }
-
-      const response = await fetch(`/api/admin/finance/transfer-requests/${id}/reject`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          reviewNote,
-        }),
-      });
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        throw new Error(payload.error ?? "Failed to reject transfer request");
-      }
-
-      await loadData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Transfer rejection failed");
     } finally {
       setBusyKey(null);
     }
@@ -795,103 +673,6 @@ export default function AdminFinancePage() {
     );
   }
 
-  function renderTransferCard(item: TransferRequestItem) {
-    const approveBusy = busyKey === `transfer-approve-${item.id}`;
-    const rejectBusy = busyKey === `transfer-reject-${item.id}`;
-    const canAct = item.status === "PENDING";
-
-    return (
-      <div key={`transfer-${item.id}`} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:shadow-md hover:border-amber-200 hover:-translate-y-0.5">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
-            <div className="text-sm text-slate-500">Transfer Request</div>
-            <div className="mt-1 text-lg font-semibold text-slate-900">
-              {formatAmount(item.amount, item.currency)}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusBadge(item.status)}`}>
-              {item.status}
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div>
-            <div className="text-xs uppercase tracking-wide text-slate-400">Sender</div>
-            <div className="mt-1 text-sm text-slate-800">{item.sender?.name || item.sender?.phone || item.sender?.email || "Unknown"}</div>
-          </div>
-
-          <div>
-            <div className="text-xs uppercase tracking-wide text-slate-400">Receiver</div>
-            <div className="mt-1 text-sm text-slate-800">{item.receiver?.name || item.receiver?.phone || item.receiver?.email || "Unknown"}</div>
-          </div>
-
-          <div>
-            <div className="text-xs uppercase tracking-wide text-slate-400">Created</div>
-            <div className="mt-1 text-sm text-slate-800">{formatDate(item.createdAt)}</div>
-          </div>
-
-          <div>
-            <div className="text-xs uppercase tracking-wide text-slate-400">Completed</div>
-            <div className="mt-1 text-sm text-slate-800">{formatDate(item.completedAt)}</div>
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <div>
-            <div className="text-xs uppercase tracking-wide text-slate-400">Approver</div>
-            <div className="mt-1 text-sm text-slate-800">{item.reviewedById ?? "—"}</div>
-            <div className="text-xs text-slate-500">{formatDate(item.reviewedAt)}</div>
-          </div>
-
-          <div className="col-span-2">
-            <div className="text-xs uppercase tracking-wide text-slate-400">Reference Note</div>
-            <div className="mt-1 text-sm text-slate-800">{item.referenceNote ?? "—"}</div>
-          </div>
-
-          <div>
-            <div className="text-xs uppercase tracking-wide text-slate-400">Review Note</div>
-            <div className="mt-1 text-sm text-slate-800">{item.reviewNote ?? "—"}</div>
-          </div>
-        </div>
-
-        {canAct && (
-          <div className="mt-4">
-            <label className="mb-2 block text-xs uppercase tracking-wide text-slate-400">
-              Action Review Note
-            </label>
-            <textarea
-              value={getReviewNote(item.id)}
-              onChange={(event) => setReviewNote(item.id, event.target.value)}
-              rows={3}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 outline-none ring-0 transition focus:border-slate-500"
-              placeholder="Enter review note. Required for reject."
-            />
-          </div>
-        )}
-
-        {canAct && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <ActionButton
-              label={approveBusy ? "Processing..." : "Approve Transfer"}
-              onClick={() => void submitTransferApprove(item.id)}
-              disabled={approveBusy || rejectBusy}
-              tone="primary"
-            />
-            <ActionButton
-              label={rejectBusy ? "Rejecting..." : "Reject Transfer"}
-              onClick={() => void submitTransferReject(item.id)}
-              disabled={approveBusy || rejectBusy}
-              tone="danger"
-            />
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-slate-50 p-6">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -930,11 +711,6 @@ export default function AdminFinancePage() {
             subtitle="New payout requests waiting for first review"
           />
           <SummaryCard
-            title="Pending Transfers"
-            value={transferPending.length}
-            subtitle="Internal P2P transfers waiting for approval"
-          />
-          <SummaryCard
             title="Deposits Awaiting Final Approval"
             value={depositAwaitingFinal.length}
             subtitle="Large deposits blocked until second approver signs"
@@ -952,7 +728,6 @@ export default function AdminFinancePage() {
             {tabButton("pending-first", "Pending First Review")}
             {tabButton("deposits", "All Deposits")}
             {tabButton("payouts", "All Payouts")}
-            {tabButton("transfers", "All Transfers")}
             {tabButton("all", "All Requests")}
           </section>
 
@@ -1009,13 +784,12 @@ export default function AdminFinancePage() {
               </p>
             </div>
 
-            {depositPending.length === 0 && payoutPending.length === 0 && transferPending.length === 0 ? (
+            {depositPending.length === 0 && payoutPending.length === 0 ? (
               <EmptyState label="No requests are currently waiting for first review." />
             ) : (
               <div className="grid gap-4">
                 {depositPending.map(renderDepositCard)}
                 {payoutPending.map(renderPayoutCard)}
-                {transferPending.map(renderTransferCard)}
               </div>
             )}
           </section>
@@ -1051,23 +825,6 @@ export default function AdminFinancePage() {
               <EmptyState label="No payout requests found." />
             ) : (
               <div className="grid gap-4">{visiblePayouts.map(renderPayoutCard)}</div>
-            )}
-          </section>
-        ) : null}
-
-        {!loading && (activeTab === "transfers" || activeTab === "all") ? (
-          <section className="space-y-4">
-            <div>
-              <h2 className="text-xl font-semibold text-slate-900">Transfer Requests</h2>
-              <p className="text-sm text-slate-500">
-                Full transfer feed with direct approval and rejection actions.
-              </p>
-            </div>
-
-            {visibleTransfers.length === 0 ? (
-              <EmptyState label="No transfer requests found." />
-            ) : (
-              <div className="grid gap-4">{visibleTransfers.map(renderTransferCard)}</div>
             )}
           </section>
         ) : null}

@@ -6,22 +6,25 @@ import { afterAll, beforeAll, beforeEach, vi } from "vitest";
 import { db } from "@/lib/db";
 
 async function resetMutableIntegrationTestState() {
-  await db.$transaction([
-    db.auctionEventLog.deleteMany(),
-    db.auctionDispute.deleteMany(),
-    db.auctionPenalty.deleteMany(),
-    db.bid.deleteMany(),
-    db.auctionParticipant.deleteMany(),
-    db.auctionImage.deleteMany(),
-    db.auction.deleteMany(),
-    db.notification.deleteMany(),
-    db.auditLog.deleteMany(),
-    db.depositRequest.deleteMany(),
-    db.payoutRequest.deleteMany(),
-    db.ledgerHold.deleteMany(),
-    db.transaction.deleteMany(),
-    db.wallet.deleteMany(),
-  ]);
+  await db.$transaction(async (tx) => {
+    await tx.auctionEventLog.deleteMany();
+    await tx.auctionDispute.deleteMany();
+    await tx.auctionPenalty.deleteMany();
+    await tx.bid.deleteMany();
+    await tx.auctionParticipant.deleteMany();
+    await tx.auctionImage.deleteMany();
+    await tx.auction.deleteMany();
+
+    await tx.notification.deleteMany();
+    await tx.auditLog.deleteMany();
+
+    await tx.ledgerHold.deleteMany();
+    await tx.depositRequest.deleteMany();
+    await tx.payoutRequest.deleteMany();
+    await tx.transaction.deleteMany();
+
+    await tx.wallet.deleteMany();
+  });
 }
 
 beforeAll(async () => {

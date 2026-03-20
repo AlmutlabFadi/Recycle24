@@ -304,4 +304,3 @@ describe("finance maker-checker approvals", () => {
     expect(updatedAccount.balance).toBe(60_000_000);
   });
 });
-
