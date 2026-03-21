@@ -23,7 +23,10 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
 
   if (!response.ok) {
     const errorMessage =
-      (payload && typeof payload === "object" && "error" in payload && typeof payload.error === "string"
+      (payload &&
+      typeof payload === "object" &&
+      "error" in payload &&
+      typeof payload.error === "string"
         ? payload.error
         : null) ?? `Request failed with status ${response.status}`;
 
@@ -333,7 +336,12 @@ export class FinanceAdminAdapter {
         accountType: row.accountType,
         ownerName: row.accountOwner,
         balances: row.walletExposure.balances,
-        debtStatus: row.walletExposure.overdueDebtCount > 0 ? "OVERDUE" : row.walletExposure.openDebtCount > 0 ? "OUTSTANDING" : "CLEAR",
+        debtStatus:
+          row.walletExposure.overdueDebtCount > 0
+            ? "OVERDUE"
+            : row.walletExposure.openDebtCount > 0
+              ? "OUTSTANDING"
+              : "CLEAR",
         restrictionStatus: row.frozenBalance > 0 ? "ACTIVE" : "NONE",
         restrictionTypes: row.frozenBalance > 0 ? ["FROZEN_DEBIT"] : [],
         riskScore: row.riskFlags.length > 0 ? 80 : 10,
@@ -385,7 +393,12 @@ export class FinanceAdminAdapter {
         {
           id: `${row.id}-updated`,
           timestamp: row.updatedAt,
-          type: row.status === "REJECTED" ? "FAILED" : row.status === "COMPLETED" ? "SETTLED" : "PROCESSING",
+          type:
+            row.status === "REJECTED"
+              ? "FAILED"
+              : row.status === "COMPLETED"
+                ? "SETTLED"
+                : "PROCESSING",
           actor: "FINANCE",
           note: `Latest status: ${row.status}`,
         },
@@ -397,22 +410,17 @@ export class FinanceAdminAdapter {
     };
   }
 
-    async getActiveHolds(): Promise<FinanceHoldRow[]> {
+  async getActiveHolds(): Promise<FinanceHoldRow[]> {
     const response = await fetch("/api/admin/finance/holds?status=OPEN&take=100", {
       method: "GET",
-      credentials: "include",
       cache: "no-store",
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to load finance holds: ${response.status}`);
-    }
-
-    const payload = (await response.json()) as {
+    const payload = await parseJsonResponse<{
       success?: boolean;
       items?: FinanceHoldRow[];
       error?: string;
-    };
+    }>(response);
 
     if (!payload.success || !Array.isArray(payload.items)) {
       throw new Error(payload.error ?? "Finance holds response was invalid");
@@ -426,14 +434,31 @@ export class FinanceAdminAdapter {
   }
 
   async getRestrictedAccounts(): Promise<FinanceRestrictionRow[]> {
-    return [];
+    const response = await fetch("/api/admin/finance/restricted?status=ACTIVE&take=100", {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    const payload = await parseJsonResponse<{
+      success?: boolean;
+      items?: FinanceRestrictionRow[];
+      error?: string;
+    }>(response);
+
+    if (!payload.success || !Array.isArray(payload.items)) {
+      throw new Error(payload.error ?? "Finance restricted response was invalid");
+    }
+
+    return payload.items;
   }
 
   async getAuditTrail(): Promise<FinanceAuditRow[]> {
     return [];
   }
 
-  async executeCommand(command: ExecuteCommandInput): Promise<{ success: boolean; message?: string }> {
+  async executeCommand(
+    command: ExecuteCommandInput,
+  ): Promise<{ success: boolean; message?: string }> {
     if (command.targetRecordType !== "REQUEST") {
       throw new Error("This action is not connected to a real backend endpoint yet.");
     }

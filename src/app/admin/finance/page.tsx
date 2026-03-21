@@ -27,7 +27,10 @@ import { FinanceSummaryCards } from "./_components/finance-summary-cards";
 import { FinanceAnalyticsPanels } from "./_components/finance-analytics-panels";
 import { FinanceFiltersBar } from "./_components/finance-filters-bar";
 import { FinanceDetailDrawer } from "./_components/finance-detail-drawer";
-import { FinanceActionModal, FinanceActionModalPayload } from "./_components/finance-action-modal";
+import {
+  FinanceActionModal,
+  FinanceActionModalPayload,
+} from "./_components/finance-action-modal";
 
 import { RequestsView } from "./_views/requests-view";
 import { HoldsView } from "./_views/holds-view";
@@ -78,7 +81,8 @@ export default function AdminFinancePage() {
   const [detailData, setDetailData] = useState<FinanceRequestDetail | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const [actionModalPayload, setActionModalPayload] = useState<FinanceActionModalPayload | null>(null);
+  const [actionModalPayload, setActionModalPayload] =
+    useState<FinanceActionModalPayload | null>(null);
 
   const fetchSummary = useCallback(async () => {
     setIsLoadingSummary(true);
@@ -285,10 +289,26 @@ export default function AdminFinancePage() {
 
   const menuButtons = [
     { id: "REQUESTS", label: "طلبات العمليات", show: true },
-    { id: "HOLDS", label: "الأرصدة المحجوزة والتأمينات", show: canViewHolds({ role: CURRENT_ROLE }) },
-    { id: "DEBTS", label: "الديون والعمولات المستحقة", show: canViewDebts({ role: CURRENT_ROLE }) },
-    { id: "RESTRICTED", label: "الحسابات المقيدة والمجمدة", show: canViewRestrictions({ role: CURRENT_ROLE }) },
-    { id: "AUDIT", label: "سجل التدقيق والإجراءات", show: canViewAudit({ role: CURRENT_ROLE }) },
+    {
+      id: "HOLDS",
+      label: "الأرصدة المحجوزة والتأمينات",
+      show: canViewHolds({ role: CURRENT_ROLE }),
+    },
+    {
+      id: "DEBTS",
+      label: "الديون والعمولات المستحقة",
+      show: canViewDebts({ role: CURRENT_ROLE }),
+    },
+    {
+      id: "RESTRICTED",
+      label: "الحسابات المقيدة والمجمدة",
+      show: canViewRestrictions({ role: CURRENT_ROLE }),
+    },
+    {
+      id: "AUDIT",
+      label: "سجل التدقيق والإجراءات",
+      show: canViewAudit({ role: CURRENT_ROLE }),
+    },
   ];
 
   return (
@@ -308,17 +328,15 @@ export default function AdminFinancePage() {
           onCardClick={handleSummaryCardClick}
         />
 
-        <FinanceAnalyticsPanels
-          summary={summary}
-          isLoading={isLoadingSummary}
-        />
+        <FinanceAnalyticsPanels summary={summary} isLoading={isLoadingSummary} />
 
         <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div>
               <h2 className="text-2xl font-black text-slate-900">مركز التحكم التشغيلي</h2>
               <p className="mt-1 text-sm leading-7 text-slate-500">
-                إدارة طوابير العمل المالي التجميد الحجز الديون والتحقيقات التنفيذية ضمن واجهة تشغيل عربية موحدة.
+                إدارة طوابير العمل المالي التجميد الحجز الديون والتحقيقات التنفيذية ضمن
+                واجهة تشغيل عربية موحدة.
               </p>
             </div>
 
@@ -389,7 +407,9 @@ export default function AdminFinancePage() {
                 isLoading={isLoadingList}
                 currentUserRole={CURRENT_ROLE}
                 onActionSelect={(actionType, recordId) =>
-                  handleOpenActionModal(actionType, recordId, undefined, { recordType: "HOLD" })
+                  handleOpenActionModal(actionType, recordId, undefined, {
+                    recordType: "HOLD",
+                  })
                 }
               />
             )}
@@ -400,7 +420,9 @@ export default function AdminFinancePage() {
                 isLoading={isLoadingList}
                 currentUserRole={CURRENT_ROLE}
                 onActionSelect={(actionType, recordId) =>
-                  handleOpenActionModal(actionType, recordId, undefined, { recordType: "DEBT" })
+                  handleOpenActionModal(actionType, recordId, undefined, {
+                    recordType: "DEBT",
+                  })
                 }
               />
             )}
@@ -411,31 +433,30 @@ export default function AdminFinancePage() {
                 isLoading={isLoadingList}
                 currentUserRole={CURRENT_ROLE}
                 onActionSelect={(actionType, recordId) =>
-                  handleOpenActionModal(actionType, recordId, undefined, { recordType: "ACCOUNT" })
+                  handleOpenActionModal(actionType, recordId, undefined, {
+                    recordType: "ACCOUNT",
+                  })
                 }
               />
             )}
 
             {activeTab === "AUDIT" && (
-              <AuditView
-                logs={auditLogs}
-                isLoading={isLoadingList}
-              />
+              <AuditView logs={auditLogs} isLoading={isLoadingList} />
             )}
           </div>
         </section>
       </div>
 
       <FinanceDetailDrawer
-        isOpen={isDrawerOpen}
-        detail={detailData}
-        isLoading={isLoadingDetail}
-        onClose={() => setIsDrawerOpen(false)}
-        currentUserRole={CURRENT_ROLE}
-        onActionSelect={(actionType, recordId, options) =>
-          handleOpenActionModal(actionType, recordId, detailData ?? undefined, options)
-        }
-      />
+  isOpen={isDrawerOpen}
+  detail={detailData}
+  isLoading={isLoadingDetail}
+  onClose={() => setIsDrawerOpen(false)}
+  currentUserRole={CURRENT_ROLE}
+  onActionSelect={(actionType, recordId, options) =>
+    handleOpenActionModal(actionType, recordId, detailData ?? undefined, options)
+  }
+/>
 
       <FinanceActionModal
         isOpen={Boolean(actionModalPayload)}

@@ -12,20 +12,31 @@ interface RestrictedAccountsViewProps {
   onActionSelect: (actionType: string, recordId: string) => void;
 }
 
-export function RestrictedAccountsView({ accounts, isLoading, currentUserRole, onActionSelect }: RestrictedAccountsViewProps) {
+export function RestrictedAccountsView({
+  accounts,
+  isLoading,
+  currentUserRole,
+  onActionSelect,
+}: RestrictedAccountsViewProps) {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between border-r-4 border-rose-900 pr-4 py-1">
+      <div className="flex items-center justify-between border-r-4 border-rose-900 py-1 pr-4">
         <div>
-          <h2 className="text-xl font-black text-slate-900 tracking-tight">الحسابات المقيدة والمجمدة</h2>
-          <p className="text-xs font-bold text-slate-500 mt-1">الحسابات تحت الحظر (Debit/Credit/Full Freeze). إدارة أسباب الحظر وفك القيود.</p>
+          <h2 className="tracking-tight text-xl font-black text-slate-900">
+            الحسابات المقيدة والمجمدة
+          </h2>
+          <p className="mt-1 text-xs font-bold text-slate-500">
+            الحسابات الواقعة تحت التقييد المالي أو التجميد أو القفل التشغيلي المرتبط
+            بالحساب أو المديونية.
+          </p>
         </div>
       </div>
-      <FinanceRestrictedAccountsTable 
-        accounts={accounts} 
-        isLoading={isLoading} 
-        currentUserRole={currentUserRole} 
-        onActionSelect={onActionSelect} 
+
+      <FinanceRestrictedAccountsTable
+        accounts={accounts}
+        isLoading={isLoading}
+        currentUserRole={currentUserRole}
+        onActionSelect={onActionSelect}
       />
     </div>
   );
