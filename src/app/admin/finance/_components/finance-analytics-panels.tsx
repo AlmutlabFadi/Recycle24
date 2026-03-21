@@ -1,15 +1,11 @@
 ﻿"use client";
 
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { FinanceDashboardSummary } from "../_lib/types";
 
 interface FinanceAnalyticsPanelsProps {
   summary: FinanceDashboardSummary | null;
   isLoading: boolean;
-}
-
-function formatNumber(value: number) {
-  return value.toLocaleString("ar-SY");
 }
 
 function calcPercent(part: number, whole: number) {
@@ -21,130 +17,146 @@ export function FinanceAnalyticsPanels({
   summary,
   isLoading,
 }: FinanceAnalyticsPanelsProps) {
-  if (isLoading || !summary) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const model = useMemo(() => {
+    if (!summary) return null;
+
+    const queueTotal =
+      summary.pendingFirstReview +
+      summary.awaitingFinalApproval +
+      summary.processingRequests +
+      summary.failedRequestsToday;
+
+    const moneyBase =
+      summary.totalHeldFunds +
+      summary.auctionDepositsHeld +
+      summary.outstandingDebts +
+      summary.overdueDebts;
+
+    return {
+      queueTotal,
+      firstReviewPercent: calcPercent(summary.pendingFirstReview, queueTotal),
+      finalApprovalPercent: calcPercent(summary.awaitingFinalApproval, queueTotal),
+      processingPercent: calcPercent(summary.processingRequests, queueTotal),
+      failedPercent: calcPercent(summary.failedRequestsToday, queueTotal),
+      heldPercent: calcPercent(summary.totalHeldFunds, moneyBase),
+      depositPercent: calcPercent(summary.auctionDepositsHeld, moneyBase),
+      debtPercent: calcPercent(summary.outstandingDebts, moneyBase),
+      overduePercent: calcPercent(summary.overdueDebts, moneyBase),
+    };
+  }, [summary]);
+
+  if (isLoading || !summary || !model) {
     return (
-      <section className="grid gap-4 xl:grid-cols-3">
-        {Array.from({ length: 3 }).map((_, idx) => (
-          <div
-            key={idx}
-            className="h-64 animate-pulse rounded-[24px] border border-slate-200 bg-white shadow-sm"
-          />
-        ))}
+      <section className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="h-32 animate-pulse rounded-2xl bg-slate-100" />
       </section>
     );
   }
 
-  const backlogTotal =
-    summary.pendingFirstReview +
-    summary.awaitingFinalApproval +
-    summary.processingRequests +
-    summary.failedRequestsToday;
-
-  const firstReviewPercent = calcPercent(summary.pendingFirstReview, backlogTotal);
-  const finalApprovalPercent = calcPercent(summary.awaitingFinalApproval, backlogTotal);
-  const processingPercent = calcPercent(summary.processingRequests, backlogTotal);
-  const failedPercent = calcPercent(summary.failedRequestsToday, backlogTotal);
-
-  const liquidityBase =
-    summary.totalHeldFunds +
-    summary.auctionDepositsHeld +
-    summary.outstandingDebts +
-    summary.overdueDebts;
-
-  const heldPercent = calcPercent(summary.totalHeldFunds, liquidityBase);
-  const depositPercent = calcPercent(summary.auctionDepositsHeld, liquidityBase);
-  const debtPercent = calcPercent(summary.outstandingDebts, liquidityBase);
-  const overduePercent = calcPercent(summary.overdueDebts, liquidityBase);
-
   return (
-    <section className="grid gap-4 xl:grid-cols-[1.2fr_1fr_1fr]">
-      <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-black text-slate-900">اختناق الطابور التشغيلي</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              يوضح أين يتكدس العمل الآن داخل دورة المراجعة والتنفيذ.
-            </p>
-          </div>
-          <div className="text-3xl font-black text-slate-900">{formatNumber(backlogTotal)}</div>
-        </div>
-
-        <div className="mt-6 h-4 overflow-hidden rounded-full bg-slate-100">
-          <div className="flex h-full w-full">
-            <div className="bg-amber-400" style={{ width: `${firstReviewPercent}%` }} />
-            <div className="bg-blue-500" style={{ width: `${finalApprovalPercent}%` }} />
-            <div className="bg-emerald-500" style={{ width: `${processingPercent}%` }} />
-            <div className="bg-rose-500" style={{ width: `${failedPercent}%` }} />
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <MetricCard label="بانتظار المراجعة الأولى" value={summary.pendingFirstReview} tone="amber" />
-          <MetricCard label="بانتظار الاعتماد النهائي" value={summary.awaitingFinalApproval} tone="blue" />
-          <MetricCard label="طلبات قيد التنفيذ" value={summary.processingRequests} tone="emerald" />
-          <MetricCard label="طلبات فاشلة اليوم" value={summary.failedRequestsToday} tone="rose" />
-        </div>
-      </div>
-
-      <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-[24px] border border-slate-200 bg-white shadow-sm">
+      <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-lg font-black text-slate-900">تحليل السيولة والالتزامات</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            توزيع مبسط بين المحجوزات والتأمينات والديون الحالية.
+          <h2 className="text-lg font-black text-slate-900">التحليلات التشغيلية السريعة</h2>
+          <p className="mt-1 text-sm leading-7 text-slate-500">
+            قسم مساعد للقراءة السريعة. ليس هو قلب اللوحة وقابل للطي حتى لا يزاحم العمل التنفيذي.
           </p>
         </div>
 
-        <div className="mt-6 h-4 overflow-hidden rounded-full bg-slate-100">
-          <div className="flex h-full w-full">
-            <div className="bg-slate-500" style={{ width: `${heldPercent}%` }} />
-            <div className="bg-indigo-500" style={{ width: `${depositPercent}%` }} />
-            <div className="bg-orange-500" style={{ width: `${debtPercent}%` }} />
-            <div className="bg-rose-500" style={{ width: `${overduePercent}%` }} />
-          </div>
-        </div>
-
-        <div className="mt-6 space-y-3">
-          <ListMetric label="إجمالي الأرصدة المحجوزة" value={summary.totalHeldFunds} accent="text-slate-700" />
-          <ListMetric label="تأمينات المزادات" value={summary.auctionDepositsHeld} accent="text-indigo-700" />
-          <ListMetric label="الديون المستحقة" value={summary.outstandingDebts} accent="text-orange-700" />
-          <ListMetric label="الديون المتأخرة" value={summary.overdueDebts} accent="text-rose-700" />
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsExpanded((prev) => !prev)}
+          className="rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+        >
+          {isExpanded ? "إخفاء التحليلات" : "إظهار التحليلات"}
+        </button>
       </div>
 
-      <div className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-sm">
-        <div>
-          <h2 className="text-lg font-black text-slate-900">وضع المخاطر والقيود</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            مقياس سريع للحسابات التي تحتاج تدخلا رقابيا أو تجميدا أو تحقيقا.
-          </p>
-        </div>
+      {isExpanded && (
+        <div className="grid gap-4 border-t border-slate-200 p-5 xl:grid-cols-3">
+          <PanelCard
+            title="اختناق الطابور"
+            subtitle="أماكن التكدس الحالية داخل دورة المعالجة"
+          >
+            <div className="text-3xl font-black text-slate-900">
+              {model.queueTotal.toLocaleString("ar-SY")}
+            </div>
 
-        <div className="mt-6 grid gap-3">
-          <RiskBox
-            label="حسابات مجمدة"
-            value={summary.frozenAccounts}
-            note="كيانات عليها قيود مالية نشطة"
-            tone="rose"
-          />
-          <RiskBox
-            label="حسابات عالية المخاطر"
-            value={summary.highRiskAccounts}
-            note="نتائج مراقبة سلوك أو تعارضات تشغيلية"
-            tone="amber"
-          />
-          <RiskBox
-            label="طلبات تحتاج اعتمادا نهائيا"
-            value={summary.awaitingFinalApproval}
-            note="تتطلب قرارا إداريا نهائيا قبل الصرف"
-            tone="blue"
-          />
+            <div className="mt-4 h-4 overflow-hidden rounded-full bg-slate-100">
+              <div className="flex h-full w-full">
+                <div className="bg-amber-400" style={{ width: `${model.firstReviewPercent}%` }} />
+                <div className="bg-blue-500" style={{ width: `${model.finalApprovalPercent}%` }} />
+                <div className="bg-emerald-500" style={{ width: `${model.processingPercent}%` }} />
+                <div className="bg-rose-500" style={{ width: `${model.failedPercent}%` }} />
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <MiniMetric label="مراجعة أولى" value={summary.pendingFirstReview} tone="amber" />
+              <MiniMetric label="اعتماد نهائي" value={summary.awaitingFinalApproval} tone="blue" />
+              <MiniMetric label="قيد التنفيذ" value={summary.processingRequests} tone="emerald" />
+              <MiniMetric label="فشل اليوم" value={summary.failedRequestsToday} tone="rose" />
+            </div>
+          </PanelCard>
+
+          <PanelCard
+            title="السيولة والالتزامات"
+            subtitle="قراءة مبسطة للتوازن بين الأموال المحجوزة والديون"
+          >
+            <div className="mt-1 h-4 overflow-hidden rounded-full bg-slate-100">
+              <div className="flex h-full w-full">
+                <div className="bg-slate-500" style={{ width: `${model.heldPercent}%` }} />
+                <div className="bg-indigo-500" style={{ width: `${model.depositPercent}%` }} />
+                <div className="bg-orange-500" style={{ width: `${model.debtPercent}%` }} />
+                <div className="bg-rose-500" style={{ width: `${model.overduePercent}%` }} />
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <RowMetric label="إجمالي الأرصدة المحجوزة" value={summary.totalHeldFunds} />
+              <RowMetric label="تأمينات المزادات" value={summary.auctionDepositsHeld} />
+              <RowMetric label="الديون المستحقة" value={summary.outstandingDebts} />
+              <RowMetric label="الديون المتأخرة" value={summary.overdueDebts} danger />
+            </div>
+          </PanelCard>
+
+          <PanelCard
+            title="المخاطر والقيود"
+            subtitle="مؤشرات تستحق انتباه الإدارة أو المراجعة الخاصة"
+          >
+            <div className="grid gap-3">
+              <FlagCard label="حسابات مجمدة" value={summary.frozenAccounts} tone="rose" />
+              <FlagCard label="حسابات عالية المخاطر" value={summary.highRiskAccounts} tone="amber" />
+              <FlagCard label="طلبات تنتظر اعتمادا نهائيا" value={summary.awaitingFinalApproval} tone="blue" />
+            </div>
+          </PanelCard>
         </div>
-      </div>
+      )}
     </section>
   );
 }
 
-function MetricCard({
+function PanelCard({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-[20px] border border-slate-200 bg-slate-50 p-5">
+      <h3 className="text-base font-black text-slate-900">{title}</h3>
+      <p className="mt-1 text-sm leading-6 text-slate-500">{subtitle}</p>
+      <div className="mt-4">{children}</div>
+    </div>
+  );
+}
+
+function MiniMetric({
   label,
   value,
   tone,
@@ -153,7 +165,7 @@ function MetricCard({
   value: number;
   tone: "amber" | "blue" | "emerald" | "rose";
 }) {
-  const toneMap: Record<string, string> = {
+  const tones: Record<string, string> = {
     amber: "bg-amber-50 text-amber-700 border-amber-200",
     blue: "bg-blue-50 text-blue-700 border-blue-200",
     emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -161,56 +173,51 @@ function MetricCard({
   };
 
   return (
-    <div className={`rounded-2xl border p-4 ${toneMap[tone]}`}>
+    <div className={`rounded-2xl border px-4 py-3 ${tones[tone]}`}>
       <div className="text-xs font-black">{label}</div>
-      <div className="mt-2 text-2xl font-black">{value.toLocaleString("ar-SY")}</div>
+      <div className="mt-1 text-xl font-black">{value.toLocaleString("ar-SY")}</div>
     </div>
   );
 }
 
-function ListMetric({
+function RowMetric({
   label,
   value,
-  accent,
+  danger,
 }: {
   label: string;
   value: number;
-  accent: string;
+  danger?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-      <div className="text-sm font-bold text-slate-600">{label}</div>
-      <div className={`text-lg font-black ${accent}`}>{value.toLocaleString("ar-SY")}</div>
+    <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3">
+      <span className="text-sm font-bold text-slate-600">{label}</span>
+      <span className={`text-lg font-black ${danger ? "text-rose-700" : "text-slate-900"}`}>
+        {value.toLocaleString("ar-SY")}
+      </span>
     </div>
   );
 }
 
-function RiskBox({
+function FlagCard({
   label,
   value,
-  note,
   tone,
 }: {
   label: string;
   value: number;
-  note: string;
   tone: "rose" | "amber" | "blue";
 }) {
-  const toneMap: Record<string, string> = {
-    rose: "from-rose-50 to-white border-rose-200 text-rose-700",
-    amber: "from-amber-50 to-white border-amber-200 text-amber-700",
-    blue: "from-blue-50 to-white border-blue-200 text-blue-700",
+  const tones: Record<string, string> = {
+    rose: "border-rose-200 bg-rose-50 text-rose-700",
+    amber: "border-amber-200 bg-amber-50 text-amber-700",
+    blue: "border-blue-200 bg-blue-50 text-blue-700",
   };
 
   return (
-    <div className={`rounded-2xl border bg-gradient-to-l p-4 ${toneMap[tone]}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-sm font-black">{label}</div>
-          <div className="mt-1 text-xs leading-6 text-slate-500">{note}</div>
-        </div>
-        <div className="text-3xl font-black">{value.toLocaleString("ar-SY")}</div>
-      </div>
+    <div className={`rounded-2xl border px-4 py-4 ${tones[tone]}`}>
+      <div className="text-sm font-black">{label}</div>
+      <div className="mt-2 text-3xl font-black">{value.toLocaleString("ar-SY")}</div>
     </div>
   );
 }
