@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
@@ -7,27 +7,20 @@ type SupportRow = {
   totalSupport: unknown;
 };
 
-type UserSummary = {
-  id: string;
-  name: string | null;
-  phone: string | null;
-  email: string | null;
-  isLocked: boolean;
-  lockReason: string | null;
-};
+function getStartOfTodayUtc() {
+  const now = new Date();
+
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
 
 export async function GET(_request: NextRequest) {
   try {
     const auth = await requirePermission("MANAGE_FINANCE");
 
     if (!auth.ok) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: auth.status }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: auth.status });
     }
 
-    // Compatibility treasury snapshot for current admin UI
     let companyWallet = await db.companyWallet.findFirst();
 
     if (!companyWallet) {
@@ -36,252 +29,318 @@ export async function GET(_request: NextRequest) {
       });
     }
 
-    // Total government support / waived value from journal metadata
-    const supportRows = await db.$queryRaw<SupportRow[]>`
-      SELECT COALESCE(SUM((metadata->>'originalAmount')::numeric), 0) AS "totalSupport"
-      FROM "JournalLine"
-      WHERE COALESCE((metadata->>'isExempt')::boolean, false) = true
-    `;
+    const startOfTodayUtc = getStartOfTodayUtc();
 
-    const totalSupportSYP = Number(supportRows[0]?.totalSupport ?? 0);
-
-    // Total open escrow / holds
-    const escrowResult = await db.ledgerHold.aggregate({
+    const restrictedUserIds = await db.user.findMany({
       where: {
-        status: "OPEN",
+        OR: [{ isLocked: true }, { status: { not: "ACTIVE" } }],
       },
-      _sum: {
-        amount: true,
-      },
-    });
-
-    const totalEscrowSYP = escrowResult._sum.amount ?? 0;
-
-    // Ledger-backed user account overview
-    const ledgerAccounts = await db.ledgerAccount.findMany({
-      where: {
-        ownerId: {
-          not: null,
-        },
-        currency: "SYP",
-      },
-      orderBy: [
-        {
-          balance: "desc",
-        },
-        {
-          updatedAt: "desc",
-        },
-      ],
-      take: 20,
       select: {
         id: true,
-        ownerId: true,
-        balance: true,
-        status: true,
-        debtStatus: true,
-        lockedByDebt: true,
-        debtDueAt: true,
-        updatedAt: true,
       },
     });
 
-    const ownerIds = ledgerAccounts
-      .map((account) => account.ownerId)
-      .filter((value): value is string => Boolean(value));
+    const restrictedUserIdList = restrictedUserIds.map((user) => user.id);
 
-    const users = ownerIds.length
-      ? await db.user.findMany({
+    const [supportRows, totalEscrow, auctionEscrow, restrictedAccountsCount, overdueDebtCount] =
+      await Promise.all([
+        db.$queryRaw<SupportRow[]>`
+          SELECT COALESCE(SUM((metadata->>'originalAmount')::numeric), 0) AS "totalSupport"
+          FROM "JournalLine"
+          WHERE COALESCE((metadata->>'isExempt')::boolean, false) = true
+        `,
+        db.ledgerHold.aggregate({
           where: {
-            id: {
-              in: ownerIds,
-            },
+            status: "OPEN",
           },
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            email: true,
-            isLocked: true,
-            lockReason: true,
+          _sum: {
+            amount: true,
           },
-        })
-      : [];
-
-    const userMap = new Map<string, UserSummary>(
-      users.map((user) => [
-        user.id,
-        {
-          id: user.id,
-          name: user.name,
-          phone: user.phone,
-          email: user.email,
-          isLocked: user.isLocked,
-          lockReason: user.lockReason,
-        },
-      ])
-    );
-
-    const userWallets = ledgerAccounts.map((account) => {
-      const user =
-        (account.ownerId ? userMap.get(account.ownerId) : null) ?? null;
-
-      return {
-        id: account.id,
-        balanceSYP: account.balance,
-        balanceUSD: 0,
-        debtStatus: account.debtStatus,
-        lockedByDebt: account.lockedByDebt,
-        debtDueAt: account.debtDueAt,
-        user: {
-          name: user?.name ?? "Unknown",
-          phone: user?.phone ?? "",
-          email: user?.email ?? "",
-          isLocked: user?.isLocked ?? false,
-          lockReason: user?.lockReason ?? null,
-        },
-      };
-    });
-
-    const riskAccountsCount = await db.ledgerAccount.count({
-      where: {
-        ownerId: {
-          not: null,
-        },
-        OR: [
-          {
-            balance: {
-              lt: 0,
-            },
+        }),
+        db.ledgerHold.aggregate({
+          where: {
+            status: "OPEN",
+            OR: [{ referenceType: "AUCTION" }, { referenceType: "AUCTION_DEPOSIT" }],
           },
-          {
-            lockedByDebt: true,
+          _sum: {
+            amount: true,
           },
-          {
-            debtStatus: {
-              not: "CLEAR",
-            },
+        }),
+        db.ledgerAccount.count({
+          where: {
+            ownerId: { not: null },
+            OR: [
+              { lockedByDebt: true },
+              { status: { not: "ACTIVE" } },
+              ...(restrictedUserIdList.length > 0 ? [{ ownerId: { in: restrictedUserIdList } }] : []),
+            ],
           },
-        ],
-      },
-    });
-
-    const pendingDepositRequests = await db.depositRequest.findMany({
-      where: {
-        status: "PENDING",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 10,
-      select: {
-        id: true,
-        amount: true,
-        currency: true,
-        method: true,
-        status: true,
-        proofUrl: true,
-        requestNote: true,
-        createdAt: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            email: true,
-          },
-        },
-      },
-    });
-
-    const pendingPayoutRequests = await db.payoutRequest.findMany({
-      where: {
-        status: "PENDING",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 10,
-      select: {
-        id: true,
-        amount: true,
-        currency: true,
-        method: true,
-        destination: true,
-        status: true,
-        requestNote: true,
-        createdAt: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            email: true,
-          },
-        },
-      },
-    });
-
-    const activeWaivers = await db.accountWaiverPolicy.findMany({
-      where: {
-        isActive: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 20,
-      select: {
-        id: true,
-        accountId: true,
-        waiveCommissions: true,
-        waiveAuctionDeposits: true,
-        waiveServiceFees: true,
-        reason: true,
-        approvedById: true,
-        createdAt: true,
-        account: {
-          select: {
-            id: true,
-            ownerId: true,
-            slug: true,
-            balance: true,
-            debtStatus: true,
-            lockedByDebt: true,
-          },
-        },
-      },
-    });
-
-    const overdueAccounts = await db.ledgerAccount.findMany({
-      where: {
-        ownerId: {
-          not: null,
-        },
-        OR: [
-          {
+        }),
+        db.ledgerAccount.count({
+          where: {
+            ownerId: { not: null },
             debtStatus: "OVERDUE",
           },
-          {
-            lockedByDebt: true,
+        }),
+      ]);
+
+    const totalSupportSYP = Number(supportRows[0]?.totalSupport ?? 0);
+    const totalEscrowSYP = totalEscrow._sum.amount ?? 0;
+    const auctionDepositsHeld = auctionEscrow._sum.amount ?? 0;
+
+    const [
+      pendingFirstReview,
+      awaitingFinalApproval,
+      processingRequests,
+      failedRequestsToday,
+      outstandingDebtAccounts,
+      riskAccountsCount,
+      pendingDepositRequests,
+      pendingPayoutRequests,
+      pendingTransferRequests,
+      activeWaivers,
+      overdueAccounts,
+    ] = await Promise.all([
+      Promise.all([
+        db.depositRequest.count({
+          where: {
+            OR: [
+              { approvalStage: "AWAITING_FIRST_REVIEW" },
+              { status: "PENDING", approvalStage: "NONE" },
+            ],
           },
-        ],
-      },
-      orderBy: {
-        updatedAt: "desc",
-      },
-      take: 20,
-      select: {
-        id: true,
-        ownerId: true,
-        slug: true,
-        balance: true,
-        debtStatus: true,
-        debtDueAt: true,
-        lockedByDebt: true,
-        debtLockReason: true,
-        updatedAt: true,
-      },
-    });
+        }),
+        db.payoutRequest.count({
+          where: {
+            OR: [
+              { approvalStage: "AWAITING_FIRST_REVIEW" },
+              { status: "PENDING", approvalStage: "NONE" },
+            ],
+          },
+        }),
+        db.transferRequest.count({
+          where: {
+            status: "PENDING",
+          },
+        }),
+      ]).then(([deposits, payouts, transfers]) => deposits + payouts + transfers),
+
+      Promise.all([
+        db.depositRequest.count({
+          where: {
+            approvalStage: "AWAITING_FINAL_APPROVAL",
+          },
+        }),
+        db.payoutRequest.count({
+          where: {
+            approvalStage: "AWAITING_FINAL_APPROVAL",
+          },
+        }),
+      ]).then(([deposits, payouts]) => deposits + payouts),
+
+      Promise.all([
+        db.depositRequest.count({
+          where: {
+            status: "PROCESSING",
+          },
+        }),
+        db.payoutRequest.count({
+          where: {
+            status: "PROCESSING",
+          },
+        }),
+        db.transferRequest.count({
+          where: {
+            status: "PROCESSING",
+          },
+        }),
+      ]).then(([deposits, payouts, transfers]) => deposits + payouts + transfers),
+
+      Promise.all([
+        db.depositRequest.count({
+          where: {
+            createdAt: { gte: startOfTodayUtc },
+            status: { in: ["FAILED", "REJECTED"] },
+          },
+        }),
+        db.payoutRequest.count({
+          where: {
+            createdAt: { gte: startOfTodayUtc },
+            status: { in: ["FAILED", "REJECTED"] },
+          },
+        }),
+        db.transferRequest.count({
+          where: {
+            createdAt: { gte: startOfTodayUtc },
+            status: { in: ["FAILED", "REJECTED"] },
+          },
+        }),
+      ]).then(([deposits, payouts, transfers]) => deposits + payouts + transfers),
+
+      db.ledgerAccount.count({
+        where: {
+          ownerId: { not: null },
+          OR: [
+            { debtStatus: { not: "CLEAR" } },
+            { lockedByDebt: true },
+            { balance: { lt: 0 } },
+          ],
+        },
+      }),
+
+      db.ledgerAccount.count({
+        where: {
+          ownerId: { not: null },
+          OR: [
+            { balance: { lt: 0 } },
+            { lockedByDebt: true },
+            { debtStatus: { not: "CLEAR" } },
+            ...(restrictedUserIdList.length > 0 ? [{ ownerId: { in: restrictedUserIdList } }] : []),
+          ],
+        },
+      }),
+
+      db.depositRequest.findMany({
+        where: {
+          status: "PENDING",
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 10,
+        select: {
+          id: true,
+          amount: true,
+          currency: true,
+          method: true,
+          status: true,
+          proofUrl: true,
+          requestNote: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              email: true,
+            },
+          },
+        },
+      }),
+
+      db.payoutRequest.findMany({
+        where: {
+          status: "PENDING",
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 10,
+        select: {
+          id: true,
+          amount: true,
+          currency: true,
+          method: true,
+          destination: true,
+          status: true,
+          requestNote: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              email: true,
+            },
+          },
+        },
+      }),
+
+      db.transferRequest.findMany({
+        where: {
+          status: "PENDING",
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 10,
+        select: {
+          id: true,
+          amount: true,
+          currency: true,
+          status: true,
+          referenceNote: true,
+          createdAt: true,
+          sender: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              email: true,
+            },
+          },
+          receiver: {
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              email: true,
+            },
+          },
+        },
+      }),
+
+      db.accountWaiverPolicy.findMany({
+        where: {
+          isActive: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 20,
+        select: {
+          id: true,
+          accountId: true,
+          waiveCommissions: true,
+          waiveAuctionDeposits: true,
+          waiveServiceFees: true,
+          reason: true,
+          approvedById: true,
+          createdAt: true,
+          account: {
+            select: {
+              id: true,
+              ownerId: true,
+              slug: true,
+              balance: true,
+              debtStatus: true,
+              lockedByDebt: true,
+            },
+          },
+        },
+      }),
+
+      db.ledgerAccount.findMany({
+        where: {
+          ownerId: { not: null },
+          OR: [{ debtStatus: "OVERDUE" }, { lockedByDebt: true }],
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 20,
+        select: {
+          id: true,
+          ownerId: true,
+          slug: true,
+          balance: true,
+          debtStatus: true,
+          debtDueAt: true,
+          lockedByDebt: true,
+          debtLockReason: true,
+        },
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,
@@ -289,11 +348,23 @@ export async function GET(_request: NextRequest) {
       totalSupportSYP,
       totalEscrowSYP,
       riskAccountsCount,
-      userWallets,
       pendingDepositRequests,
       pendingPayoutRequests,
+      pendingTransferRequests,
       activeWaivers,
       overdueAccounts,
+      summary: {
+        pendingFirstReview,
+        awaitingFinalApproval,
+        processingRequests,
+        failedRequestsToday,
+        frozenAccounts: restrictedAccountsCount,
+        totalHeldFunds: totalEscrowSYP,
+        auctionDepositsHeld,
+        outstandingDebts: outstandingDebtAccounts,
+        overdueDebts: overdueDebtCount,
+        highRiskAccounts: riskAccountsCount,
+      },
     });
   } catch (error) {
     console.error("Admin finance GET error:", error);
@@ -303,7 +374,10 @@ export async function GET(_request: NextRequest) {
         success: false,
         error: "Failed to load finance admin data",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
+
+
+

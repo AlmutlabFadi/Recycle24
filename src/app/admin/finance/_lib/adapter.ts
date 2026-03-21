@@ -88,36 +88,23 @@ function resolveRequestActionEndpoint(
 }
 
 export class FinanceAdminAdapter {
-  async getSummaryMetrics(): Promise<FinanceDashboardSummary> {
-    const response = await fetch("/api/admin/finance", {
-      method: "GET",
-      cache: "no-store",
-    });
+async getSummaryMetrics(): Promise<FinanceDashboardSummary> {
+  const response = await fetch("/api/admin/finance", {
+    method: "GET",
+    cache: "no-store",
+  });
 
-    const payload = await parseJsonResponse<{
-      success: boolean;
-      totalEscrowSYP?: number;
-      riskAccountsCount?: number;
-      overdueAccounts?: Array<unknown>;
-      pendingDepositRequests?: Array<unknown>;
-      pendingPayoutRequests?: Array<unknown>;
-    }>(response);
+  const payload = await parseJsonResponse<{
+    success: boolean;
+    summary?: FinanceDashboardSummary;
+  }>(response);
 
-    return {
-      pendingFirstReview: Array.isArray(payload.pendingDepositRequests)
-        ? payload.pendingDepositRequests.length
-        : 0,
-      awaitingFinalApproval: 0,
-      processingRequests: 0,
-      failedRequestsToday: 0,
-      frozenAccounts: Array.isArray(payload.overdueAccounts) ? payload.overdueAccounts.length : 0,
-      totalHeldFunds: payload.totalEscrowSYP ?? 0,
-      auctionDepositsHeld: 0,
-      outstandingDebts: 0,
-      overdueDebts: Array.isArray(payload.overdueAccounts) ? payload.overdueAccounts.length : 0,
-      highRiskAccounts: payload.riskAccountsCount ?? 0,
-    };
+  if (!payload.summary) {
+    throw new Error("Finance summary payload is missing.");
   }
+
+  return payload.summary;
+}
 
   async getRequestsQueue(filters: Partial<FinanceQueueFilters>): Promise<FinanceRequestRow[]> {
     const query = buildRequestQuery(filters);
