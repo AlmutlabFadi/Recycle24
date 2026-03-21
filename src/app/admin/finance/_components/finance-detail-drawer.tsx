@@ -11,7 +11,14 @@ interface FinanceDetailDrawerProps {
   isLoading: boolean;
   onClose: () => void;
   currentUserRole: AdminRole;
-  onActionSelect: (actionType: string, recordId: string) => void;
+  onActionSelect: (
+    actionType: string,
+    recordId: string,
+    options?: {
+      recordType?: "REQUEST" | "ACCOUNT" | "HOLD" | "DEBT" | "RESTRICTION";
+      requestType?: "DEPOSIT" | "PAYOUT" | "TRANSFER" | null;
+    },
+  ) => void;
 }
 
 function formatNumber(value: number) {
@@ -52,16 +59,17 @@ export function FinanceDetailDrawer({
             </div>
           ) : (
             <div className="space-y-8">
-              <div className="rounded-xl border border-slate-200 bg-slate-900 p-6 shadow-xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+              <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-900 p-6 shadow-xl group">
+                <div className="absolute top-0 right-0 -mr-16 -mt-16 h-32 w-32 rounded-full bg-blue-500/10 transition-transform duration-700 group-hover:scale-150"></div>
                 <div className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">
                   نافذة التحكم السريع
                 </div>
                 <FinanceActionMenu
                   inline
-                  context={{ role: currentUserRole, selectedRow: detail as any }}
+                  context={{ role: currentUserRole, selectedRow: detail }}
                   recordId={detail.id}
                   recordType="REQUEST"
+                  requestType={detail.type}
                   onSelectAction={onActionSelect}
                 />
               </div>
@@ -73,7 +81,7 @@ export function FinanceDetailDrawer({
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="block text-xs font-black text-slate-400">رقم الطلب</span>
-                    <span className="font-black text-slate-900 font-mono tracking-tight">{detail.id}</span>
+                    <span className="font-mono font-black tracking-tight text-slate-900">{detail.id}</span>
                   </div>
                   <div>
                     <span className="block text-xs font-black text-slate-400">النوع</span>
@@ -87,7 +95,7 @@ export function FinanceDetailDrawer({
                   </div>
                   <div>
                     <span className="block text-xs font-black text-slate-400">القيمة</span>
-                    <span className="font-black text-slate-900 text-lg">
+                    <span className="text-lg font-black text-slate-900">
                       {formatNumber(detail.amount)} {detail.currency}
                     </span>
                   </div>
@@ -132,7 +140,7 @@ export function FinanceDetailDrawer({
                 <div className="space-y-3">
                   {detail.snapshot.balances.map((bal) => (
                     <div key={bal.currency} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                      <div className="mb-3 text-xs font-black uppercase tracking-wider text-slate-500 border-b border-slate-200 pb-1">
+                      <div className="mb-3 border-b border-slate-200 pb-1 text-xs font-black uppercase tracking-wider text-slate-500">
                         تعرض العملة: {bal.currency}
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-5">
@@ -168,11 +176,13 @@ export function FinanceDetailDrawer({
                     </span>
                     <ul className="space-y-2">
                       {detail.snapshot.riskFlags.map((flag) => (
-                        <li key={flag.id} className="text-xs font-bold text-rose-900 flex items-start gap-2">
-                          <span className="bg-rose-600 text-white px-1.5 py-0.5 rounded text-[10px] shrink-0">{flag.code}</span>
+                        <li key={flag.id} className="flex items-start gap-2 text-xs font-bold text-rose-900">
+                          <span className="shrink-0 rounded bg-rose-600 px-1.5 py-0.5 text-[10px] text-white">{flag.code}</span>
                           <div>
                             <span className="font-black">{flag.description}</span>
-                            <span className="mr-2 text-rose-700/70 border-r border-rose-200 pr-2 uppercase">[{flag.severity}]</span>
+                            <span className="mr-2 border-r border-rose-200 pr-2 uppercase text-rose-700/70">
+                              [{flag.severity}]
+                            </span>
                           </div>
                         </li>
                       ))}
@@ -191,11 +201,15 @@ export function FinanceDetailDrawer({
                       <div className="mt-1 flex-shrink-0">
                         {step.status === "APPROVED" ? (
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
                           </div>
                         ) : step.status === "REJECTED" ? (
                           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-500 text-white shadow-lg">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
                           </div>
                         ) : (
                           <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-300 bg-slate-100 text-slate-500 shadow-inner">
@@ -203,19 +217,27 @@ export function FinanceDetailDrawer({
                           </div>
                         )}
                       </div>
-                      <div className="flex-1 bg-slate-50/50 rounded-xl p-4 border border-slate-100/50">
-                        <div className="text-sm font-black text-slate-900 border-b border-slate-100 pb-1 mb-2">
+                      <div className="flex-1 rounded-xl border border-slate-100/50 bg-slate-50/50 p-4">
+                        <div className="mb-2 border-b border-slate-100 pb-1 text-sm font-black text-slate-900">
                           {step.role}
-                          <span className={`mr-2 px-1.5 py-0.5 rounded text-[10px] uppercase ${
-                            step.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' : 
-                            step.status === 'REJECTED' ? 'bg-rose-100 text-rose-700' : 'bg-slate-200 text-slate-600'
-                          }`}>{step.status}</span>
+                          <span className={`mr-2 rounded px-1.5 py-0.5 text-[10px] uppercase ${
+                            step.status === "APPROVED"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : step.status === "REJECTED"
+                                ? "bg-rose-100 text-rose-700"
+                                : "bg-slate-200 text-slate-600"
+                          }`}>
+                            {step.status}
+                          </span>
                         </div>
                         <div className="text-[11px] font-black text-blue-600">
-                          {step.actorName || "بانتظار التكليف..."} • <span dir="ltr" className="text-slate-400">{step.timestamp ? new Date(step.timestamp).toLocaleString("en-US") : "---"}</span>
+                          {step.actorName || "بانتظار التكليف..."} •{" "}
+                          <span dir="ltr" className="text-slate-400">
+                            {step.timestamp ? new Date(step.timestamp).toLocaleString("en-US") : "---"}
+                          </span>
                         </div>
                         {step.note && (
-                          <div className="mt-2 rounded border border-slate-200 bg-white p-3 text-xs italic font-medium text-slate-700 border-r-4 border-r-blue-500">
+                          <div className="mt-2 border-r-4 border-r-blue-500 rounded border border-slate-200 bg-white p-3 text-xs font-medium italic text-slate-700">
                             "{step.note}"
                           </div>
                         )}
@@ -233,13 +255,13 @@ export function FinanceDetailDrawer({
                   {detail.timeline.map((event) => (
                     <div key={event.id} className="relative">
                       <div className="absolute -right-[33px] top-1 h-3.5 w-3.5 rounded-full border-4 border-white bg-blue-600 shadow-md" />
-                      <div className="mb-1 text-[10px] font-black text-slate-400 uppercase tracking-widest" dir="ltr">
+                      <div className="mb-1 text-[10px] font-black uppercase tracking-widest text-slate-400" dir="ltr">
                         {new Date(event.timestamp).toLocaleString("en-US")}
                       </div>
                       <div className="text-sm font-black text-slate-900">{event.type}</div>
-                      <div className="text-[11px] font-black text-blue-600 mt-0.5">المسؤول: {event.actor}</div>
+                      <div className="mt-0.5 text-[11px] font-black text-blue-600">المسؤول: {event.actor}</div>
                       {event.note && (
-                        <div className="mt-2 rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs font-medium text-slate-600 italic">
+                        <div className="mt-2 rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs font-medium italic text-slate-600">
                           {event.note}
                         </div>
                       )}

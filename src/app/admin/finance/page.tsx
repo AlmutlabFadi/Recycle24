@@ -11,6 +11,7 @@ import {
   FinanceRequestDetail,
   FinanceRequestRow,
   FinanceRestrictionRow,
+  FinanceRequestType,
 } from "./_lib/types";
 import { financeAdapter } from "./_lib/adapter";
 import {
@@ -24,9 +25,9 @@ import {
 import { FinanceOpsHeader } from "./_components/finance-ops-header";
 import { FinanceSummaryCards } from "./_components/finance-summary-cards";
 import { FinanceAnalyticsPanels } from "./_components/finance-analytics-panels";
-import { FinanceWalletAnalytics } from "./_components/finance-wallet-analytics";
 import { FinanceFiltersBar } from "./_components/finance-filters-bar";
 import { FinanceDetailDrawer } from "./_components/finance-detail-drawer";
+import { FinanceActionModal, FinanceActionModalPayload } from "./_components/finance-action-modal";
 
 import { RequestsView } from "./_views/requests-view";
 import { HoldsView } from "./_views/holds-view";
@@ -62,6 +63,7 @@ export default function AdminFinancePage() {
   const [isLoadingSummary, setIsLoadingSummary] = useState(true);
   const [isLoadingList, setIsLoadingList] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
 
   const [summary, setSummary] = useState<FinanceDashboardSummary | null>(null);
   const [filters, setFilters] = useState<FinanceQueueFilters>(getInitialFilters());
@@ -75,6 +77,8 @@ export default function AdminFinancePage() {
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [detailData, setDetailData] = useState<FinanceRequestDetail | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const [actionModalPayload, setActionModalPayload] = useState<FinanceActionModalPayload | null>(null);
 
   const fetchSummary = useCallback(async () => {
     setIsLoadingSummary(true);
@@ -136,7 +140,7 @@ export default function AdminFinancePage() {
     setIsLoadingDetail(true);
 
     try {
-      const detail = await financeAdapter.getRequestDetail(row.id);
+      const detail = await financeAdapter.getRequestDetail(row.id, row.type);
       setDetailData(detail);
     } catch (error) {
       console.error(error);
@@ -145,21 +149,59 @@ export default function AdminFinancePage() {
     }
   };
 
-  const handleActionSelect = async (actionType: string, recordId: string) => {
-    const confirmed = window.confirm(`هل أنت متأكد من تنفيذ الإجراء على السجل ${recordId}`);
-    if (!confirmed) return;
-
-    await financeAdapter.executeCommand({
+  const handleOpenActionModal = (
+    actionType: string,
+    recordId: string,
+    row?: FinanceRequestRow,
+    options?: {
+      recordType?: "REQUEST" | "ACCOUNT" | "HOLD" | "DEBT" | "RESTRICTION";
+      requestType?: FinanceRequestType | null;
+    },
+  ) => {
+    setActionModalPayload({
       actionType,
-      targetRecordId: recordId,
-      targetRecordType: activeTab === "REQUESTS" ? "REQUEST" : "ACCOUNT",
+      recordId,
+      recordType: options?.recordType ?? (activeTab === "REQUESTS" ? "REQUEST" : "ACCOUNT"),
+      requestType: options?.requestType ?? row?.type ?? null,
+      row: row ?? null,
     });
+  };
 
-    await handleRefreshAll();
+  const handleConfirmAction = async ({
+    actionType,
+    recordId,
+    recordType,
+    requestType,
+    reason,
+  }: {
+    actionType: string;
+    recordId: string;
+    recordType?: "REQUEST" | "ACCOUNT" | "HOLD" | "DEBT" | "RESTRICTION";
+    requestType?: FinanceRequestType | null;
+    reason: string;
+  }) => {
+    setIsSubmittingAction(true);
 
-    if (isDrawerOpen && selectedRecordId === recordId) {
-      const detail = await financeAdapter.getRequestDetail(recordId);
-      setDetailData(detail);
+    try {
+      await financeAdapter.executeCommand({
+        actionType,
+        targetRecordId: recordId,
+        targetRecordType: recordType ?? (activeTab === "REQUESTS" ? "REQUEST" : "ACCOUNT"),
+        requestType: requestType ?? null,
+        reason,
+      });
+
+      setActionModalPayload(null);
+      await handleRefreshAll();
+
+      if (isDrawerOpen && selectedRecordId === recordId && requestType) {
+        const detail = await financeAdapter.getRequestDetail(recordId, requestType);
+        setDetailData(detail);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmittingAction(false);
     }
   };
 
@@ -251,12 +293,13 @@ export default function AdminFinancePage() {
 
   return (
     <main dir="rtl" className="min-h-screen bg-[#f4f7fb] px-4 py-6 text-slate-800 lg:px-6">
-      <div className="mx-auto max-w-[1750px] space-y-6">
+      <div className="mx-auto max-w-[1750px] space-y-5">
         <FinanceOpsHeader
           lastRefreshedAt={lastRefreshedAt}
           criticalAlerts={summary ? summary.failedRequestsToday + summary.overdueDebts : 0}
           highRiskAccounts={summary?.highRiskAccounts ?? 0}
           currentUserLabel={CURRENT_USER_LABEL}
+          onRefresh={handleRefreshAll}
         />
 
         <FinanceSummaryCards
@@ -270,30 +313,20 @@ export default function AdminFinancePage() {
           isLoading={isLoadingSummary}
         />
 
-        <FinanceWalletAnalytics
-          onSegmentClick={(accountClass) => {
-            setActiveTab("REQUESTS");
-            setFilters((prev) => ({
-              ...prev,
-              accountClass,
-            }));
-          }}
-        />
-
-        <section className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm lg:p-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
             <div>
-              <h2 className="text-xl font-black text-slate-900">مركز التحكم التشغيلي</h2>
+              <h2 className="text-2xl font-black text-slate-900">مركز التحكم التشغيلي</h2>
               <p className="mt-1 text-sm leading-7 text-slate-500">
-                إدارة طوابير العمل المالي التجميد والحجز الديون والتحقيقات التنفيذية ضمن واجهة تشغيل عربية موحدة.
+                إدارة طوابير العمل المالي التجميد الحجز الديون والتحقيقات التنفيذية ضمن واجهة تشغيل عربية موحدة.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={handleRefreshAll}
-                className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-slate-800"
+                className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white transition hover:bg-slate-800"
               >
                 تحديث شامل للبيانات
               </button>
@@ -308,7 +341,7 @@ export default function AdminFinancePage() {
             </div>
           </div>
 
-          <div className="mt-6 border-b border-slate-200">
+          <div className="mt-5 border-b border-slate-200">
             <nav className="-mb-px flex gap-8 overflow-x-auto pb-1">
               {menuButtons.map((tab) =>
                 tab.show ? (
@@ -329,62 +362,66 @@ export default function AdminFinancePage() {
             </nav>
           </div>
 
-          <div className="mt-5 space-y-5">
+          <div className="mt-5">
             {activeTab === "REQUESTS" && (
-              <FinanceFiltersBar
-                filters={filters}
-                onChange={setFilters}
-                onReset={handleResetFilters}
-                onRefresh={fetchListData}
-                lastRefreshedAt={lastRefreshedAt}
-              />
-            )}
+              <div className="space-y-5">
+                <FinanceFiltersBar
+                  filters={filters}
+                  onChange={setFilters}
+                  onReset={handleResetFilters}
+                  onRefresh={fetchListData}
+                  lastRefreshedAt={lastRefreshedAt}
+                />
 
-            <section className="animate-in fade-in duration-500">
-              {activeTab === "REQUESTS" && (
                 <RequestsView
                   requests={requests}
                   isLoading={isLoadingList}
                   currentUserRole={CURRENT_ROLE}
                   onRowClick={handleRowClick}
-                  onActionSelect={handleActionSelect}
+                  onActionSelect={handleOpenActionModal}
                 />
-              )}
+              </div>
+            )}
 
-              {activeTab === "HOLDS" && (
-                <HoldsView
-                  holds={holds}
-                  isLoading={isLoadingList}
-                  currentUserRole={CURRENT_ROLE}
-                  onActionSelect={handleActionSelect}
-                />
-              )}
+            {activeTab === "HOLDS" && (
+              <HoldsView
+                holds={holds}
+                isLoading={isLoadingList}
+                currentUserRole={CURRENT_ROLE}
+                onActionSelect={(actionType, recordId) =>
+                  handleOpenActionModal(actionType, recordId, undefined, { recordType: "HOLD" })
+                }
+              />
+            )}
 
-              {activeTab === "DEBTS" && (
-                <DebtsView
-                  debts={debts}
-                  isLoading={isLoadingList}
-                  currentUserRole={CURRENT_ROLE}
-                  onActionSelect={handleActionSelect}
-                />
-              )}
+            {activeTab === "DEBTS" && (
+              <DebtsView
+                debts={debts}
+                isLoading={isLoadingList}
+                currentUserRole={CURRENT_ROLE}
+                onActionSelect={(actionType, recordId) =>
+                  handleOpenActionModal(actionType, recordId, undefined, { recordType: "DEBT" })
+                }
+              />
+            )}
 
-              {activeTab === "RESTRICTED" && (
-                <RestrictedAccountsView
-                  accounts={restrictions}
-                  isLoading={isLoadingList}
-                  currentUserRole={CURRENT_ROLE}
-                  onActionSelect={handleActionSelect}
-                />
-              )}
+            {activeTab === "RESTRICTED" && (
+              <RestrictedAccountsView
+                accounts={restrictions}
+                isLoading={isLoadingList}
+                currentUserRole={CURRENT_ROLE}
+                onActionSelect={(actionType, recordId) =>
+                  handleOpenActionModal(actionType, recordId, undefined, { recordType: "ACCOUNT" })
+                }
+              />
+            )}
 
-              {activeTab === "AUDIT" && (
-                <AuditView
-                  logs={auditLogs}
-                  isLoading={isLoadingList}
-                />
-              )}
-            </section>
+            {activeTab === "AUDIT" && (
+              <AuditView
+                logs={auditLogs}
+                isLoading={isLoadingList}
+              />
+            )}
           </div>
         </section>
       </div>
@@ -395,7 +432,17 @@ export default function AdminFinancePage() {
         isLoading={isLoadingDetail}
         onClose={() => setIsDrawerOpen(false)}
         currentUserRole={CURRENT_ROLE}
-        onActionSelect={handleActionSelect}
+        onActionSelect={(actionType, recordId, options) =>
+          handleOpenActionModal(actionType, recordId, detailData ?? undefined, options)
+        }
+      />
+
+      <FinanceActionModal
+        isOpen={Boolean(actionModalPayload)}
+        payload={actionModalPayload}
+        onClose={() => setActionModalPayload(null)}
+        onConfirm={handleConfirmAction}
+        isSubmitting={isSubmittingAction}
       />
     </main>
   );

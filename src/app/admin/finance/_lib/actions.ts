@@ -1,55 +1,98 @@
-export type FinanceActionType = 
-  | "ASSIGN_REVIEWER"
-  | "ASSIGN_FINAL_APPROVER"
+import type { FinanceRequestType } from "./types";
+
+export type FinanceSupportedActionType =
   | "APPROVE_FIRST_STAGE"
   | "APPROVE_FINAL_STAGE"
   | "REJECT"
-  | "MARK_PROCESSING"
-  | "MARK_SETTLED"
   | "MARK_FAILED"
-  | "FREEZE_DEBIT"
-  | "FREEZE_CREDIT"
-  | "FULL_FREEZE"
-  | "UNFREEZE"
-  | "RELEASE_HOLD"
-  | "CAPTURE_HOLD"
-  | "ESCALATE_COMPLIANCE"
-  | "ADD_INTERNAL_NOTE";
+  | "ADD_INTERNAL_NOTE"
+  | "FREEZE_DEBIT";
+
+export type FinanceActionTone = "primary" | "danger" | "warning" | "neutral";
+
+export interface FinanceActionCapabilityInput {
+  actionType: FinanceSupportedActionType;
+  label: string;
+  requiresReason: boolean;
+  requiresConfirmation: boolean;
+  tone: FinanceActionTone;
+  canExecute: boolean;
+  disabledReason?: string | null;
+}
 
 export interface FinanceActionCapability {
-  actionType: FinanceActionType;
+  actionType: FinanceSupportedActionType;
   label: string;
+  requiresReason: boolean;
+  requiresConfirmation: boolean;
+  tone: FinanceActionTone;
   isEnabled: boolean;
-  requiresReason: boolean;
-  requiresConfirmation: boolean;
-  disabledReason?: string;
-  tone: "primary" | "danger" | "neutral" | "warning";
+  disabledReason: string | null;
+  backendSupported: boolean;
 }
 
-export interface FinanceActionCommand {
-  actionType: FinanceActionType;
-  targetRecordType: "REQUEST" | "ACCOUNT" | "HOLD" | "DEBT" | "RESTRICTION";
-  targetRecordId: string;
-  reason?: string;
-  metadata?: Record<string, unknown>;
+const BACKEND_SUPPORTED_ACTIONS: ReadonlySet<FinanceSupportedActionType> = new Set([
+  "APPROVE_FIRST_STAGE",
+  "APPROVE_FINAL_STAGE",
+  "REJECT",
+]);
+
+export function isBackendSupportedAction(
+  actionType: FinanceSupportedActionType,
+  requestType?: FinanceRequestType | null,
+): boolean {
+  if (!BACKEND_SUPPORTED_ACTIONS.has(actionType)) {
+    return false;
+  }
+
+  if (
+    actionType === "APPROVE_FIRST_STAGE" ||
+    actionType === "APPROVE_FINAL_STAGE" ||
+    actionType === "REJECT"
+  ) {
+    return (
+      requestType === "DEPOSIT" ||
+      requestType === "PAYOUT" ||
+      requestType === "TRANSFER"
+    );
+  }
+
+  return false;
 }
 
-export function getActionCapabilities(options: {
-  canExecute: boolean;
-  actionType: FinanceActionType;
-  label: string;
-  requiresReason: boolean;
-  requiresConfirmation: boolean;
-  disabledReason?: string;
-  tone: "primary" | "danger" | "neutral" | "warning";
-}): FinanceActionCapability {
+export function getActionCapabilities(
+  input: FinanceActionCapabilityInput,
+  options?: {
+    requestType?: FinanceRequestType | null;
+  },
+): FinanceActionCapability {
+  const backendSupported = isBackendSupportedAction(
+    input.actionType,
+    options?.requestType ?? null,
+  );
+
+  if (!input.canExecute) {
+    return {
+      ...input,
+      isEnabled: false,
+      disabledReason: input.disabledReason ?? "ليست لديك الصلاحية لتنفيذ هذا الإجراء.",
+      backendSupported,
+    };
+  }
+
+  if (!backendSupported) {
+    return {
+      ...input,
+      isEnabled: false,
+      disabledReason: "هذا الإجراء غير مربوط بعد بمسار backend حقيقي.",
+      backendSupported,
+    };
+  }
+
   return {
-    actionType: options.actionType,
-    label: options.label,
-    isEnabled: options.canExecute,
-    requiresReason: options.requiresReason,
-    requiresConfirmation: options.requiresConfirmation,
-    disabledReason: options.canExecute ? undefined : options.disabledReason ?? "You do not have permission or the record state is invalid.",
-    tone: options.tone,
+    ...input,
+    isEnabled: true,
+    disabledReason: null,
+    backendSupported,
   };
 }

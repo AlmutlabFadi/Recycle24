@@ -1,46 +1,16 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { FinanceRequestRow } from "../_lib/types";
-import { FinanceActionMenu } from "./finance-action-menu";
 import { AdminRole, PermissionContext } from "../_lib/permissions";
+import { FinanceActionMenu } from "./finance-action-menu";
 
 interface FinanceRequestsTableProps {
   requests: FinanceRequestRow[];
   isLoading: boolean;
   onRowClick: (row: FinanceRequestRow) => void;
   currentUserRole: AdminRole;
-  onActionSelect: (actionType: string, recordId: string) => void;
-}
-
-function formatNumber(value: number) {
-  return value.toLocaleString("en-US");
-}
-
-function getStatusBadgeColor(status: string) {
-  switch (status) {
-    case "PENDING":
-      return "bg-slate-50 text-slate-700 border-slate-200";
-    case "UNDER_REVIEW":
-      return "bg-blue-50 text-blue-700 border-blue-200";
-    case "PROCESSING":
-      return "bg-purple-50 text-purple-700 border-purple-200";
-    case "COMPLETED":
-      return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    case "FAILED":
-    case "REJECTED":
-    case "REVERSED":
-      return "bg-rose-50 text-rose-700 border-rose-200";
-    default:
-      return "bg-slate-50 text-slate-700 border-slate-200";
-  }
-}
-
-function getStageBadgeColor(stage: string) {
-  if (stage === "AWAITING_FIRST_REVIEW") return "bg-amber-50 text-amber-700 border-amber-200";
-  if (stage === "AWAITING_FINAL_APPROVAL") return "bg-orange-50 text-orange-700 border-orange-200";
-  if (stage === "FINAL_APPROVED") return "bg-emerald-50 text-emerald-700 border-emerald-200";
-  return "bg-slate-50 text-slate-700 border-slate-200";
+  onActionSelect: (actionType: string, recordId: string, row?: FinanceRequestRow) => void;
 }
 
 export function FinanceRequestsTable({
@@ -54,153 +24,281 @@ export function FinanceRequestsTable({
 
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm font-black text-slate-500 animate-pulse shadow-sm">
-        جاري تحميل طابور العمليات...
+      <div className="rounded-[24px] border border-slate-200 bg-white p-8 text-center text-sm font-bold text-slate-500 shadow-sm">
+        جار تحميل طابور العمليات...
       </div>
     );
   }
 
   if (requests.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-12 text-center shadow-sm">
-        <p className="text-sm font-black text-slate-600">لم يتم العثور على طلبات تطابق معايير البحث.</p>
+      <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-12 text-center shadow-sm">
+        <p className="text-sm font-black text-slate-600">لا توجد سجلات مطابقة للفلاتر الحالية.</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm" dir="rtl">
-      <table className="w-full text-right text-sm text-slate-700">
-        <thead className="border-b border-slate-200 bg-slate-50 text-xs font-black uppercase tracking-wider text-slate-500">
-          <tr>
-            <th className="px-5 py-4">رقم الطلب / النوع</th>
-            <th className="px-5 py-4">صاحب الحساب / الكيان</th>
-            <th className="px-5 py-4">القيمة المالية</th>
-            <th className="px-5 py-4 hidden lg:table-cell">التعرض اللحظي</th>
-            <th className="px-5 py-4">الحالة والمرحلة</th>
-            <th className="px-5 py-4 hidden xl:table-cell">المسؤول</th>
-            <th className="px-5 py-4">الخطر / الأوسمة</th>
-            <th className="px-5 py-4 hidden xl:table-cell">التاريخ / SLA</th>
-            <th className="px-5 py-4 sticky left-0 bg-slate-50 text-center shadow-[4px_0_6px_-2px_rgba(0,0,0,0.05)]">
-              الإجراءات
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {requests.map((row) => {
-            const permissionCtx: PermissionContext = { role: currentUserRole, selectedRow: row as any };
-            const isMenuOpen = openMenuId === row.id;
+    <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-sm">
+      <div className="border-b border-slate-200 px-5 py-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h3 className="text-2xl font-black text-slate-900">طابور العمليات التشغيلي</h3>
+            <p className="mt-1 text-sm leading-7 text-slate-500">
+              إدارة طلبات الإيداع والسحب والتحويلات البنكية. الأعمدة هنا مصممة لدعم القرار السريع لا العرض فقط.
+            </p>
+          </div>
 
-            return (
-              <tr
-                key={row.id}
-                onClick={() => onRowClick(row)}
-                className="group cursor-pointer bg-white transition-colors hover:bg-blue-50/30"
-              >
-                <td className="px-5 py-4 align-top">
-                  <div className="font-black text-slate-900 tracking-tight">{row.id}</div>
-                  <div className="text-[10px] font-black text-slate-500 mt-1 uppercase bg-slate-100 inline-block px-1.5 py-0.5 rounded border border-slate-200">{row.type}</div>
-                </td>
+          <div className="flex flex-wrap gap-2">
+            <QuickLegend label="اختراق SLA" tone="rose" />
+            <QuickLegend label="عالية المخاطر" tone="amber" />
+            <QuickLegend label="قابل للتنفيذ" tone="emerald" />
+          </div>
+        </div>
+      </div>
 
-                <td className="px-5 py-4 align-top">
-                  <div className="font-black text-slate-900 text-[15px] leading-tight">{row.accountName}</div>
-                  <div className="text-[11px] font-black text-blue-600 mt-1">
-                    {row.accountOwner} • {row.accountClass}
-                  </div>
-                  <div className="text-[10px] font-bold text-slate-400 mt-1 font-mono">ID: {row.accountId}</div>
-                </td>
+      <div className="overflow-x-auto">
+        <table className="min-w-[1600px] w-full text-right text-sm text-slate-700">
+          <thead className="bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-500">
+            <tr>
+              <th className="px-5 py-4">رقم الطلب / النوع</th>
+              <th className="px-5 py-4">صاحب الحساب / الكيان</th>
+              <th className="px-5 py-4">القيمة المالية</th>
+              <th className="px-5 py-4">التعرض اللحظي</th>
+              <th className="px-5 py-4">الحالة والمرحلة</th>
+              <th className="px-5 py-4">المسؤول</th>
+              <th className="px-5 py-4">الخطر / الأوسمة</th>
+              <th className="px-5 py-4">التاريخ / SLA</th>
+              <th className="px-5 py-4">إجراءات سريعة</th>
+              <th className="sticky left-0 bg-slate-50 px-5 py-4 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.06)]">
+                الإجراءات
+              </th>
+            </tr>
+          </thead>
 
-                <td className="px-5 py-4 align-top">
-                  <div className="text-lg font-black text-slate-900 leading-none">
-                    {formatNumber(row.amount)}
-                  </div>
-                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{row.currency}</div>
-                </td>
+          <tbody className="divide-y divide-slate-100">
+            {requests.map((row) => {
+              const permissionCtx: PermissionContext = {
+                role: currentUserRole,
+                selectedRow: row,
+              };
 
-                <td className="px-5 py-4 align-top hidden lg:table-cell text-[11px] leading-relaxed">
-                  {row.walletExposure.balances.map((balance) => (
-                    <div key={balance.currency} className="mb-2 last:mb-0 border-b border-slate-50 pb-1 last:border-0">
-                      <div className="font-black text-slate-700 bg-slate-50 px-1 py-0.5 rounded text-[9px] w-fit mb-1">{balance.currency}</div>
-                      <div className="flex justify-between gap-4">
-                        <span className="text-slate-500 font-bold">متاح: <span className="text-slate-900 font-black">{formatNumber(balance.available)}</span></span>
-                        {balance.frozen > 0 && <span className="text-rose-600 font-black">مجمد: {formatNumber(balance.frozen)}</span>}
-                      </div>
-                    </div>
-                  ))}
-                </td>
+              const isMenuOpen = openMenuId === row.id;
+              const isSlaBreached =
+                row.slaWaitingTime.toLowerCase().includes("failed") ||
+                row.slaWaitingTime.toLowerCase().includes("overrun");
 
-                <td className="px-5 py-4 align-top space-y-1.5">
-                  <div className="flex">
-                    <span className={`inline-flex items-center rounded-lg border px-2 py-0.5 text-[10px] font-black tracking-tight shadow-sm ${getStatusBadgeColor(row.status)}`}>
-                      <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5 ml-0.5 animate-pulse"></span>
-                      {row.status}
-                    </span>
-                  </div>
-                  {row.approvalStage !== "NONE" && (
-                    <div className="flex">
-                      <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider border shadow-sm ${getStageBadgeColor(row.approvalStage)}`}>
-                        {row.approvalStage}
-                      </span>
-                    </div>
-                  )}
-                </td>
-
-                <td className="px-5 py-4 align-top hidden xl:table-cell text-xs font-black text-slate-800">
-                  {row.currentOwner ?? "غير مكلف"}
-                </td>
-
-                <td className="px-5 py-4 align-top">
-                  <div className="flex flex-wrap gap-1.5 max-w-[150px]">
-                    {row.badges.map((badge) => (
-                      <span key={badge} className="rounded-md bg-blue-600 px-2 py-0.5 text-[9px] font-black text-white shadow-sm">
-                        {badge}
-                      </span>
-                    ))}
-                    {row.riskFlags.map((flag) => (
-                      <span
-                        key={flag.id}
-                        className="rounded-md bg-white border border-rose-200 px-2 py-0.5 text-[9px] font-black text-rose-600 shadow-sm"
-                        title={flag.description}
-                      >
-                        ! {flag.code}
-                      </span>
-                    ))}
-                    {row.linkedReference && (
-                      <span
-                        className="rounded-md bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-[9px] font-black text-indigo-700 italic shadow-sm"
-                        title={row.linkedReference.label}
-                      >
-                        رابط: {row.linkedReference.type}
-                      </span>
-                    )}
-                  </div>
-                </td>
-
-                <td className="px-5 py-4 align-top hidden xl:table-cell">
-                  <div className="text-[11px] font-black text-slate-500" dir="ltr">{new Date(row.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                  <div className="text-[10px] text-slate-400 font-bold">{new Date(row.createdAt).toLocaleDateString()}</div>
-                  <div className={`mt-2 text-[9px] font-black uppercase tracking-tighter px-1 rounded inline-block ${row.slaWaitingTime.includes('Failed') ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-600'}`}>SLA: {row.slaWaitingTime}</div>
-                </td>
-
-                <td
-                  className={`px-5 py-4 align-top sticky left-0 bg-white text-center shadow-[4px_0_6px_-2px_rgba(0,0,0,0.05)] group-hover:bg-blue-50/30 transition-all ${isMenuOpen ? 'z-50' : 'z-20'}`}
-                  onClick={(e) => e.stopPropagation()}
+              return (
+                <tr
+                  key={row.id}
+                  className="group cursor-pointer bg-white transition-colors hover:bg-slate-50/80"
+                  onClick={() => onRowClick(row)}
                 >
-                  <FinanceActionMenu
-                    context={permissionCtx}
-                    recordId={row.id}
-                    recordType="REQUEST"
-                    onSelectAction={onActionSelect}
-                    isOpen={isMenuOpen}
-                    onToggle={() => setOpenMenuId(isMenuOpen ? null : row.id)}
-                    onClose={() => setOpenMenuId(null)}
-                  />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  <td className="px-5 py-4 align-top">
+                    <div className="font-black text-slate-900">{row.id}</div>
+                    <div className="mt-2 inline-flex rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-black text-slate-600">
+                      {row.type}
+                    </div>
+                  </td>
+
+                  <td className="px-5 py-4 align-top">
+                    <div className="text-[15px] font-black text-slate-900">{row.accountName}</div>
+                    <div className="mt-1 text-xs font-bold text-blue-600">
+                      {row.accountOwner} · {row.accountType}
+                    </div>
+                    <div className="mt-2 text-[11px] text-slate-400">ID: {row.accountId}</div>
+                  </td>
+
+                  <td className="px-5 py-4 align-top">
+                    <div className="text-[15px] font-black text-slate-900">
+                      {row.amount.toLocaleString("ar-SY")}
+                    </div>
+                    <div className="mt-1 text-xs font-bold text-slate-400">{row.currency}</div>
+                  </td>
+
+                  <td className="px-5 py-4 align-top text-[11px] leading-6">
+                    <div>
+                      <span className="font-black text-slate-500">متاح:</span>{" "}
+                      <span className="font-black text-slate-900">
+                        {row.availableBalance.toLocaleString("ar-SY")}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-black text-slate-500">محجوز:</span>{" "}
+                      <span className="font-black text-slate-900">
+                        {row.heldBalance.toLocaleString("ar-SY")}
+                      </span>
+                    </div>
+                    {row.frozenBalance > 0 && (
+                      <div className="font-black text-rose-600">
+                        مجمد: {row.frozenBalance.toLocaleString("ar-SY")}
+                      </div>
+                    )}
+                  </td>
+
+                  <td className="px-5 py-4 align-top">
+                    <div>
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black ${getStatusBadgeColor(row.status)}`}
+                      >
+                        {row.status}
+                      </span>
+                    </div>
+
+                    {row.approvalStage !== "NONE" && (
+                      <div className="mt-2">
+                        <span
+                          className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black ${getStageBadgeColor(row.approvalStage)}`}
+                        >
+                          {row.approvalStage}
+                        </span>
+                      </div>
+                    )}
+                  </td>
+
+                  <td className="px-5 py-4 align-top">
+                    <div className="font-black text-slate-900">{row.currentOwner ?? "Unassigned"}</div>
+                    <div className="mt-2 text-[11px] text-slate-400">تشغيل / مراجعة</div>
+                  </td>
+
+                  <td className="px-5 py-4 align-top">
+                    <div className="flex flex-wrap gap-1.5">
+                      {row.badges.map((badge) => (
+                        <span
+                          key={badge}
+                          className="rounded-lg bg-blue-600 px-2 py-1 text-[10px] font-black text-white"
+                        >
+                          {badge}
+                        </span>
+                      ))}
+
+                      {row.riskFlags.map((flag) => (
+                        <span
+                          key={flag.id}
+                          title={flag.description}
+                          className="rounded-lg bg-amber-100 px-2 py-1 text-[10px] font-black text-amber-800"
+                        >
+                          {flag.code}
+                        </span>
+                      ))}
+
+                      {row.linkedReference && (
+                        <span className="rounded-lg bg-indigo-50 px-2 py-1 text-[10px] font-black text-indigo-700">
+                          رابط {row.linkedReference.type}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+
+                  <td className="px-5 py-4 align-top">
+                    <div className="text-xs font-black text-slate-700">
+                      {new Date(row.createdAt).toLocaleTimeString("ar-SY")}
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      {new Date(row.createdAt).toLocaleDateString("ar-SY")}
+                    </div>
+                    <div
+                      className={`mt-3 inline-flex rounded-lg px-2 py-1 text-[10px] font-black ${
+                        isSlaBreached ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      SLA: {row.slaWaitingTime}
+                    </div>
+                  </td>
+
+                  <td
+                    className="px-5 py-4 align-top"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <FinanceActionMenu
+                      inline
+                      context={permissionCtx}
+                      recordId={row.id}
+                      recordType="REQUEST"
+                      requestType={row.type}
+                      onSelectAction={(actionType, recordId) =>
+                        onActionSelect(actionType, recordId, row)
+                      }
+                    />
+                  </td>
+
+                  <td
+                    className="sticky left-0 bg-white px-5 py-4 align-top shadow-[4px_0_8px_-2px_rgba(0,0,0,0.06)] group-hover:bg-slate-50/80"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <FinanceActionMenu
+                      context={permissionCtx}
+                      recordId={row.id}
+                      recordType="REQUEST"
+                      requestType={row.type}
+                      isOpen={isMenuOpen}
+                      onToggle={() => setOpenMenuId(isMenuOpen ? null : row.id)}
+                      onClose={() => setOpenMenuId(null)}
+                      onSelectAction={(actionType, recordId) =>
+                        onActionSelect(actionType, recordId, row)
+                      }
+                    />
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
+
+function QuickLegend({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "rose" | "amber" | "emerald";
+}) {
+  const toneClass =
+    tone === "rose"
+      ? "bg-rose-100 text-rose-700"
+      : tone === "amber"
+        ? "bg-amber-100 text-amber-700"
+        : "bg-emerald-100 text-emerald-700";
+
+  return <span className={`rounded-full px-3 py-1 text-[11px] font-black ${toneClass}`}>{label}</span>;
+}
+
+function getStatusBadgeColor(status: string) {
+  switch (status) {
+    case "PENDING":
+      return "border-slate-200 bg-slate-100 text-slate-700";
+    case "UNDER_REVIEW":
+      return "border-blue-200 bg-blue-50 text-blue-700";
+    case "PROCESSING":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "COMPLETED":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+    case "FAILED":
+    case "REJECTED":
+    case "REVERSED":
+      return "border-rose-200 bg-rose-50 text-rose-700";
+    default:
+      return "border-slate-200 bg-slate-100 text-slate-700";
+  }
+}
+
+function getStageBadgeColor(stage: string) {
+  if (stage === "AWAITING_FIRST_REVIEW") {
+    return "border-amber-200 bg-amber-50 text-amber-700";
+  }
+
+  if (stage === "AWAITING_FINAL_APPROVAL") {
+    return "border-orange-200 bg-orange-50 text-orange-700";
+  }
+
+  if (stage === "FINAL_APPROVED") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+
+  return "border-slate-200 bg-slate-100 text-slate-700";
+}
+
+export default FinanceRequestsTable;
