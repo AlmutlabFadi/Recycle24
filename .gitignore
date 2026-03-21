@@ -68,4 +68,4 @@ public/uploads/
 
 *.bak
 *.bak-*
-schema-current.txt
+schema-current.txtfix-locales.js
