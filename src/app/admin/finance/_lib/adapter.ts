@@ -468,8 +468,23 @@ export class FinanceAdminAdapter {
   }
 
   async getAuditTrail(): Promise<FinanceAuditRow[]> {
-    return [];
+  const response = await fetch("/api/admin/finance/audit?take=100", {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  const payload = await parseJsonResponse<{
+    success?: boolean;
+    items?: FinanceAuditRow[];
+    error?: string;
+  }>(response);
+
+  if (!payload.success || !Array.isArray(payload.items)) {
+    throw new Error(payload.error ?? "Finance audit response was invalid");
   }
+
+  return payload.items;
+}
 
   async executeCommand(
     command: ExecuteCommandInput,
