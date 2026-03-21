@@ -1,30 +1,32 @@
-"use client";
+﻿"use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  FinanceDashboardSummary,
-  FinanceQueueFilters,
-  FinancePageTab,
-  FinanceRequestRow,
-  FinanceRequestDetail,
-  FinanceHoldRow,
-  FinanceDebtRow,
-  FinanceRestrictionRow,
   FinanceAuditRow,
+  FinanceDashboardSummary,
+  FinanceDebtRow,
+  FinanceHoldRow,
+  FinancePageTab,
+  FinanceQueueFilters,
+  FinanceRequestDetail,
+  FinanceRequestRow,
+  FinanceRestrictionRow,
 } from "./_lib/types";
 import { financeAdapter } from "./_lib/adapter";
 import {
   AdminRole,
-  canViewHolds,
-  canViewDebts,
-  canViewRestrictions,
   canViewAudit,
+  canViewDebts,
+  canViewHolds,
+  canViewRestrictions,
 } from "./_lib/permissions";
 
+import { FinanceOpsHeader } from "./_components/finance-ops-header";
 import { FinanceSummaryCards } from "./_components/finance-summary-cards";
+import { FinanceAnalyticsPanels } from "./_components/finance-analytics-panels";
+import { FinanceWalletAnalytics } from "./_components/finance-wallet-analytics";
 import { FinanceFiltersBar } from "./_components/finance-filters-bar";
 import { FinanceDetailDrawer } from "./_components/finance-detail-drawer";
-import { FinanceWalletAnalytics } from "./_components/finance-wallet-analytics";
 
 import { RequestsView } from "./_views/requests-view";
 import { HoldsView } from "./_views/holds-view";
@@ -33,16 +35,10 @@ import { RestrictedAccountsView } from "./_views/restricted-view";
 import { AuditView } from "./_views/audit-view";
 
 const CURRENT_ROLE: AdminRole = "FINANCE_MANAGER";
+const CURRENT_USER_LABEL = "مدير العمليات المالية";
 
-export default function AdminFinancePage() {
-  const [activeTab, setActiveTab] = useState<FinancePageTab>("REQUESTS");
-  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
-  const [isLoadingSummary, setIsLoadingSummary] = useState(true);
-  const [isLoadingList, setIsLoadingList] = useState(true);
-
-  const [summary, setSummary] = useState<FinanceDashboardSummary | null>(null);
-
-  const [filters, setFilters] = useState<FinanceQueueFilters>({
+function getInitialFilters(): FinanceQueueFilters {
+  return {
     requestType: "ALL",
     accountType: "ALL",
     accountClass: "ALL",
@@ -56,7 +52,19 @@ export default function AdminFinancePage() {
     highValueOnly: false,
     dateRange: { from: null, to: null },
     search: "",
-  });
+  };
+}
+
+export default function AdminFinancePage() {
+  const [activeTab, setActiveTab] = useState<FinancePageTab>("REQUESTS");
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
+
+  const [isLoadingSummary, setIsLoadingSummary] = useState(true);
+  const [isLoadingList, setIsLoadingList] = useState(true);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+
+  const [summary, setSummary] = useState<FinanceDashboardSummary | null>(null);
+  const [filters, setFilters] = useState<FinanceQueueFilters>(getInitialFilters());
 
   const [requests, setRequests] = useState<FinanceRequestRow[]>([]);
   const [holds, setHolds] = useState<FinanceHoldRow[]>([]);
@@ -67,15 +75,14 @@ export default function AdminFinancePage() {
   const [selectedRecordId, setSelectedRecordId] = useState<string | null>(null);
   const [detailData, setDetailData] = useState<FinanceRequestDetail | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   const fetchSummary = useCallback(async () => {
     setIsLoadingSummary(true);
     try {
       const data = await financeAdapter.getSummaryMetrics();
       setSummary(data);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsLoadingSummary(false);
     }
@@ -83,6 +90,7 @@ export default function AdminFinancePage() {
 
   const fetchListData = useCallback(async () => {
     setIsLoadingList(true);
+
     try {
       if (activeTab === "REQUESTS") {
         const data = await financeAdapter.getRequestsQueue(filters);
@@ -100,9 +108,10 @@ export default function AdminFinancePage() {
         const data = await financeAdapter.getAuditTrail();
         setAuditLogs(data);
       }
+
       setLastRefreshedAt(new Date());
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsLoadingList(false);
     }
@@ -116,6 +125,11 @@ export default function AdminFinancePage() {
     void fetchListData();
   }, [fetchListData]);
 
+  const handleRefreshAll = async () => {
+    await fetchSummary();
+    await fetchListData();
+  };
+
   const handleRowClick = async (row: FinanceRequestRow) => {
     setSelectedRecordId(row.id);
     setIsDrawerOpen(true);
@@ -124,15 +138,15 @@ export default function AdminFinancePage() {
     try {
       const detail = await financeAdapter.getRequestDetail(row.id);
       setDetailData(detail);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsLoadingDetail(false);
     }
   };
 
   const handleActionSelect = async (actionType: string, recordId: string) => {
-    const confirmed = window.confirm(`هل أنت متأكد من تنفيذ الإجراء المطلوب على السجل: ${recordId}؟`);
+    const confirmed = window.confirm(`هل أنت متأكد من تنفيذ الإجراء على السجل ${recordId}`);
     if (!confirmed) return;
 
     await financeAdapter.executeCommand({
@@ -141,8 +155,7 @@ export default function AdminFinancePage() {
       targetRecordType: activeTab === "REQUESTS" ? "REQUEST" : "ACCOUNT",
     });
 
-    void fetchListData();
-    void fetchSummary();
+    await handleRefreshAll();
 
     if (isDrawerOpen && selectedRecordId === recordId) {
       const detail = await financeAdapter.getRequestDetail(recordId);
@@ -156,7 +169,6 @@ export default function AdminFinancePage() {
     if (key === "pendingFirstReview") {
       setFilters((prev) => ({
         ...prev,
-        requestType: "ALL",
         status: "ALL",
         approvalStage: "AWAITING_FIRST_REVIEW",
       }));
@@ -166,7 +178,6 @@ export default function AdminFinancePage() {
     if (key === "awaitingFinalApproval") {
       setFilters((prev) => ({
         ...prev,
-        requestType: "ALL",
         status: "ALL",
         approvalStage: "AWAITING_FINAL_APPROVAL",
       }));
@@ -227,25 +238,11 @@ export default function AdminFinancePage() {
   };
 
   const handleResetFilters = () => {
-    setFilters({
-      requestType: "ALL",
-      accountType: "ALL",
-      accountClass: "ALL",
-      currency: "ALL",
-      status: "ALL",
-      approvalStage: "ALL",
-      riskLevel: "ALL",
-      hasHold: false,
-      hasDebt: false,
-      frozenOnly: false,
-      highValueOnly: false,
-      dateRange: { from: null, to: null },
-      search: "",
-    });
+    setFilters(getInitialFilters());
   };
 
   const menuButtons = [
-    { id: "REQUESTS", label: "طلبات العمليات (إيداع/سحب/تحويل)", show: true },
+    { id: "REQUESTS", label: "طلبات العمليات", show: true },
     { id: "HOLDS", label: "الأرصدة المحجوزة والتأمينات", show: canViewHolds({ role: CURRENT_ROLE }) },
     { id: "DEBTS", label: "الديون والعمولات المستحقة", show: canViewDebts({ role: CURRENT_ROLE }) },
     { id: "RESTRICTED", label: "الحسابات المقيدة والمجمدة", show: canViewRestrictions({ role: CURRENT_ROLE }) },
@@ -253,27 +250,14 @@ export default function AdminFinancePage() {
   ];
 
   return (
-    <main className="min-h-screen bg-[#f8fafc] p-6 text-slate-800" dir="rtl">
-      <div className="mx-auto max-w-[1700px] space-y-6">
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-900">
-              وحدة التحكم بالعمليات المالية
-            </h1>
-            <p className="mt-2 text-sm font-medium text-slate-500 max-w-2xl leading-relaxed">
-              النظام المركزي لمراقبة التدفقات النقدية، إدارة الموافقات الثلاثية (Maker-Checker-Finalizer)، تتبع الضمانات المزادية، ومعالجة القيود والحظر المالي.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-             <div className="text-right hidden sm:block">
-               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">المستخدم الحالي</div>
-               <div className="text-xs font-black text-blue-600 uppercase italic">Financial Management Console</div>
-             </div>
-             <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 border border-blue-200">
-               <span className="font-black text-sm">ADM</span>
-             </div>
-          </div>
-        </header>
+    <main dir="rtl" className="min-h-screen bg-[#f4f7fb] px-4 py-6 text-slate-800 lg:px-6">
+      <div className="mx-auto max-w-[1750px] space-y-6">
+        <FinanceOpsHeader
+          lastRefreshedAt={lastRefreshedAt}
+          criticalAlerts={summary ? summary.failedRequestsToday + summary.overdueDebts : 0}
+          highRiskAccounts={summary?.highRiskAccounts ?? 0}
+          currentUserLabel={CURRENT_USER_LABEL}
+        />
 
         <FinanceSummaryCards
           summary={summary}
@@ -281,20 +265,56 @@ export default function AdminFinancePage() {
           onCardClick={handleSummaryCardClick}
         />
 
-        <FinanceWalletAnalytics 
-           onSegmentClick={(accountClass) => {
-             setActiveTab("REQUESTS");
-             setFilters(prev => ({ ...prev, accountClass: accountClass as any }));
-           }}
+        <FinanceAnalyticsPanels
+          summary={summary}
+          isLoading={isLoadingSummary}
         />
 
-        <div className="border-b border-slate-200 sticky top-0 bg-[#f8fafc] z-30 pt-2">
-          <nav className="-mb-px flex gap-8 overflow-x-auto hide-scrollbar pb-1">
-            {menuButtons.map(
-              (tab) =>
-                tab.show && (
+        <FinanceWalletAnalytics
+          onSegmentClick={(accountClass) => {
+            setActiveTab("REQUESTS");
+            setFilters((prev) => ({
+              ...prev,
+              accountClass,
+            }));
+          }}
+        />
+
+        <section className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm lg:p-5">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div>
+              <h2 className="text-xl font-black text-slate-900">مركز التحكم التشغيلي</h2>
+              <p className="mt-1 text-sm leading-7 text-slate-500">
+                إدارة طوابير العمل المالي التجميد والحجز الديون والتحقيقات التنفيذية ضمن واجهة تشغيل عربية موحدة.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={handleRefreshAll}
+                className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-slate-800"
+              >
+                تحديث شامل للبيانات
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+              >
+                تصفير جميع الفلاتر
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 border-b border-slate-200">
+            <nav className="-mb-px flex gap-8 overflow-x-auto pb-1">
+              {menuButtons.map((tab) =>
+                tab.show ? (
                   <button
                     key={tab.id}
+                    type="button"
                     onClick={() => setActiveTab(tab.id as FinancePageTab)}
                     className={`whitespace-nowrap border-b-4 px-1 py-3 text-sm font-black transition-all ${
                       activeTab === tab.id
@@ -304,65 +324,69 @@ export default function AdminFinancePage() {
                   >
                     {tab.label}
                   </button>
-                ),
-            )}
-          </nav>
-        </div>
+                ) : null,
+              )}
+            </nav>
+          </div>
 
-        <div className="space-y-4">
-          {activeTab === "REQUESTS" && (
-            <FinanceFiltersBar
-              filters={filters}
-              onChange={setFilters}
-              onReset={handleResetFilters}
-              onRefresh={fetchListData}
-              lastRefreshedAt={lastRefreshedAt}
-            />
-          )}
-
-          <section className="animate-in fade-in duration-500">
+          <div className="mt-5 space-y-5">
             {activeTab === "REQUESTS" && (
-              <RequestsView
-                requests={requests}
-                isLoading={isLoadingList}
-                currentUserRole={CURRENT_ROLE}
-                onRowClick={handleRowClick}
-                onActionSelect={handleActionSelect}
+              <FinanceFiltersBar
+                filters={filters}
+                onChange={setFilters}
+                onReset={handleResetFilters}
+                onRefresh={fetchListData}
+                lastRefreshedAt={lastRefreshedAt}
               />
             )}
 
-            {activeTab === "HOLDS" && (
-              <HoldsView
-                holds={holds}
-                isLoading={isLoadingList}
-                currentUserRole={CURRENT_ROLE}
-                onActionSelect={handleActionSelect}
-              />
-            )}
+            <section className="animate-in fade-in duration-500">
+              {activeTab === "REQUESTS" && (
+                <RequestsView
+                  requests={requests}
+                  isLoading={isLoadingList}
+                  currentUserRole={CURRENT_ROLE}
+                  onRowClick={handleRowClick}
+                  onActionSelect={handleActionSelect}
+                />
+              )}
 
-            {activeTab === "DEBTS" && (
-              <DebtsView
-                debts={debts}
-                isLoading={isLoadingList}
-                currentUserRole={CURRENT_ROLE}
-                onActionSelect={handleActionSelect}
-              />
-            )}
+              {activeTab === "HOLDS" && (
+                <HoldsView
+                  holds={holds}
+                  isLoading={isLoadingList}
+                  currentUserRole={CURRENT_ROLE}
+                  onActionSelect={handleActionSelect}
+                />
+              )}
 
-            {activeTab === "RESTRICTED" && (
-              <RestrictedAccountsView
-                accounts={restrictions}
-                isLoading={isLoadingList}
-                currentUserRole={CURRENT_ROLE}
-                onActionSelect={handleActionSelect}
-              />
-            )}
+              {activeTab === "DEBTS" && (
+                <DebtsView
+                  debts={debts}
+                  isLoading={isLoadingList}
+                  currentUserRole={CURRENT_ROLE}
+                  onActionSelect={handleActionSelect}
+                />
+              )}
 
-            {activeTab === "AUDIT" && (
-              <AuditView logs={auditLogs} isLoading={isLoadingList} />
-            )}
-          </section>
-        </div>
+              {activeTab === "RESTRICTED" && (
+                <RestrictedAccountsView
+                  accounts={restrictions}
+                  isLoading={isLoadingList}
+                  currentUserRole={CURRENT_ROLE}
+                  onActionSelect={handleActionSelect}
+                />
+              )}
+
+              {activeTab === "AUDIT" && (
+                <AuditView
+                  logs={auditLogs}
+                  isLoading={isLoadingList}
+                />
+              )}
+            </section>
+          </div>
+        </section>
       </div>
 
       <FinanceDetailDrawer

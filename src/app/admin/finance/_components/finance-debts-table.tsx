@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { FinanceDebtRow } from "../_lib/types";
 import { AdminRole, PermissionContext } from "../_lib/permissions";
 import { FinanceActionMenu } from "./finance-action-menu";
@@ -13,73 +13,174 @@ interface FinanceDebtsTableProps {
 }
 
 function formatNumber(value: number) {
-  return value.toLocaleString("en-US");
+  return value.toLocaleString("ar-SY");
 }
 
-export function FinanceDebtsTable({ debts, isLoading, currentUserRole, onActionSelect }: FinanceDebtsTableProps) {
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+function getStatusClasses(status: FinanceDebtRow["status"]) {
+  switch (status) {
+    case "OVERDUE":
+      return "bg-rose-100 text-rose-800 border border-rose-200";
+    case "PARTIAL":
+      return "bg-amber-100 text-amber-800 border border-amber-200";
+    case "PAID":
+      return "bg-emerald-100 text-emerald-800 border border-emerald-200";
+    default:
+      return "bg-slate-100 text-slate-700 border border-slate-200";
+  }
+}
 
-  if (isLoading) return <div className="p-10 text-center animate-pulse text-slate-400 font-black tracking-widest uppercase shadow-inner bg-slate-50/50 rounded-xl">جاري استرجاع تفاصيل المديونيات...</div>;
-  if (debts.length === 0) return <div className="p-16 text-center bg-slate-50 rounded-xl border border-dashed border-slate-300 font-black text-slate-400">لا توجد ديون مستحقة حالياً.</div>;
+function getAgingClasses(bucket: FinanceDebtRow["agingBucket"]) {
+  switch (bucket) {
+    case "30+_DAYS":
+      return "bg-rose-100 text-rose-700";
+    case "8-30_DAYS":
+      return "bg-amber-100 text-amber-700";
+    case "0-7_DAYS":
+      return "bg-orange-100 text-orange-700";
+    default:
+      return "bg-emerald-100 text-emerald-700";
+  }
+}
+
+function getAgingLabel(bucket: FinanceDebtRow["agingBucket"]) {
+  switch (bucket) {
+    case "30+_DAYS":
+      return "أكثر من 30 يوم";
+    case "8-30_DAYS":
+      return "من 8 إلى 30 يوم";
+    case "0-7_DAYS":
+      return "من 0 إلى 7 أيام";
+    default:
+      return "غير مستحق بعد";
+  }
+}
+
+function getDebtTypeLabel(type: FinanceDebtRow["debtType"]) {
+  switch (type) {
+    case "COMMISSION":
+      return "عمولة";
+    case "SUBSCRIPTION":
+      return "اشتراك";
+    case "LOGISTICS":
+      return "خدمات لوجستية";
+    case "PENALTY":
+      return "غرامة";
+    default:
+      return type;
+  }
+}
+
+export function FinanceDebtsTable({
+  debts,
+  isLoading,
+  currentUserRole,
+  onActionSelect,
+}: FinanceDebtsTableProps) {
+  if (isLoading) {
+    return (
+      <div className="rounded-[24px] border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
+        جار تحميل سجل الديون والعمولات...
+      </div>
+    );
+  }
+
+  if (debts.length === 0) {
+    return (
+      <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-12 text-center shadow-sm">
+        <p className="text-sm font-bold text-slate-600">لا توجد ديون مطابقة للعرض الحالي.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm" dir="rtl">
+    <div className="overflow-x-auto rounded-[24px] border border-slate-200 bg-white shadow-sm">
       <table className="w-full text-right text-sm text-slate-700">
-        <thead className="bg-slate-50 border-b border-slate-200 text-xs font-black uppercase tracking-wider text-slate-500">
+        <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-500">
           <tr>
-            <th className="px-5 py-4">المدين (صاحب الحساب)</th>
+            <th className="px-5 py-4">مرجع الدين</th>
+            <th className="px-5 py-4">الحساب</th>
             <th className="px-5 py-4">نوع الدين</th>
-            <th className="px-5 py-4">المبلغ المستحق</th>
-            <th className="px-5 py-4">تاريخ الاستحقاق</th>
-            <th className="px-5 py-4">مدة التأخير</th>
+            <th className="px-5 py-4">القيم</th>
+            <th className="px-5 py-4">الاستحقاق والتقادم</th>
             <th className="px-5 py-4">الحالة</th>
-            <th className="px-5 py-4 sticky left-0 bg-slate-50 text-center shadow-[4px_0_6px_-2px_rgba(0,0,0,0.05)]">الإجراءات</th>
+            <th className="px-5 py-4">الإجراء الأخير</th>
+            <th className="px-5 py-4 text-left">إجراءات</th>
           </tr>
         </thead>
+
         <tbody className="divide-y divide-slate-100">
-          {debts.map(debt => {
-            const permissionCtx: PermissionContext = { role: currentUserRole, selectedRow: debt as any };
-            const isMenuOpen = openMenuId === debt.id;
+          {debts.map((debt) => {
+            const permissionCtx: PermissionContext = { role: currentUserRole };
 
             return (
-              <tr key={debt.id} className="hover:bg-blue-50/30 transition-colors group">
-                <td className="px-5 py-4">
-                  <div className="font-black text-slate-900 leading-tight">{debt.accountName}</div>
-                  <div className="text-[10px] font-black text-slate-400 mt-1 font-mono tracking-tighter uppercase">ID: {debt.accountId}</div>
+              <tr key={debt.id} className="transition-colors hover:bg-slate-50">
+                <td className="px-5 py-4 align-top">
+                  <div className="font-black text-slate-900">{debt.id}</div>
                 </td>
-                <td className="px-5 py-4">
-                  <span className="text-[10px] font-black bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200 uppercase">{debt.debtType}</span>
+
+                <td className="px-5 py-4 align-top">
+                  <div className="font-black text-slate-900">{debt.accountName}</div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {debt.accountClass} • {debt.accountType}
+                  </div>
+                  <div className="mt-1 text-[11px] text-slate-400">{debt.accountId}</div>
                 </td>
-                <td className="px-5 py-4">
-                  <div className="font-black text-rose-700 text-base">{formatNumber(debt.amount)} <span className="text-[10px] uppercase text-slate-400">{debt.currency}</span></div>
-                </td>
-                <td className="px-5 py-4 text-[11px] font-black text-slate-500" dir="ltr">
-                  {new Date(debt.dueDate).toLocaleDateString("en-US")}
-                </td>
-                <td className="px-5 py-4">
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded ${
-                    debt.overdueDays > 30 ? 'bg-rose-100 text-rose-700' : 
-                    debt.overdueDays > 0 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
-                  }`}>
-                    {debt.overdueDays > 0 ? `${debt.overdueDays} يوم تأخير` : 'منتظم'}
+
+                <td className="px-5 py-4 align-top">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+                    {getDebtTypeLabel(debt.debtType)}
                   </span>
                 </td>
-                <td className="px-5 py-4">
-                  <span className={`px-2 py-1 rounded-lg text-[10px] font-black shadow-sm ${
-                    debt.status === 'ACTIVE' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-slate-100 text-slate-600 border border-slate-200'
-                  }`}>
-                    {debt.status}
+
+                <td className="px-5 py-4 align-top">
+                  <div className="font-black text-slate-900">
+                    الإجمالي: {formatNumber(debt.amount)}{" "}
+                    <span className="text-[10px] uppercase text-slate-400">{debt.currency}</span>
+                  </div>
+                  <div className="mt-1 text-sm font-black text-rose-700">
+                    المتبقي: {formatNumber(debt.outstanding)}{" "}
+                    <span className="text-[10px] uppercase text-rose-400">{debt.currency}</span>
+                  </div>
+                  <div className="mt-2 text-[11px] text-slate-500">
+                    إعفاء مطبق: {debt.waiverApplied ? "نعم" : "لا"}
+                  </div>
+                </td>
+
+                <td className="px-5 py-4 align-top">
+                  <div className="text-sm font-bold text-slate-700">
+                    {new Date(debt.dueDate).toLocaleDateString("ar-SY")}
+                  </div>
+                  <div className="mt-2">
+                    <span className={`rounded-full px-2 py-1 text-[10px] font-black ${getAgingClasses(debt.agingBucket)}`}>
+                      {getAgingLabel(debt.agingBucket)}
+                    </span>
+                  </div>
+                </td>
+
+                <td className="px-5 py-4 align-top">
+                  <span className={`rounded-full px-3 py-1 text-[10px] font-black ${getStatusClasses(debt.status)}`}>
+                    {debt.status === "PENDING"
+                      ? "معلق"
+                      : debt.status === "OVERDUE"
+                        ? "متأخر"
+                        : debt.status === "PARTIAL"
+                          ? "مسدد جزئيا"
+                          : "مسدد"}
                   </span>
                 </td>
-                <td className={`px-5 py-4 text-center sticky left-0 bg-white group-hover:bg-blue-50/30 shadow-[4px_0_6px_-2px_rgba(0,0,0,0.05)] transition-all ${isMenuOpen ? 'z-50' : 'z-20'}`}>
-                  <FinanceActionMenu 
+
+                <td className="px-5 py-4 align-top text-xs text-slate-500">
+                  {debt.lastActionAt
+                    ? new Date(debt.lastActionAt).toLocaleString("ar-SY")
+                    : "لا يوجد إجراء مسجل"}
+                </td>
+
+                <td className="px-5 py-4 align-top text-left">
+                  <FinanceActionMenu
                     context={permissionCtx}
                     recordId={debt.id}
                     recordType="DEBT"
                     onSelectAction={onActionSelect}
-                    isOpen={isMenuOpen}
-                    onToggle={() => setOpenMenuId(isMenuOpen ? null : debt.id)}
-                    onClose={() => setOpenMenuId(null)}
                   />
                 </td>
               </tr>
@@ -90,3 +191,5 @@ export function FinanceDebtsTable({ debts, isLoading, currentUserRole, onActionS
     </div>
   );
 }
+
+export default FinanceDebtsTable;

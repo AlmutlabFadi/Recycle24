@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { FinanceRestrictionRow } from "../_lib/types";
 import { AdminRole, PermissionContext } from "../_lib/permissions";
 import { FinanceActionMenu } from "./finance-action-menu";
@@ -13,62 +13,150 @@ interface FinanceRestrictedAccountsTableProps {
 }
 
 function formatNumber(value: number) {
-  return value.toLocaleString("en-US");
+  return value.toLocaleString("ar-SY");
 }
 
-export function FinanceRestrictedAccountsTable({ accounts, isLoading, currentUserRole, onActionSelect }: FinanceRestrictedAccountsTableProps) {
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+function getRestrictionLabel(type: FinanceRestrictionRow["restrictionType"]) {
+  switch (type) {
+    case "FROZEN_DEBIT":
+      return "تجميد الخصم";
+    case "FROZEN_CREDIT":
+      return "تجميد الإضافة";
+    case "FULL_SUSPENSION":
+      return "إيقاف كامل";
+    case "BLACKLISTED":
+      return "حظر كامل";
+    case "FROZEN_BALANCE":
+      return "تجميد رصيد";
+    default:
+      return type;
+  }
+}
 
-  if (isLoading) return <div className="p-10 text-center animate-pulse text-slate-400 font-black tracking-widest uppercase shadow-inner bg-slate-50/50 rounded-xl">جاري فحص قيود الحسابات...</div>;
-  if (accounts.length === 0) return <div className="p-16 text-center bg-slate-50 rounded-xl border border-dashed border-slate-300 font-black text-slate-400">لا يوجد حسابات مقيدة حالياً.</div>;
+function getRestrictionClasses(type: FinanceRestrictionRow["restrictionType"]) {
+  if (type === "BLACKLISTED") {
+    return "bg-black text-white";
+  }
+
+  if (type === "FULL_SUSPENSION") {
+    return "bg-rose-100 text-rose-800";
+  }
+
+  if (type === "FROZEN_BALANCE") {
+    return "bg-orange-100 text-orange-800";
+  }
+
+  return "bg-amber-100 text-amber-800";
+}
+
+export function FinanceRestrictedAccountsTable({
+  accounts,
+  isLoading,
+  currentUserRole,
+  onActionSelect,
+}: FinanceRestrictedAccountsTableProps) {
+  if (isLoading) {
+    return (
+      <div className="rounded-[24px] border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 shadow-sm">
+        جار تحميل الحسابات المقيدة والمجمدة...
+      </div>
+    );
+  }
+
+  if (accounts.length === 0) {
+    return (
+      <div className="rounded-[24px] border border-dashed border-slate-300 bg-slate-50 p-12 text-center shadow-sm">
+        <p className="text-sm font-bold text-slate-600">لا توجد حسابات مقيدة في العرض الحالي.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm" dir="rtl">
+    <div className="overflow-x-auto rounded-[24px] border border-slate-200 bg-white shadow-sm">
       <table className="w-full text-right text-sm text-slate-700">
-        <thead className="bg-slate-50 border-b border-slate-200 text-xs font-black uppercase tracking-wider text-slate-500">
+        <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-black uppercase tracking-wider text-slate-500">
           <tr>
-            <th className="px-5 py-4">الحساب المقيد</th>
+            <th className="px-5 py-4">الحساب</th>
+            <th className="px-5 py-4">التصنيف</th>
             <th className="px-5 py-4">نوع القيد</th>
             <th className="px-5 py-4">الرصيد المجمد</th>
-            <th className="px-5 py-4">سبب القيد</th>
-            <th className="px-5 py-4">تاريخ البدء</th>
-            <th className="px-5 py-4 sticky left-0 bg-slate-50 text-center shadow-[4px_0_6px_-2px_rgba(0,0,0,0.05)]">الإجراءات</th>
+            <th className="px-5 py-4">المطبق بواسطة</th>
+            <th className="px-5 py-4">وقت التطبيق</th>
+            <th className="px-5 py-4">السبب</th>
+            <th className="px-5 py-4">مؤشرات الخطر</th>
+            <th className="px-5 py-4 text-left">إجراءات</th>
           </tr>
         </thead>
+
         <tbody className="divide-y divide-slate-100">
-          {accounts.map(acc => {
-            const permissionCtx: PermissionContext = { role: currentUserRole, selectedRow: acc as any };
-            const isMenuOpen = openMenuId === acc.id;
+          {accounts.map((acc) => {
+            const permissionCtx: PermissionContext = { role: currentUserRole };
+            const recordId = `${acc.accountId}:${acc.restrictionType}`;
 
             return (
-              <tr key={acc.id} className="hover:bg-rose-50/30 transition-colors group">
-                <td className="px-5 py-4">
-                  <div className="font-black text-slate-900 leading-tight">{acc.accountName}</div>
-                  <div className="text-[10px] font-black text-slate-400 mt-1 font-mono tracking-tighter uppercase">ID: {acc.accountId}</div>
+              <tr key={recordId} className="transition-colors hover:bg-rose-50/30">
+                <td className="px-5 py-4 align-top">
+                  <div className="font-black text-slate-900">{acc.accountName}</div>
+                  <div className="mt-1 text-xs text-slate-500">{acc.accountId}</div>
                 </td>
-                <td className="px-5 py-4">
-                  <span className="text-[10px] font-black bg-rose-50 text-rose-700 px-2 py-0.5 rounded border border-rose-100 shadow-sm uppercase">{acc.restrictionType}</span>
+
+                <td className="px-5 py-4 align-top">
+                  <div className="font-black text-slate-900">{acc.accountClass}</div>
+                  <div className="mt-1 text-xs text-slate-500">{acc.accountType}</div>
                 </td>
-                <td className="px-5 py-4">
-                  <div className="font-black text-slate-900 text-base">{formatNumber(acc.frozenAmount)} <span className="text-[10px] uppercase text-slate-400">{acc.currency}</span></div>
+
+                <td className="px-5 py-4 align-top">
+                  <span className={`rounded-full px-3 py-1 text-[10px] font-black ${getRestrictionClasses(acc.restrictionType)}`}>
+                    {getRestrictionLabel(acc.restrictionType)}
+                  </span>
+                  <div className="mt-2 text-[11px] text-slate-500">
+                    الحالة: {acc.status === "ACTIVE" ? "نشط" : "مرفوع"}
+                  </div>
                 </td>
-                <td className="px-5 py-4">
-                  <p className="text-xs font-bold text-slate-500 max-w-[200px] leading-relaxed truncate group-hover:whitespace-normal" title={acc.reason}>
-                    {acc.reason}
-                  </p>
+
+                <td className="px-5 py-4 align-top">
+                  <div className="text-base font-black text-rose-700">
+                    {formatNumber(acc.frozenBalance)}{" "}
+                    <span className="text-[10px] uppercase text-rose-400">{acc.currency}</span>
+                  </div>
                 </td>
-                <td className="px-5 py-4 text-[11px] font-black text-slate-500" dir="ltr">
-                  {new Date(acc.createdAt).toLocaleString("en-US")}
+
+                <td className="px-5 py-4 align-top">
+                  <div className="font-bold text-slate-800">{acc.appliedBy}</div>
                 </td>
-                <td className={`px-5 py-4 text-center sticky left-0 bg-white group-hover:bg-rose-50/30 shadow-[4px_0_6px_-2px_rgba(0,0,0,0.05)] transition-all ${isMenuOpen ? 'z-50' : 'z-20'}`}>
-                  <FinanceActionMenu 
+
+                <td className="px-5 py-4 align-top text-xs text-slate-500">
+                  {new Date(acc.appliedAt).toLocaleString("ar-SY")}
+                </td>
+
+                <td className="px-5 py-4 align-top text-xs leading-6 text-slate-600">
+                  {acc.reason}
+                </td>
+
+                <td className="px-5 py-4 align-top">
+                  <div className="flex flex-wrap gap-1">
+                    {acc.relatedFlags.length > 0 ? (
+                      acc.relatedFlags.map((flag) => (
+                        <span
+                          key={flag.id}
+                          title={flag.description}
+                          className="rounded bg-amber-100 px-2 py-1 text-[10px] font-black text-amber-800"
+                        >
+                          {flag.code}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-xs text-slate-400">لا توجد مؤشرات إضافية</span>
+                    )}
+                  </div>
+                </td>
+
+                <td className="px-5 py-4 align-top text-left">
+                  <FinanceActionMenu
                     context={permissionCtx}
-                    recordId={acc.id}
-                    recordType="RESTRICTION"
+                    recordId={recordId}
+                    recordType="ACCOUNT"
                     onSelectAction={onActionSelect}
-                    isOpen={isMenuOpen}
-                    onToggle={() => setOpenMenuId(isMenuOpen ? null : acc.id)}
-                    onClose={() => setOpenMenuId(null)}
                   />
                 </td>
               </tr>
@@ -79,3 +167,5 @@ export function FinanceRestrictedAccountsTable({ accounts, isLoading, currentUse
     </div>
   );
 }
+
+export default FinanceRestrictedAccountsTable;
