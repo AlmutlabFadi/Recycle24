@@ -397,8 +397,28 @@ export class FinanceAdminAdapter {
     };
   }
 
-  async getActiveHolds(): Promise<FinanceHoldRow[]> {
-    return [];
+    async getActiveHolds(): Promise<FinanceHoldRow[]> {
+    const response = await fetch("/api/admin/finance/holds?status=OPEN&take=100", {
+      method: "GET",
+      credentials: "include",
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to load finance holds: ${response.status}`);
+    }
+
+    const payload = (await response.json()) as {
+      success?: boolean;
+      items?: FinanceHoldRow[];
+      error?: string;
+    };
+
+    if (!payload.success || !Array.isArray(payload.items)) {
+      throw new Error(payload.error ?? "Finance holds response was invalid");
+    }
+
+    return payload.items;
   }
 
   async getOutstandingDebts(): Promise<FinanceDebtRow[]> {
