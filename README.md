@@ -1,3 +1,9 @@
+# 🛡️ Governance Engine & Architecture Guardian
+**CRITICAL**: This project operates under a strict [Governance Policy](docs/GOVERNANCE_POLICY.md) and an [AI Governor](docs/AI_GOVERNOR.md). 
+**NO UNAUTHORIZED CHANGES** are allowed. You must read and abide by the [Workflow Rules](WORKFLOW_RULES.md) before making any modifications.
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

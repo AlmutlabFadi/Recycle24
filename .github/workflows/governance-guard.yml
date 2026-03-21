@@ -1,0 +1,29 @@
+name: Governance Guard 
+
+on: 
+  pull_request: 
+    types: [opened, edited, synchronize, reopened] 
+    branches: [main, develop] 
+
+jobs: 
+  guard: 
+    runs-on: ubuntu-latest 
+    permissions: 
+      contents: read 
+      pull-requests: read 
+
+    steps: 
+      - uses: actions/checkout@v4 
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4 
+        with: 
+          node-version: 20 
+
+      - name: Run Governance Guard 
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+          PR_NUMBER: ${{ github.event.pull_request.number }} 
+        run: node governance/guard-pr.js

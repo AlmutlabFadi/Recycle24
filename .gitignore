@@ -66,3 +66,6 @@ ledger-files-only.txt
 # Runtime uploads
 public/uploads/
 
+*.bak
+*.bak-*
+schema-current.txt

@@ -1,0 +1,10 @@
+{ 
+  "protected": [ 
+    "prisma/", 
+    "src/lib/auth/", 
+    "src/lib/security/", 
+    "src/lib/ledger/", 
+    "src/app/admin-core/" 
+  ], 
+  "max_changed_lines_without_explicit_approval": 300 
+}
