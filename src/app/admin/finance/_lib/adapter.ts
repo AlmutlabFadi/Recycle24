@@ -429,9 +429,24 @@ export class FinanceAdminAdapter {
     return payload.items;
   }
 
-  async getOutstandingDebts(): Promise<FinanceDebtRow[]> {
-    return [];
+ async getOutstandingDebts(): Promise<FinanceDebtRow[]> {
+  const response = await fetch("/api/admin/finance/debts?take=100", {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  const payload = await parseJsonResponse<{
+    success?: boolean;
+    items?: FinanceDebtRow[];
+    error?: string;
+  }>(response);
+
+  if (!payload.success || !Array.isArray(payload.items)) {
+    throw new Error(payload.error ?? "Finance debts response was invalid");
   }
+
+  return payload.items;
+}
 
   async getRestrictedAccounts(): Promise<FinanceRestrictionRow[]> {
     const response = await fetch("/api/admin/finance/restricted?status=ACTIVE&take=100", {
