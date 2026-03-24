@@ -137,7 +137,7 @@ export async function bootstrapAccessControl() {
 
       if (ownerRole) {
         // Only assign OWNER to the primary administrator email
-        const primaryAdminEmail = process.env.OWNER_EMAIL || "fadialmutlab@gmail.com";
+        const primaryAdminEmail = process.env.OWNER_EMAIL || "emixdigitall@gmail.com";
         const primaryUser = await tx.user.findUnique({
           where: { email: primaryAdminEmail },
           select: { id: true },
