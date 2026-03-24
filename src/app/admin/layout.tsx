@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import StaffActivityHeartbeat from "@/components/admin/StaffActivityHeartbeat";
 
 interface NavItem {
     id: string;
@@ -11,6 +12,7 @@ interface NavItem {
     icon: string;
     href: string;
     badge?: number;
+    permission?: string;
     children?: { label: string; href: string }[];
 }
 
@@ -29,19 +31,24 @@ function AdminSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: (
     const navItems: NavItem[] = [
         { id: "dashboard", label: "لوحة القيادة", icon: "dashboard", href: "/admin/dashboard" },
         { id: "control", label: "برج المراقبة", icon: "cell_tower", href: "/admin/control" },
-        { id: "users", label: "المستخدمين", icon: "group", href: "/admin/users" },
-        { id: "verification", label: "التوثيق", icon: "verified_user", href: "/admin/verification", badge: stats?.verification?.pending },
-        { id: "finance", label: "المالية", icon: "account_balance", href: "/admin/finance" },
-        { id: "transport", label: "إدارة النقل", icon: "local_shipping", href: "/admin/transport" },
-        { id: "marketplace", label: "الأسواق", icon: "storefront", href: "/admin/marketplace" },
-        { id: "deals", label: "الصفقات", icon: "handshake", href: "/admin/deals" },
-        { id: "subscriptions", label: "الاشتراكات", icon: "card_membership", href: "/admin/subscriptions" },
-        { id: "support", label: "الدعم الفني", icon: "support_agent", href: "/admin/support", badge: stats?.support?.open },
-        { id: "rewards", label: "المكافآت", icon: "loyalty", href: "/admin/rewards" },
-        { id: "soc", label: "الأمن", icon: "security", href: "/admin/soc" },
-        { id: "safety", label: "السلامة", icon: "health_and_safety", href: "/admin/safety/incidents" },
-        { id: "access", label: "الصلاحيات", icon: "admin_panel_settings", href: "/admin/access" },
+        { id: "users", label: "المستخدمين", icon: "group", href: "/admin/users", permission: "MANAGE_USERS" },
+        { id: "verification", label: "التوثيق", icon: "verified_user", href: "/admin/verification", badge: stats?.verification?.pending, permission: "MANAGE_USERS" },
+        { id: "finance", label: "المالية", icon: "account_balance", href: "/admin/finance", permission: "MANAGE_FINANCE" },
+        { id: "transport", label: "إدارة النقل", icon: "local_shipping", href: "/admin/transport", permission: "MANAGE_DRIVERS" },
+        { id: "marketplace", label: "الأسواق", icon: "storefront", href: "/admin/marketplace", permission: "MANAGE_KNOWLEDGE" },
+        { id: "deals", label: "الصفقات", icon: "handshake", href: "/admin/deals", permission: "MANAGE_FINANCE" },
+        { id: "subscriptions", label: "الاشتراكات", icon: "card_membership", href: "/admin/subscriptions", permission: "MANAGE_FINANCE" },
+        { id: "support", label: "الدعم الفني", icon: "support_agent", href: "/admin/support", badge: stats?.support?.open, permission: "MANAGE_SUPPORT" },
+        { id: "rewards", label: "المكافآت", icon: "loyalty", href: "/admin/rewards", permission: "MANAGE_REWARDS" },
+        { id: "soc", label: "الأمن", icon: "security", href: "/admin/soc", permission: "MANAGE_ACCESS" },
+        { id: "safety", label: "السلامة", icon: "health_and_safety", href: "/admin/safety/incidents", permission: "ACCESS_SAFETY" },
+        { id: "access", label: "الصلاحيات", icon: "admin_panel_settings", href: "/admin/access", permission: "MANAGE_ACCESS" },
     ];
+
+    const filteredNavItems = navItems.filter(item => {
+        if (!item.permission) return true;
+        return user?.permissions?.includes(item.permission);
+    });
 
     const handleSwitchToClient = async () => {
         if (switchRole) {
@@ -109,7 +116,7 @@ function AdminSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: (
 
                 {/* Navigation */}
                 <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5 scrollbar-thin">
-                    {navItems.map((item) => {
+                    {filteredNavItems.map((item) => {
                         const isActive = pathname === item.href || pathname?.startsWith(item.href + "/");
                         return (
                             <Link
@@ -201,6 +208,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <div className="min-h-screen bg-[#060a14] font-display" dir="rtl">
+            <StaffActivityHeartbeat />
             {/* Sidebar */}
             <AdminSidebar
                 collapsed={sidebarCollapsed}
@@ -225,6 +233,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </div>
 
                     <div className="flex items-center gap-2">
+                        {/* Break Toggle Button */}
+                        <button
+                            onClick={() => {
+                                const isOnBreak = document.querySelector('[data-staff-break]')?.getAttribute('data-staff-break') === 'true';
+                                window.dispatchEvent(new CustomEvent('staff-break-toggle', {
+                                    detail: { action: isOnBreak ? 'end' : 'start' }
+                                }));
+                                const btn = document.querySelector('[data-staff-break]');
+                                if (btn) btn.setAttribute('data-staff-break', String(!isOnBreak));
+                            }}
+                            data-staff-break="false"
+                            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold border transition-all hover:scale-105 active:scale-95 bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20"
+                            title="أخذ استراحة / العودة من الاستراحة"
+                        >
+                            <span className="material-symbols-outlined !text-[14px]">coffee</span>
+                            استراحة
+                        </button>
+
                         {/* System Status Indicator */}
                         <div className="hidden md:flex items-center gap-1.5 bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-full text-[10px] font-bold border border-emerald-500/20">
                             <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -239,9 +265,50 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                 {/* Page Content */}
                 <main className="p-4 lg:p-6">
-                    {children}
+                    <PermissionGuard pathname={pathname}>
+                        {children}
+                    </PermissionGuard>
                 </main>
             </div>
         </div>
     );
+}
+function PermissionGuard({ children, pathname }: { children: React.ReactNode; pathname: string | null }) {
+    const { user, isLoading } = useAuth();
+    
+    if (isLoading) return <div className="flex items-center justify-center p-20 animate-pulse text-slate-500 font-bold">جاري التحقق من الصلاحيات...</div>;
+
+    const routePermissions: Record<string, string> = {
+        "/admin/users": "MANAGE_USERS",
+        "/admin/verification": "MANAGE_USERS",
+        "/admin/finance": "MANAGE_FINANCE",
+        "/admin/transport": "MANAGE_DRIVERS",
+        "/admin/marketplace": "MANAGE_KNOWLEDGE",
+        "/admin/deals": "MANAGE_FINANCE",
+        "/admin/subscriptions": "MANAGE_FINANCE",
+        "/admin/support": "MANAGE_SUPPORT",
+        "/admin/rewards": "MANAGE_REWARDS",
+        "/admin/soc": "MANAGE_ACCESS",
+        "/admin/safety": "ACCESS_SAFETY",
+        "/admin/access": "MANAGE_ACCESS",
+    };
+
+    const requiredPermission = Object.entries(routePermissions).find(([route]) => pathname?.startsWith(route))?.[1];
+
+    if (requiredPermission && !user?.permissions?.includes(requiredPermission)) {
+        return (
+            <div className="flex flex-col items-center justify-center py-32 text-center">
+                <div className="size-20 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
+                    <span className="material-symbols-outlined !text-4xl text-red-500">lock</span>
+                </div>
+                <h2 className="text-2xl font-black text-white mb-2">عذراً، الوصول مرفوض</h2>
+                <p className="text-slate-400 max-w-sm font-bold">ليس لديك الصلاحيات الكافية للوصول إلى هذا القسم. إذا كنت تعتقد أن هذا خطأ، يرجى مراجعة المسؤول.</p>
+                <Link href="/admin/dashboard" className="mt-8 bg-slate-800 hover:bg-slate-700 text-white px-6 py-2.5 rounded-xl font-bold transition">
+                    العودة للرئيسية
+                </Link>
+            </div>
+        );
+    }
+
+    return <>{children}</>;
 }

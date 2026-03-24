@@ -17,26 +17,26 @@ export async function GET(req: Request) {
         const where: any = {};
         if (userId) where.userId = userId;
         if (startDate || endDate) {
-            where.createdAt = {};
-            if (startDate) where.createdAt.gte = new Date(startDate);
-            if (endDate) where.createdAt.lte = new Date(endDate);
+            where.startTime = {};
+            if (startDate) where.startTime.gte = new Date(startDate);
+            if (endDate) where.startTime.lte = new Date(endDate);
         }
 
-        const logs = await db.securityLog.findMany({
+        const logs = await db.staffActivity.findMany({
             where,
             include: {
                 user: {
                     select: {
                         name: true,
                         email: true,
-                        role: true
+                        role: true,
                     }
                 }
             },
             orderBy: {
-                createdAt: "desc"
+                startTime: "desc"
             },
-            take: 200 // Limit for performance
+            take: 500,
         });
 
         return NextResponse.json({ logs });

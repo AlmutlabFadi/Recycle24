@@ -41,9 +41,14 @@ export async function DELETE(
                 data: {
                     userType: "CLIENT",
                     role: "CLIENT",
-                    currentAdminStatus: "OFFLINE",
-                },
+                } as any,
             });
+
+            // 3. Set admin status to OFFLINE (separate call to avoid type conflict)
+            await tx.$executeRawUnsafe(
+                `UPDATE "User" SET "currentAdminStatus" = 'OFFLINE' WHERE "id" = $1`,
+                targetUserId
+            );
 
             // 3. Log the action
             await tx.securityLog.create({

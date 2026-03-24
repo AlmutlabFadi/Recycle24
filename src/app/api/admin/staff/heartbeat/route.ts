@@ -11,21 +11,19 @@ export async function POST(req: Request) {
         }
 
         const userId = session.user.id;
-        const { status } = await req.json(); // ONLINE or IDLE
+        const { status } = await req.json(); // ONLINE, IDLE, OFFLINE, BREAK
 
         const now = new Date();
 
-        // 1. Update User's basic status and last active time
-        await db.user.update({
-            where: { id: userId },
-            data: {
-                lastActiveAt: now,
-                currentAdminStatus: status === "IDLE" ? "IDLE" : "ONLINE",
-            },
-        });
+        // 1. Update User's status and last active time
+        await db.$executeRawUnsafe(
+            `UPDATE "User" SET "lastActiveAt" = $1, "currentAdminStatus" = $2 WHERE "id" = $3`,
+            now,
+            status === "BREAK" ? "BREAK" : status === "IDLE" ? "IDLE" : status === "OFFLINE" ? "OFFLINE" : "ONLINE",
+            userId
+        );
 
-        // 2. Manage StaffActivity Log
-        // Find the most recent active log for this user
+        // 2. Manage StaffActivity session log
         const lastLog = await db.staffActivity.findFirst({
             where: { userId, endTime: null },
             orderBy: { startTime: "desc" },
@@ -33,7 +31,7 @@ export async function POST(req: Request) {
 
         if (lastLog) {
             if (lastLog.status !== status) {
-                // Status changed: Close the previous log and start a new one
+                // Status changed: Close the previous segment and start a new one
                 const duration = Math.floor((now.getTime() - lastLog.startTime.getTime()) / 1000);
                 await db.staffActivity.update({
                     where: { id: lastLog.id },
@@ -50,12 +48,10 @@ export async function POST(req: Request) {
                         startTime: now,
                     },
                 });
-            } else {
-                // Same status: just keep it open, maybe update a "lastContentAt" if we had one
-                // For now, simple transition-based logging is enough.
             }
+            // Same status: keep the segment open
         } else {
-            // No open log: Start a new one
+            // No open segment: Start a new one (login event)
             await db.staffActivity.create({
                 data: {
                     userId,
