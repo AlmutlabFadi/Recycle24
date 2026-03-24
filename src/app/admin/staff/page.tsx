@@ -308,30 +308,41 @@ export default function StaffManagementPage() {
                                         <td className="px-6 py-4">
                                             {isOwner(user) ? (
                                                 <div className="flex items-center justify-end">
-                                                    <span className="text-[9px] text-amber-500/60 font-bold uppercase tracking-tight">محمي</span>
+                                                    <span className="text-[10px] text-amber-500/80 font-bold bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20">🔒 محمي</span>
                                                 </div>
                                             ) : (
-                                                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center justify-end gap-2 flex-wrap">
+                                                    <Link
+                                                        href="/admin/access"
+                                                        title="تعديل الصلاحيات"
+                                                        className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-emerald-500/20 border border-slate-700 hover:border-emerald-500/40 rounded-xl text-slate-300 hover:text-emerald-400 transition-all text-[11px] font-bold"
+                                                    >
+                                                        <span className="material-symbols-outlined !text-[16px]">edit</span>
+                                                        الصلاحيات
+                                                    </Link>
                                                     <button
                                                         onClick={() => openModal("warn", user)}
                                                         title="إرسال تحذير"
-                                                        className="p-2 hover:bg-amber-500/10 rounded-lg text-slate-500 hover:text-amber-500 transition-colors"
+                                                        className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/40 rounded-xl text-amber-400 transition-all text-[11px] font-bold"
                                                     >
-                                                        <span className="material-symbols-outlined !text-sm">warning</span>
+                                                        <span className="material-symbols-outlined !text-[16px]">warning</span>
+                                                        تحذير
                                                     </button>
                                                     <button
                                                         onClick={() => openModal("remove", user)}
                                                         title="فصل من فريق العمل"
-                                                        className="p-2 hover:bg-red-500/10 rounded-lg text-slate-500 hover:text-red-400 transition-colors"
+                                                        className="flex items-center gap-1.5 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 rounded-xl text-red-400 transition-all text-[11px] font-bold"
                                                     >
-                                                        <span className="material-symbols-outlined !text-sm">person_remove</span>
+                                                        <span className="material-symbols-outlined !text-[16px]">person_remove</span>
+                                                        إزالة
                                                     </button>
                                                     <button
                                                         onClick={() => openModal("block", user)}
                                                         title="حظر الحساب نهائياً"
-                                                        className="p-2 hover:bg-red-500/10 rounded-lg text-slate-600 hover:text-red-500 transition-colors"
+                                                        className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-red-500/10 border border-slate-700 hover:border-red-500/30 rounded-xl text-slate-500 hover:text-red-500 transition-all text-[11px] font-bold"
                                                     >
-                                                        <span className="material-symbols-outlined !text-sm">block</span>
+                                                        <span className="material-symbols-outlined !text-[16px]">block</span>
+                                                        حظر
                                                     </button>
                                                 </div>
                                             )}
