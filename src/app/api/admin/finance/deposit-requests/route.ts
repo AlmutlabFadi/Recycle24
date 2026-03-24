@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
@@ -6,7 +6,7 @@ import { requirePermission } from "@/lib/rbac";
 function parsePositiveInt(value: string | null, fallback: number, max: number) {
   const parsed = Number(value);
 
-  if (!Number.isFinite(parsed) || parsed < 0) {
+  if (!Number.isFinite(parsed) || parsed <= 0) {
     return fallback;
   }
 
@@ -157,6 +157,7 @@ export async function GET(request: NextRequest) {
       }),
       db.depositRequest.count({ where }),
       db.depositRequest.groupBy({
+        where,
         by: ["status", "approvalStage"],
         _count: {
           _all: true,
@@ -194,3 +195,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+
+

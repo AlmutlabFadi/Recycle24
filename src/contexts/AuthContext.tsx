@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { createContext, useContext, ReactNode, useCallback, useState, useEffect } from "react";
 import { useSession, signIn, signOut, SessionProvider } from "next-auth/react";
@@ -110,7 +110,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.error || "فشل إنشاء الحساب");
+      throw new Error(data.error || "ÙØ´Ù„ Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ø­Ø³Ø§Ø¨");
     }
 
     const result = await signIn("credentials", {
@@ -134,7 +134,7 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
 
     const data = await response.json();
     if (!response.ok) {
-      throw new Error(data.error || "فشل إنشاء الحساب");
+      throw new Error(data.error || "ÙØ´Ù„ Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„Ø­Ø³Ø§Ø¨");
     }
 
     const result = await signIn("credentials", {
@@ -213,3 +213,4 @@ export function useAuth() {
   }
   return context;
 }
+

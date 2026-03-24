@@ -50,8 +50,9 @@ export default function AccessControlPage() {
     const [error, setError] = useState<string | null>(null);
     const [isForbidden, setIsForbidden] = useState(false);
 
-    const [roleForm, setRoleForm] = useState({ name: "", description: "" });
+    const [roleForm, setRoleForm] = useState({ name: "", description: "", specialization: "" });
     const [rolePermissionsDraft, setRolePermissionsDraft] = useState<Record<string, string[]>>({});
+    const [userRolesDraft, setUserRolesDraft] = useState<Record<string, string[]>>({});
 
     const [inviteForm, setInviteForm] = useState({ email: "", phone: "", roleId: "", expiresAt: "" });
 
@@ -188,16 +189,51 @@ export default function AccessControlPage() {
         }
     };
 
-    const updateUserRoles = async (user: UserSearch, roleIds: string[]) => {
+    const handleUserRoleToggle = (userId: string, roleId: string, currentRoles: string[]) => {
+        setUserRolesDraft(prev => {
+            const draft = prev[userId] || currentRoles;
+            const next = draft.includes(roleId)
+                ? draft.filter(id => id !== roleId)
+                : [...draft, roleId];
+            return { ...prev, [userId]: next };
+        });
+    };
+
+    const saveUserRoles = async (userId: string) => {
+        const rolesToSave = userRolesDraft[userId];
+        if (!rolesToSave) return;
+
         try {
-            const response = await fetch(`/api/admin/access/users/${user.id}/roles`, {
+            const response = await fetch(`/api/admin/access/users/${userId}/roles`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ roleIds }),
+                body: JSON.stringify({ roleIds: rolesToSave }),
             });
             const data = await response.json();
             if (!response.ok) {
                 throw new Error(data.error || "تعذر تحديث الأدوار");
+            }
+            // Clear draft and refresh
+            setUserRolesDraft(prev => {
+                const { [userId]: _, ...rest } = prev;
+                return rest;
+            });
+            await searchUsers();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
+        }
+    };
+
+    const removeTeamMember = async (userId: string) => {
+        if (!confirm("هل أنت متأكد من إزالة هذا العضو من فريق العمل؟ سيتم تجريده من كافة الصلاحيات فوراً.")) return;
+
+        try {
+            const response = await fetch(`/api/admin/access/users/${userId}/remove`, {
+                method: "DELETE",
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || "تعذر إزالة العضو");
             }
             await searchUsers();
         } catch (err) {
@@ -230,34 +266,61 @@ export default function AccessControlPage() {
         <div className="min-h-screen bg-bg-dark text-white font-display">
             <HeaderWithBack title="لوحة توزيع الأدوار والصلاحيات" />
 
-            <main className="p-4 pb-20 flex flex-col gap-6">
+            <main className="p-4 pb-20 flex flex-col gap-8 max-w-6xl mx-auto">
+                {/* Bridge to Staff Dashboard */}
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-3xl">
+                    <div>
+                        <h2 className="text-lg font-bold text-emerald-400">إدارة فريق العمل</h2>
+                        <p className="text-xs text-slate-400 mt-1">لقد قمنا بنقل قائمة الموظفين والدعوات إلى لوحة مستقلة لتسهيل العمل.</p>
+                    </div>
+                    <Link 
+                        href="/admin/staff"
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+                    >
+                        المتابعة إلى إدارة الموظفين
+                        <span className="material-symbols-outlined !text-sm">arrow_left</span>
+                    </Link>
+                </div>
+
                 {error && (
                     <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 text-sm text-red-300">
                         {error}
                     </div>
                 )}
 
-                <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
-                    <h2 className="text-sm font-bold mb-4">إنشاء دور جديد</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <section className="bg-slate-900/40 border border-slate-800 rounded-2xl p-6">
+                    <h2 className="text-sm font-bold mb-4 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-emerald-400 !text-sm">add_circle</span>
+                        إنشاء دور جديد في المنظومة
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <input
-                            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm"
-                            placeholder="اسم الدور"
+                            className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-emerald-500/50 transition-all outline-none"
+                            placeholder="اسم الدور (مثلاً: مدير مالي)"
                             value={roleForm.name}
                             onChange={(e) => setRoleForm((prev) => ({ ...prev, name: e.target.value }))}
                         />
                         <input
-                            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm"
-                            placeholder="وصف مختصر"
+                            className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-emerald-500/50 transition-all outline-none"
+                            placeholder="وصف مختصر للمهام"
                             value={roleForm.description}
                             onChange={(e) => setRoleForm((prev) => ({ ...prev, description: e.target.value }))}
                         />
+                         <input
+                            className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:border-emerald-500/50 transition-all outline-none"
+                            placeholder="التخصص (مثلاً: إدارة الميزانية)"
+                            value={roleForm.specialization || ""}
+                            onChange={(e) => setRoleForm((prev) => ({ ...prev, specialization: e.target.value }))}
+                        />
                         <button
                             onClick={createRole}
-                            className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg"
+                            className="bg-slate-800 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all active:scale-95"
                         >
                             إنشاء الدور
                         </button>
+                    </div>
+                    <div className="mt-3 text-[9px] text-slate-600 uppercase tracking-tighter">
+                        * سيظهر التخصص بجانب مسمى المسمى الوظيفي للموظف لمزيد من التفصيل
                     </div>
                 </section>
 
@@ -266,161 +329,117 @@ export default function AccessControlPage() {
                         <h2 className="text-sm font-bold">الأدوار الحالية</h2>
                         <span className="text-xs text-slate-500">{roles.length} دور</span>
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-6">
                         {roles.map((role) => {
                             const currentPermissions = rolePermissionsDraft[role.id]
                                 || role.rolePermissions.map((rp) => rp.permission.id);
+                            
+                            const groups = [
+                                { label: "النظام البنكي والمالي", keys: ["MANAGE_FINANCE", "FINANCE_FINAL_APPROVE"] },
+                                { label: "إدارة المستخدمين والوصول", keys: ["MANAGE_USERS", "MANAGE_ACCESS"] },
+                                { label: "إدارة النقل والسائقين", keys: ["MANAGE_DRIVERS", "REVIEW_DRIVER_DOCS"] },
+                                { label: "إدارة المحتوى والوسائط", keys: ["MANAGE_KNOWLEDGE", "UPLOAD_MEDIA"] },
+                                { label: "الوصول للمراكز المتخصصة", keys: ["ACCESS_SAFETY", "ACCESS_CONSULTATIONS", "ACCESS_ACADEMY"] },
+                                { label: "الدعم والمكافآت", keys: ["MANAGE_SUPPORT", "MANAGE_REWARDS"] },
+                            ];
+
+                            const handleToggleGroup = (groupKeys: string[]) => {
+                                const groupPermIds = permissions
+                                    .filter(p => groupKeys.includes(p.key))
+                                    .map(p => p.id);
+                                
+                                const allSelected = groupPermIds.every(id => currentPermissions.includes(id));
+                                
+                                setRolePermissionsDraft(prev => {
+                                    const next = allSelected
+                                        ? currentPermissions.filter(id => !groupPermIds.includes(id))
+                                        : Array.from(new Set([...currentPermissions, ...groupPermIds]));
+                                    return { ...prev, [role.id]: next };
+                                });
+                            };
+
                             return (
-                                <div key={role.id} className="border border-slate-800 rounded-xl p-4 bg-slate-900/70">
-                                    <div className="flex items-start justify-between mb-3">
+                                <div key={role.id} className="border border-slate-800 rounded-2xl p-6 bg-slate-900/70 shadow-xl overflow-hidden relative group">
+                                    <div className="flex items-start justify-between mb-6">
                                         <div>
-                                            <h3 className="font-bold text-white">{role.name}</h3>
-                                            <p className="text-xs text-slate-400">{role.description || "بدون وصف"}</p>
-                                            <p className="text-[11px] text-slate-500">عدد المستخدمين: {role.userRoles.length}</p>
-                                        </div>
-                                        {role.isSystem && (
-                                            <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-1 rounded-full">
-                                                دور نظامي
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                        {permissions.map((perm) => (
-                                            <label key={perm.id} className="flex items-start gap-2 text-xs text-slate-300">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={currentPermissions.includes(perm.id)}
-                                                    onChange={() => handleRolePermissionToggle(role.id, perm.id)}
-                                                    className="mt-1"
-                                                />
-                                                <span>
-                                                    <span className="font-bold block">{perm.label}</span>
-                                                    <span className="text-[10px] text-slate-500">{perm.description}</span>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <h3 className="font-bold text-white text-lg">{role.name}</h3>
+                                                {role.isSystem && (
+                                                    <span className="text-[10px] bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                                        دور نظامي
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-slate-400 mb-2">{role.description || "لا يوجد وصف محدد لهذا الدور"}</p>
+                                            <div className="flex items-center gap-4">
+                                                <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                                                    <span className="material-symbols-outlined !text-xs">group</span>
+                                                    {role.userRoles.length} مستخدم
                                                 </span>
-                                            </label>
-                                        ))}
-                                    </div>
-                                    <button
-                                        onClick={() => saveRolePermissions(role)}
-                                        className="mt-3 bg-emerald-500/20 text-emerald-300 px-3 py-2 rounded-lg text-xs"
-                                    >
-                                        حفظ الصلاحيات
-                                    </button>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </section>
-
-                <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
-                    <h2 className="text-sm font-bold mb-4">دعوة موظف جديد</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <input
-                            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm"
-                            placeholder="البريد الإلكتروني"
-                            value={inviteForm.email}
-                            onChange={(e) => setInviteForm((prev) => ({ ...prev, email: e.target.value }))}
-                        />
-                        <input
-                            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm"
-                            placeholder="رقم الهاتف"
-                            value={inviteForm.phone}
-                            onChange={(e) => setInviteForm((prev) => ({ ...prev, phone: e.target.value }))}
-                        />
-                        <select
-                            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm"
-                            value={inviteForm.roleId}
-                            onChange={(e) => setInviteForm((prev) => ({ ...prev, roleId: e.target.value }))}
-                        >
-                            <option value="">اختر الدور</option>
-                            {roles.map((role) => (
-                                <option key={role.id} value={role.id}>
-                                    {role.name}
-                                </option>
-                            ))}
-                        </select>
-                        <input
-                            type="date"
-                            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm"
-                            value={inviteForm.expiresAt}
-                            onChange={(e) => setInviteForm((prev) => ({ ...prev, expiresAt: e.target.value }))}
-                        />
-                    </div>
-                    <button
-                        onClick={createInvite}
-                        className="mt-3 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold"
-                    >
-                        إنشاء الدعوة
-                    </button>
-                    <div className="mt-4 space-y-2">
-                        {invites.map((invite) => (
-                            <div key={invite.id} className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 bg-slate-950/70 border border-slate-800 rounded-lg p-3 text-xs">
-                                <div>
-                                    <span className="text-slate-400">الدور:</span> {invite.role.name}
-                                    <span className="text-slate-500"> | {invite.email || invite.phone}</span>
-                                    <div className="text-[10px] text-slate-500">رمز الدعوة: {invite.code}</div>
-                                    <div className="text-[10px] text-emerald-300">/invite/{invite.code}</div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] bg-slate-800 px-2 py-1 rounded-full">{invite.status}</span>
-                                    {invite.status === "PENDING" && (
-                                        <button
-                                            onClick={() => revokeInvite(invite.id)}
-                                            className="text-[10px] text-red-300 bg-red-500/10 px-2 py-1 rounded-full"
-                                        >
-                                            إلغاء
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                <section className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4">
-                    <h2 className="text-sm font-bold mb-4">تعيين أدوار لمستخدم</h2>
-                    <div className="flex flex-col md:flex-row gap-3 mb-4">
-                        <input
-                            className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm"
-                            placeholder="ابحث بالبريد أو الهاتف أو الاسم"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        <button
-                            onClick={searchUsers}
-                            className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold"
-                        >
-                            بحث
-                        </button>
-                    </div>
-                    <div className="space-y-3">
-                        {users.map((user) => {
-                            const currentRoles = user.userRoles.map((role) => role.role.id);
-                            return (
-                                <div key={user.id} className="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
-                                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                                        <div>
-                                            <div className="text-sm font-bold">{user.name || "مستخدم"}</div>
-                                            <div className="text-[11px] text-slate-400">{user.email || user.phone}</div>
-                                            <div className="text-[10px] text-slate-500">الحالة: {user.status || "غير محدد"}</div>
+                                                <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                                                    <span className="material-symbols-outlined !text-xs">key</span>
+                                                    {currentPermissions.length} صلاحية مفعلة
+                                                </span>
+                                            </div>
                                         </div>
+                                        <button
+                                            onClick={() => saveRolePermissions(role)}
+                                            className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2 rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-500/10 active:scale-95"
+                                        >
+                                            حفظ الصلاحيات
+                                        </button>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-3">
-                                        {roles.map((role) => (
-                                            <label key={role.id} className="flex items-center gap-2 text-xs text-slate-300">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={currentRoles.includes(role.id)}
-                                                    onChange={(e) => {
-                                                        const next = e.target.checked
-                                                            ? [...currentRoles, role.id]
-                                                            : currentRoles.filter((id) => id !== role.id);
-                                                        updateUserRoles(user, next);
-                                                    }}
-                                                />
-                                                {role.name}
-                                            </label>
-                                        ))}
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {groups.map((group) => {
+                                            const groupPermissions = permissions.filter(p => group.keys.includes(p.key));
+                                            if (groupPermissions.length === 0) return null;
+                                            const allSelected = groupPermissions.every(p => currentPermissions.includes(p.id));
+
+                                            return (
+                                                <div key={group.label} className="bg-slate-950/50 border border-slate-800/60 rounded-xl p-4 transition-colors hover:border-slate-700/60">
+                                                    <div className="flex items-center justify-between mb-3 pb-2 border-b border-white/5">
+                                                        <span className="text-[11px] font-black text-slate-400 uppercase tracking-wider">{group.label}</span>
+                                                        <button 
+                                                            onClick={() => handleToggleGroup(group.keys)}
+                                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md transition ${allSelected ? 'text-amber-500' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
+                                                        >
+                                                            {allSelected ? "إلغاء الكل" : "تحديد القسم"}
+                                                        </button>
+                                                    </div>
+                                                    <div className="space-y-2.5">
+                                                        {groupPermissions.map((perm) => (
+                                                            <label key={perm.id} className="flex items-start gap-2.5 cursor-pointer group/label">
+                                                                <div className="relative flex items-center mt-0.5">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={currentPermissions.includes(perm.id)}
+                                                                        onChange={() => handleRolePermissionToggle(role.id, perm.id)}
+                                                                        className="peer size-4 opacity-0 absolute inset-0 z-10 cursor-pointer"
+                                                                    />
+                                                                    <div className={`size-4 rounded border transition-all duration-200 
+                                                                        ${currentPermissions.includes(perm.id) 
+                                                                            ? "bg-emerald-500 border-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" 
+                                                                            : "bg-slate-800 border-slate-700 group-hover/label:border-slate-500"}
+                                                                    `}>
+                                                                        {currentPermissions.includes(perm.id) && (
+                                                                            <span className="material-symbols-outlined !text-[14px] text-white flex items-center justify-center h-full">check</span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <span className={`text-[11px] font-bold block transition ${currentPermissions.includes(perm.id) ? "text-white" : "text-slate-400 group-hover/label:text-slate-300"}`}>
+                                                                        {perm.label}
+                                                                    </span>
+                                                                    <span className="text-[9px] text-slate-500 leading-tight block mt-0.5">
+                                                                        </span>
+                                                                </div>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             );
@@ -431,3 +450,4 @@ export default function AccessControlPage() {
         </div>
     );
 }
+

@@ -1,4 +1,4 @@
-﻿import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -10,6 +10,7 @@ export const PERMISSIONS = {
   REVIEW_DRIVER_DOCS: "REVIEW_DRIVER_DOCS",
   MANAGE_SUPPORT: "MANAGE_SUPPORT",
   MANAGE_FINANCE: "MANAGE_FINANCE",
+  FINANCE_FINAL_APPROVE: "FINANCE_FINAL_APPROVE",
   MANAGE_REWARDS: "MANAGE_REWARDS",
   UPLOAD_MEDIA: "UPLOAD_MEDIA",
   ACCESS_SAFETY: "ACCESS_SAFETY",
@@ -25,6 +26,7 @@ const DEFAULT_PERMISSIONS = [
   { key: PERMISSIONS.REVIEW_DRIVER_DOCS, label: "مراجعة وثائق السائق", description: "مراجعة وثائق السائقين واعتمادها" },
   { key: PERMISSIONS.MANAGE_SUPPORT, label: "الدعم الفني", description: "الرد على تذاكر الدعم وحل المشكلات" },
   { key: PERMISSIONS.MANAGE_FINANCE, label: "الإدارة المالية", description: "إدارة الاشتراكات والرسوم والتقارير" },
+  { key: PERMISSIONS.FINANCE_FINAL_APPROVE, label: "الاعتماد المالي النهائي", description: "صلاحية الاعتماد النهائي لعمليات السحب والتحويل الكبيرة" },
   { key: PERMISSIONS.MANAGE_REWARDS, label: "نظام المكافآت", description: "إدارة نقاط التدوير والجوائز" },
   { key: PERMISSIONS.UPLOAD_MEDIA, label: "رفع الوسائط", description: "رفع صور وفيديوهات للمحتوى" },
   { key: PERMISSIONS.ACCESS_SAFETY, label: "مركز السلامة", description: "الوصول لمحتوى السلامة" },
@@ -127,30 +129,31 @@ export async function bootstrapAccessControl() {
         }
       }
 
-      const adminUsers = await tx.user.findMany({
-        where: { role: "ADMIN" },
+      // 3. Associate OWNER role only with the primary administrator
+      const ownerRole = await tx.role.findUnique({
+        where: { name: "OWNER" },
         select: { id: true },
       });
 
-      if (adminUsers.length) {
-        const ownerRole = await tx.role.findUnique({
-          where: { name: "OWNER" },
+      if (ownerRole) {
+        // Only assign OWNER to the primary administrator email
+        const primaryAdminEmail = process.env.OWNER_EMAIL || "fadialmutlab@gmail.com";
+        const primaryUser = await tx.user.findUnique({
+          where: { email: primaryAdminEmail },
           select: { id: true },
         });
 
-        if (ownerRole) {
-          for (const user of adminUsers) {
-            await tx.userRole.upsert({
-              where: {
-                userId_roleId: {
-                  userId: user.id,
-                  roleId: ownerRole.id,
-                },
+        if (primaryUser) {
+          await tx.userRole.upsert({
+            where: {
+              userId_roleId: {
+                userId: primaryUser.id,
+                roleId: ownerRole.id,
               },
-              update: {},
-              create: { userId: user.id, roleId: ownerRole.id },
-            });
-          }
+            },
+            update: {},
+            create: { userId: primaryUser.id, roleId: ownerRole.id },
+          });
         }
       }
     },
