@@ -138,7 +138,7 @@ export default function AccessControlPage() {
             if (!response.ok) {
                 throw new Error(data.error || "تعذر إنشاء الدور");
             }
-            setRoleForm({ name: "", description: "" });
+            setRoleForm({ name: "", description: "", specialization: "" });
             await loadBaseData();
         } catch (err) {
             setError(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
@@ -450,4 +450,5 @@ export default function AccessControlPage() {
         </div>
     );
 }
+
 

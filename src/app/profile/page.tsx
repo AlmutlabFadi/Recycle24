@@ -113,7 +113,7 @@ export default function ProfilePage() {
         { icon: "analytics", label: "أسعار السوق (رقابة)", href: "/market", permission: "MANAGE_KNOWLEDGE" },
         { icon: "support_agent", label: "مكتب الدعم والعمليات", href: "/admin/support", permission: "MANAGE_SUPPORT" },
         { icon: "help", label: "مركز المساعدة الإداري", href: "/help" },
-    ].filter(item => !item.permission || user?.permissions?.includes(item.permission)) : [
+    ].filter(item => !item.permission || ((user as { permissions?: string[] } | undefined)?.permissions)?.includes(item.permission)) : [
         { icon: "settings", label: "إعدادات الحساب", href: "/settings/account" },
         { icon: "security", label: "الأمان والخصوصية", href: "/settings/security" },
         { icon: "dashboard", label: "لوحة التحكم", href: "/dashboard" },
@@ -601,7 +601,7 @@ export default function ProfilePage() {
                                     
                                     <p className="text-sm text-slate-400 mt-0.5">
                                         {user?.role === "ADMIN" ? (
-                                            `مدير النظام • ${user.permissions?.length || 0} صلاحية`
+                                            `مدير النظام • ${((user as { permissions?: string[] } | undefined)?.permissions?.length ?? 0)} صلاحية`
                                         ) : isTrader ? (
                                             `${getCompanyTypeLabel(profile.companyType)} • ${getUserTypeLabel(user?.userType || "TRADER")}`
                                         ) : (
@@ -864,3 +864,4 @@ export default function ProfilePage() {
         </>
     );
 }
+

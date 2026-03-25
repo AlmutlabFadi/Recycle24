@@ -95,7 +95,7 @@ export default function AdminCommandCenter() {
         { id: 'soc', title: 'الأمن والعمليات', icon: 'security', href: '/admin/soc', permission: 'MANAGE_ACCESS' },
     ];
 
-    const userPermissions = user?.permissions || [];
+    const userPermissions = ((user as { permissions?: string[] } | undefined)?.permissions) || [];
     const adminModules = allModules.filter(m => {
         if (m.permissions) return m.permissions.some(p => userPermissions.includes(p));
         return userPermissions.includes(m.permission as string);
@@ -322,3 +322,4 @@ export default function AdminCommandCenter() {
         </div>
     );
 }
+

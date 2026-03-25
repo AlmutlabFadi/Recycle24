@@ -1,4 +1,4 @@
-﻿import { withAuth } from "next-auth/middleware";
+import { withAuth } from "next-auth/middleware";
 import { NextRequest, NextResponse } from "next/server";
 
 const authOnlyPrefixes = [
@@ -21,6 +21,22 @@ const authOnlyPrefixes = [
 const adminPrefixes = ["/admin"];
 const publicOnlyPrefixes = ["/login", "/register"];
 
+const ADMIN_PERMISSIONS = new Set<string>([
+  "MANAGE_USERS",
+  "MANAGE_FINANCE",
+  "FINANCE_FINAL_APPROVE",
+  "MANAGE_DRIVERS",
+  "REVIEW_DRIVER_DOCS",
+  "MANAGE_SUPPORT",
+  "MANAGE_REWARDS",
+  "MANAGE_KNOWLEDGE",
+  "UPLOAD_MEDIA",
+  "MANAGE_ACCESS",
+  "ACCESS_SAFETY",
+  "ACCESS_CONSULTATIONS",
+  "ACCESS_ACADEMY",
+]);
+
 function startsWithAny(pathname: string, prefixes: string[]) {
   return prefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
@@ -32,15 +48,20 @@ function getClientIp(req: NextRequest) {
   if (xForwardedFor) {
     return xForwardedFor.split(",")[0].trim();
   }
+
   return req.headers.get("x-real-ip") || "unknown";
 }
 
+function hasAnyAdminPermission(permissions: string[]) {
+  return permissions.some((permission) => ADMIN_PERMISSIONS.has(permission));
+}
 export default withAuth(
   async function proxy(req) {
     const pathname = req.nextUrl.pathname;
     const token = req.nextauth.token as (typeof req.nextauth.token & {
       permissions?: string[];
       status?: string;
+      userType?: string;
     }) | null;
 
     const isAuth = !!token;
@@ -53,13 +74,16 @@ export default withAuth(
     }
 
     if (isAuth && token?.status === "BANNED") {
-      return NextResponse.redirect(new URL("/login?error=account_suspended", req.url));
+      return NextResponse.redirect(
+        new URL("/login?error=account_suspended", req.url)
+      );
     }
 
     if (startsWithAny(pathname, publicOnlyPrefixes)) {
       if (isAuth) {
         return NextResponse.redirect(new URL("/", req.url));
       }
+
       return NextResponse.next();
     }
 
@@ -71,15 +95,18 @@ export default withAuth(
       }
 
       const permissions = token?.permissions ?? [];
-      if (!permissions.includes("MANAGE_ACCESS")) {
+      const hasAdminAccess =
+        hasAnyAdminPermission(permissions) || token?.userType === "ADMIN";
+
+      if (!hasAdminAccess) {
         return NextResponse.redirect(new URL("/", req.url));
       }
 
       return NextResponse.next();
     }
-
     if (startsWithAny(pathname, authOnlyPrefixes) && !isAuth) {
       let from = pathname;
+
       if (req.nextUrl.search) {
         from += req.nextUrl.search;
       }
