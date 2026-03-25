@@ -251,7 +251,6 @@ model User {
   safetyIncidentStatusLogs   SafetyIncidentStatusLog[]
   safetyTrainingRequests     SafetyTrainingRequest[]
   securityLogs               SecurityLog[]
-  securityOtps               SecurityOTP[]
   sessions                   Session[]
   invitesCreated             StaffInvite[]
   invitesUsed                StaffInvite[]               @relation("InviteUsedBy")
@@ -368,11 +367,11 @@ model Auction {
   status         String                @default("SCHEDULED")
   type           AuctionType           @default(PRIVATE)
   workflowStatus AuctionWorkflowStatus @default(DRAFT)
-
-  auctionDomain       AuctionDomain              @default(ASSET_SALE)
-  auctionDirection    AuctionDirection           @default(FORWARD)
-  currency            String                     @default("SYP")
-  pricingModeV2       AuctionPricingMode         @default(LOT_BASED)
+  
+  auctionDomain       AuctionDomain         @default(ASSET_SALE)
+  auctionDirection    AuctionDirection      @default(FORWARD)
+  currency            String                @default("SYP")
+  pricingModeV2       AuctionPricingMode    @default(LOT_BASED)
   winnerSelectionMode AuctionWinnerSelectionMode @default(PER_LOT)
 
   jurisdictionCountry String?
@@ -403,19 +402,22 @@ model Auction {
   govWaiverRequired Boolean @default(false)
   govWaiverFileUrl  String?
 
-  pricingMode             String @default("unified")
+  // Financial fields
+  pricingMode             String @default("unified") // unified, per_material
   startingBidCurrency     String @default("SYP")
-  startingBidUnit         String @default("total")
+  startingBidUnit         String @default("total") // total, ton, kg, piece
   buyNowPriceCurrency     String @default("SYP")
   securityDepositCurrency String @default("SYP")
   securityDepositMethod   String @default("platform")
 
+  // Preview fields
   allowPreview     Boolean   @default(false)
   previewStartDate DateTime?
   previewEndDate   DateTime?
   previewStartTime String?
   previewEndTime   String?
 
+  // Additional details
   notes                String?
   shipmentDurationDays Int?
   organization         String?
@@ -423,18 +425,18 @@ model Auction {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  seller          User                    @relation(fields: [sellerId], references: [id])
-  lots            AuctionLot[]
-  items           AuctionItem[]
-  documents       AuctionDocument[]
-  images          AuctionImage[]
-  participants    AuctionParticipant[]
+  seller       User                 @relation(fields: [sellerId], references: [id])
+  lots         AuctionLot[]
+  items        AuctionItem[]
+  documents    AuctionDocument[]
+  images       AuctionImage[]
+  participants AuctionParticipant[]
   participantLots AuctionParticipantLot[]
-  bids            Bid[]
-  events          AuctionEventLog[]
-  disputes        AuctionDispute[]
-  penalties       AuctionPenalty[]
-  version         Int                     @default(0)
+  bids         Bid[]
+  events       AuctionEventLog[]
+  disputes     AuctionDispute[]
+  penalties    AuctionPenalty[]
+  version      Int                  @default(0)
 
   @@index([sellerId])
   @@index([category])
@@ -447,35 +449,35 @@ model Auction {
 }
 
 model AuctionLot {
-  id            String  @id @default(cuid())
-  auctionId     String
-  lineNo        Int
-  title         String
-  description   String?
-  category      String
-  quantity      Float
-  unit          String
-  pricingUnit   String
-  startingPrice Float
-  reservePrice  Float?
-  buyNowPrice   Float?
-
-  direction AuctionDirection @default(FORWARD)
-  currency  String           @default("SYP")
+  id             String            @id @default(cuid())
+  auctionId      String
+  lineNo         Int
+  title          String
+  description    String?
+  category       String
+  quantity       Float
+  unit           String
+  pricingUnit    String
+  startingPrice  Float
+  reservePrice   Float?
+  buyNowPrice    Float?
+  
+  direction      AuctionDirection  @default(FORWARD)
+  currency       String            @default("SYP")
 
   depositModeOverride   AuctionDepositMode @default(NONE)
   depositAmountOverride Float              @default(0)
-
+  
   currentBestBid Float?
   winningBidId   String?
   winnerId       String?
   finalPrice     Float?
-  status         AuctionLotStatus @default(DRAFT)
-  version        Int              @default(0)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  status         AuctionLotStatus  @default(DRAFT)
+  version        Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
-  auction         Auction                 @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  auction         Auction               @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   bids            Bid[]
   participantLots AuctionParticipantLot[]
 
@@ -506,7 +508,7 @@ model AuctionDocument {
   fileUrl   String
   fileName  String?
   fileType  String?
-  fileSize  Int?
+  fileSize  Int? // Size in bytes
   createdAt DateTime @default(now())
   auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
 
@@ -538,8 +540,8 @@ model AuctionParticipant {
   rejectedAt      DateTime?
   rejectionReason String?
 
-  auction      Auction                 @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  user         User                    @relation(fields: [userId], references: [id])
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
   selectedLots AuctionParticipantLot[]
 
   @@unique([auctionId, userId])
@@ -551,17 +553,17 @@ model AuctionParticipant {
 }
 
 model AuctionParticipantLot {
-  id                    String                              @id @default(cuid())
-  participantId         String
-  auctionId             String
-  lotId                 String
-  isSelected            Boolean                             @default(true)
-  depositRequired       Float                               @default(0)
-  depositHoldId         String?
-  depositWorkflowStatus AuctionDepositWorkflowStatus        @default(NONE)
-  workflowStatus        AuctionParticipantLotWorkflowStatus @default(SELECTED)
-  createdAt             DateTime                            @default(now())
-  updatedAt             DateTime                            @updatedAt
+  id                     String                             @id @default(cuid())
+  participantId          String
+  auctionId              String
+  lotId                  String
+  isSelected             Boolean                            @default(true)
+  depositRequired        Float                              @default(0)
+  depositHoldId          String?
+  depositWorkflowStatus  AuctionDepositWorkflowStatus       @default(NONE)
+  workflowStatus         AuctionParticipantLotWorkflowStatus @default(SELECTED)
+  createdAt              DateTime                           @default(now())
+  updatedAt              DateTime                           @updatedAt
 
   participant AuctionParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
   auction     Auction            @relation(fields: [auctionId], references: [id], onDelete: Cascade)
@@ -602,9 +604,9 @@ model Bid {
   rejectionReason String?
   createdAt       DateTime  @default(now())
 
-  auction Auction     @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  auction Auction    @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   lot     AuctionLot? @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  bidder  User        @relation(fields: [bidderId], references: [id])
+  bidder  User       @relation(fields: [bidderId], references: [id])
 
   @@index([auctionId, createdAt])
   @@index([auctionId, amount])
@@ -802,21 +804,6 @@ model SecurityLog {
   @@index([event])
   @@index([level])
   @@index([createdAt])
-}
-
-model SecurityOTP {
-  id          String   @id
-  userId      String
-  code        String
-  actionType  String
-  referenceId String?
-  isUsed      Boolean  @default(false)
-  expiresAt   DateTime
-  createdAt   DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([code])
-  @@index([userId, actionType])
 }
 
 model Agent {
@@ -1359,7 +1346,7 @@ model TransferRequest {
   receiverAccountId String?
   amount            Float
   currency          String    @default("SYP")
-  status            String    @default("PENDING")
+  status            String    @default("PENDING") // PENDING, APPROVED, REJECTED, FAILED
   referenceNote     String?
   reviewNote        String?
   reviewedById      String?
@@ -1463,17 +1450,17 @@ model DriverDocument {
 }
 
 model DriverSession {
-  id          String    @id @default(cuid())
-  driverId    String
-  deviceId    String
-  pushToken   String?
-  lastLat     Float?
-  lastLng     Float?
-  lastSeenAt  DateTime?
-  isAvailable Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  driver      Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  id         String    @id @default(cuid())
+  driverId   String
+  deviceId   String
+  pushToken  String?
+  lastLat    Float?
+  lastLng    Float?
+  lastSeenAt DateTime?
+  isAvailable Boolean  @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  driver     Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
 
   @@index([driverId])
   @@index([deviceId])
@@ -1765,20 +1752,20 @@ model KillSwitch {
 }
 
 model Dealer {
-  id              String   @id @default(cuid())
-  name            String
-  governorate     String
-  region          String
-  address         String
-  lat             Float?
-  lng             Float?
-  contactPhone    String?
-  contactWhatsapp String?
-  isActive        Boolean  @default(true)
-  services        String[] @default(["DEPOSIT", "WITHDRAW"])
-  workingHours    String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default(cuid())
+  name             String   // Name of the shop/agent
+  governorate      String   // e.g. دمشق، حلب، حمص
+  region           String   // e.g. المزة، حي السبيل
+  address          String   // Detailed address
+  lat              Float?   // Latitude
+  lng              Float?   // Longitude
+  contactPhone     String?
+  contactWhatsapp  String?
+  isActive         Boolean  @default(true)
+  services         String[] @default(["DEPOSIT", "WITHDRAW"]) // Types of services offered
+  workingHours     String?  // e.g. 9:00 AM - 6:00 PM
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([governorate])
   @@index([region])
