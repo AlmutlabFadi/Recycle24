@@ -7,6 +7,7 @@ import { useToast } from "@/contexts/ToastContext";
 
 const OWNER_EMAIL = "emixdigitall@gmail.com";
 
+type Role = { id: string; name: string };
 type User = {
     id: string;
     name: string | null;
@@ -16,9 +17,8 @@ type User = {
     role: string;
     currentAdminStatus: string;
     lastActiveAt: string | null;
-    userRoles: Array<{ role: { id: string, name: string } }>;
+    userRoles: Array<{ role: Role }>;
 };
-
 type Invite = {
     id: string;
     code: string;
@@ -30,25 +30,24 @@ type Invite = {
     expiresAt: string | null;
 };
 
-type ModalAction = {
-    type: "remove" | "warn" | "block" | null;
-    userId: string;
-    userName: string;
-};
-
 export default function StaffManagementPage() {
     const { addToast } = useToast();
     const [staff, setStaff] = useState<User[]>([]);
     const [invites, setInvites] = useState<Invite[]>([]);
-    const [roles, setRoles] = useState<Array<{ id: string, name: string }>>([]);
+    const [allRoles, setAllRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
     const [inviteForm, setInviteForm] = useState({ email: "", phone: "", roleId: "", expiresAt: "" });
 
-    // Modal state
-    const [modal, setModal] = useState<ModalAction>({ type: null, userId: "", userName: "" });
-    const [modalReason, setModalReason] = useState("");
-    const [modalLoading, setModalLoading] = useState(false);
+    // Staff Detail Modal
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [editedRoleIds, setEditedRoleIds] = useState<string[]>([]);
+    const [savingRoles, setSavingRoles] = useState(false);
+
+    // Confirm Action Modal (warn/remove/block)
+    const [actionModal, setActionModal] = useState<{ type: "remove" | "warn" | "block" | null; user: User | null }>({ type: null, user: null });
+    const [actionReason, setActionReason] = useState("");
+    const [actionLoading, setActionLoading] = useState(false);
 
     const fetchData = async () => {
         try {
@@ -58,27 +57,120 @@ export default function StaffManagementPage() {
                 fetch("/api/admin/access/invites"),
                 fetch("/api/admin/access/roles"),
             ]);
-
             if (staffRes.ok && inviteRes.ok && roleRes.ok) {
                 const staffData = await staffRes.json();
                 const inviteData = await inviteRes.json();
                 const roleData = await roleRes.json();
                 setStaff(staffData.users || []);
                 setInvites(inviteData.invites || []);
-                setRoles(roleData.roles || []);
+                setAllRoles(roleData.roles || []);
             }
-        } catch (error) {
-            console.error("Fetch staff error:", error);
+        } catch {
             addToast("تعذر تحميل البيانات", "error");
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+    useEffect(() => { fetchData(); }, []);
 
+    // ─── Staff Detail Modal ──────────────────────────────────
+    const openStaffDetail = (user: User) => {
+        setSelectedUser(user);
+        setEditedRoleIds(user.userRoles.map(ur => ur.role.id));
+    };
+
+    const closeStaffDetail = () => {
+        setSelectedUser(null);
+        setEditedRoleIds([]);
+    };
+
+    const toggleRole = (roleId: string) => {
+        setEditedRoleIds(prev =>
+            prev.includes(roleId) ? prev.filter(id => id !== roleId) : [...prev, roleId]
+        );
+    };
+
+    const handleSaveRoles = async () => {
+        if (!selectedUser) return;
+        setSavingRoles(true);
+        try {
+            const res = await fetch(`/api/admin/access/users/${selectedUser.id}/roles`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ roleIds: editedRoleIds }),
+            });
+            if (res.ok) {
+                addToast("تم حفظ الصلاحيات بنجاح", "success");
+                closeStaffDetail();
+                fetchData();
+            } else {
+                const data = await res.json().catch(() => ({}));
+                addToast(data.error || "تعذر حفظ الصلاحيات", "error");
+            }
+        } catch {
+            addToast("خطأ في الاتصال بالخادم", "error");
+        } finally {
+            setSavingRoles(false);
+        }
+    };
+
+    // ─── Action Modal (warn / remove / block) ────────────────
+    const openActionModal = (type: "remove" | "warn" | "block", user: User) => {
+        if (user.email === OWNER_EMAIL) {
+            addToast("لا يمكن تنفيذ هذا الإجراء على مالك المشروع", "error");
+            return;
+        }
+        closeStaffDetail(); // Close detail first
+        setActionModal({ type, user });
+        setActionReason("");
+    };
+
+    const closeAction = () => {
+        setActionModal({ type: null, user: null });
+        setActionReason("");
+        setActionLoading(false);
+    };
+
+    const executeAction = async () => {
+        const { type, user } = actionModal;
+        if (!type || !user) return;
+        setActionLoading(true);
+        try {
+            let res: Response;
+            if (type === "remove") {
+                res = await fetch(`/api/admin/access/users/${user.id}/remove`, { method: "DELETE" });
+            } else if (type === "warn") {
+                if (!actionReason.trim()) { addToast("يجب كتابة سبب التحذير", "error"); setActionLoading(false); return; }
+                res = await fetch("/api/admin/staff/warn", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId: user.id, reason: actionReason, severity: "MEDIUM" }),
+                });
+            } else {
+                res = await fetch("/api/admin/staff/block", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ userId: user.id, reason: actionReason || "تم الحظر بواسطة الإدارة" }),
+                });
+            }
+            if (res.ok) {
+                const labels = { remove: "تمت إزالة الموظف", warn: "تم إرسال التحذير", block: "تم حظر الحساب" };
+                addToast(labels[type] + " بنجاح", "success");
+                closeAction();
+                fetchData();
+            } else {
+                const data = await res.json().catch(() => ({}));
+                addToast(data.error || "تعذر تنفيذ العملية", "error");
+            }
+        } catch {
+            addToast("خطأ في الاتصال بالخادم", "error");
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    // ─── Invites ─────────────────────────────────────────────
     const handleCreateInvite = async () => {
         if (!inviteForm.roleId) return addToast("يجب اختيار دور للموظف", "error");
         try {
@@ -94,139 +186,45 @@ export default function StaffManagementPage() {
             } else {
                 addToast("تعذر إنشاء الدعوة", "error");
             }
-        } catch (error) {
-            addToast("حدث خطأ ما", "error");
-        }
+        } catch { addToast("حدث خطأ ما", "error"); }
     };
 
     const handleRevokeInvite = async (id: string) => {
         try {
             const res = await fetch(`/api/admin/access/invites/${id}/revoke`, { method: "PATCH" });
-            if (res.ok) {
-                addToast("تم إلغاء الدعوة", "success");
-                fetchData();
-            }
-        } catch (error) {
-            addToast("تعذر إلغاء الدعوة", "error");
-        }
-    };
-
-    // ─── Modal Action Handlers ───────────────────────────────
-
-    const openModal = (type: "remove" | "warn" | "block", user: User) => {
-        if (user.email === OWNER_EMAIL) {
-            addToast("لا يمكن تنفيذ هذا الإجراء على مالك المشروع", "error");
-            return;
-        }
-        setModal({ type, userId: user.id, userName: user.name || "بدون اسم" });
-        setModalReason("");
-    };
-
-    const closeModal = () => {
-        setModal({ type: null, userId: "", userName: "" });
-        setModalReason("");
-        setModalLoading(false);
-    };
-
-    const executeModalAction = async () => {
-        if (!modal.type || !modal.userId) return;
-        setModalLoading(true);
-
-        try {
-            let res: Response;
-
-            if (modal.type === "remove") {
-                res = await fetch(`/api/admin/access/users/${modal.userId}/remove`, { method: "DELETE" });
-            } else if (modal.type === "warn") {
-                if (!modalReason.trim()) {
-                    addToast("يجب كتابة سبب التحذير", "error");
-                    setModalLoading(false);
-                    return;
-                }
-                res = await fetch("/api/admin/staff/warn", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId: modal.userId, reason: modalReason, severity: "MEDIUM" }),
-                });
-            } else {
-                // block
-                res = await fetch("/api/admin/staff/block", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ userId: modal.userId, reason: modalReason || "تم الحظر بواسطة الإدارة" }),
-                });
-            }
-
-            if (res.ok) {
-                const labels = { remove: "تمت إزالة الموظف", warn: "تم إرسال التحذير", block: "تم حظر الحساب" };
-                addToast(labels[modal.type] + " بنجاح", "success");
-                closeModal();
-                fetchData();
-            } else {
-                const data = await res.json().catch(() => ({}));
-                addToast(data.error || "تعذر تنفيذ العملية", "error");
-            }
-        } catch (error) {
-            addToast("حدث خطأ في الاتصال بالخادم", "error");
-        } finally {
-            setModalLoading(false);
-        }
+            if (res.ok) { addToast("تم إلغاء الدعوة", "success"); fetchData(); }
+        } catch { addToast("تعذر إلغاء الدعوة", "error"); }
     };
 
     // ─── Helpers ─────────────────────────────────────────────
-
     const filteredStaff = staff.filter(u =>
-        u.name?.includes(searchTerm) ||
-        u.email?.includes(searchTerm) ||
-        u.phone?.includes(searchTerm)
+        u.name?.includes(searchTerm) || u.email?.includes(searchTerm) || u.phone?.includes(searchTerm)
     );
-
     const isOwner = (user: User) => user.email === OWNER_EMAIL;
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case "ONLINE": return "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
-            case "IDLE": return "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]";
-            default: return "bg-slate-600";
-        }
+    const getStatusDot = (status: string) => {
+        if (status === "ONLINE") return "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
+        if (status === "IDLE") return "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]";
+        if (status === "BREAK") return "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]";
+        return "bg-red-500/60";
+    };
+    const getStatusLabel = (s: string) => {
+        if (s === "ONLINE") return "متصل";
+        if (s === "IDLE") return "خامل";
+        if (s === "BREAK") return "استراحة";
+        return "غير متصل";
     };
 
-    const modalConfig = {
-        remove: {
-            title: "إزالة الموظف من فريق العمل",
-            description: "سيتم سحب جميع الصلاحيات وإعادة الحساب إلى عميل عادي فوراً",
-            icon: "person_remove",
-            color: "text-red-400",
-            bgColor: "bg-red-500/10",
-            btnColor: "bg-red-500 hover:bg-red-600",
-            btnText: "تأكيد الإزالة نهائياً",
-            needsReason: false,
-        },
-        warn: {
-            title: "إرسال تحذير رسمي",
-            description: "سيتم تسجيل التحذير في سجل النشاط وإبلاغ الموظف",
-            icon: "warning",
-            color: "text-amber-400",
-            bgColor: "bg-amber-500/10",
-            btnColor: "bg-amber-500 hover:bg-amber-600",
-            btnText: "إرسال التحذير",
-            needsReason: true,
-        },
-        block: {
-            title: "حظر الحساب نهائياً",
-            description: "سيتم قفل الحساب وسحب جميع الصلاحيات فوراً ولن يتمكن من الدخول مجدداً",
-            icon: "block",
-            color: "text-red-500",
-            bgColor: "bg-red-500/10",
-            btnColor: "bg-red-600 hover:bg-red-700",
-            btnText: "تأكيد الحظر النهائي",
-            needsReason: false,
-        },
+    const rolesChanged = selectedUser
+        ? JSON.stringify([...editedRoleIds].sort()) !== JSON.stringify([...selectedUser.userRoles.map(ur => ur.role.id)].sort())
+        : false;
+
+    const actionConfig: Record<string, any> = {
+        remove: { title: "إزالة الموظف من فريق العمل", desc: "سيتم سحب جميع الصلاحيات وإعادة الحساب إلى عميل عادي فوراً", icon: "person_remove", color: "text-red-400", bg: "bg-red-500/10", btn: "bg-red-500 hover:bg-red-600", btnText: "تأكيد الإزالة نهائياً", needsReason: false },
+        warn: { title: "إرسال تحذير رسمي", desc: "سيتم تسجيل التحذير في سجل النشاط وإبلاغ الموظف", icon: "warning", color: "text-amber-400", bg: "bg-amber-500/10", btn: "bg-amber-500 hover:bg-amber-600", btnText: "إرسال التحذير", needsReason: true },
+        block: { title: "حظر الحساب نهائياً", desc: "سيتم قفل الحساب وسحب جميع الصلاحيات فوراً", icon: "block", color: "text-red-500", bg: "bg-red-500/10", btn: "bg-red-600 hover:bg-red-700", btnText: "تأكيد الحظر النهائي", needsReason: false },
     };
 
-    if (loading) {
-        return <div className="min-h-screen bg-bg-dark flex items-center justify-center text-white">جاري التحميل...</div>;
-    }
+    if (loading) return <div className="min-h-screen bg-bg-dark flex items-center justify-center text-white">جاري التحميل...</div>;
 
     return (
         <div className="min-h-screen bg-bg-dark text-white font-display">
@@ -236,16 +234,12 @@ export default function StaffManagementPage() {
                 {/* Search */}
                 <div className="relative w-full">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">search</span>
-                    <input
-                        type="text"
-                        placeholder="بحث عن موظف..."
+                    <input type="text" placeholder="بحث عن موظف..."
                         className="w-full bg-slate-900/50 border border-slate-800 rounded-2xl pl-10 pr-4 py-3 text-sm focus:border-emerald-500 transition-all outline-none"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                        value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                 </div>
 
-                {/* Staff Table */}
+                {/* Staff Grid — Click name to open detail */}
                 <section className="bg-slate-900/40 border border-slate-800 rounded-3xl overflow-hidden backdrop-blur-md">
                     <div className="p-6 border-b border-slate-800 flex items-center justify-between">
                         <h2 className="font-bold flex items-center gap-2">
@@ -255,109 +249,56 @@ export default function StaffManagementPage() {
                         <span className="text-[10px] text-slate-500 bg-slate-800/50 px-3 py-1 rounded-full">{filteredStaff.length} موظف</span>
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-right">
-                            <thead>
-                                <tr className="text-slate-500 text-[10px] uppercase tracking-wider border-b border-slate-800/50">
-                                    <th className="px-6 py-4 font-black">الموظف</th>
-                                    <th className="px-6 py-4 font-black text-center">الحالة</th>
-                                    <th className="px-6 py-4 font-black">الدور الرئيسي</th>
-                                    <th className="px-6 py-4 font-black text-left">إجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800/30">
-                                {filteredStaff.map((user) => (
-                                    <tr key={user.id} className="hover:bg-white/[0.02] transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className={`size-10 rounded-xl flex items-center justify-center border transition-colors ${isOwner(user) ? 'bg-gradient-to-br from-amber-500/20 to-amber-600/10 border-amber-500/30' : 'bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700 group-hover:border-emerald-500/50'}`}>
-                                                    <span className={`material-symbols-outlined ${isOwner(user) ? 'text-amber-400' : 'text-slate-400'}`}>
-                                                        {isOwner(user) ? 'shield_person' : 'person'}
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <div className="text-[13px] font-bold text-white leading-tight flex items-center gap-2">
-                                                        {user.name || "بدون اسم"}
-                                                        {isOwner(user) && (
-                                                            <span className="text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/20 font-black uppercase tracking-tight">مالك المشروع</span>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-[10px] text-slate-500">{user.email || user.phone}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col items-center gap-1">
-                                                <div className="flex items-center gap-2">
-                                                    <div className={`size-2 rounded-full ${getStatusColor(user.currentAdminStatus)}`}></div>
-                                                    <span className="text-[10px] font-bold text-slate-300">
-                                                        {user.currentAdminStatus === "ONLINE" ? "متصل" : user.currentAdminStatus === "IDLE" ? "خامل" : "غير متصل"}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-wrap gap-1">
-                                                {user.userRoles.map(ur => (
-                                                    <span key={ur.role.id} className="text-[9px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700 lowercase">
-                                                        {ur.role.name}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {isOwner(user) ? (
-                                                <div className="flex items-center justify-end">
-                                                    <span className="text-[10px] text-amber-500/80 font-bold bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20">🔒 محمي</span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center justify-end gap-2 flex-wrap">
-                                                    <Link
-                                                        href="/admin/access"
-                                                        title="تعديل الصلاحيات"
-                                                        className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-emerald-500/20 border border-slate-700 hover:border-emerald-500/40 rounded-xl text-slate-300 hover:text-emerald-400 transition-all text-[11px] font-bold"
-                                                    >
-                                                        <span className="material-symbols-outlined !text-[16px]">edit</span>
-                                                        الصلاحيات
-                                                    </Link>
-                                                    <button
-                                                        onClick={() => openModal("warn", user)}
-                                                        title="إرسال تحذير"
-                                                        className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 hover:border-amber-500/40 rounded-xl text-amber-400 transition-all text-[11px] font-bold"
-                                                    >
-                                                        <span className="material-symbols-outlined !text-[16px]">warning</span>
-                                                        تحذير
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openModal("remove", user)}
-                                                        title="فصل من فريق العمل"
-                                                        className="flex items-center gap-1.5 px-3 py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 rounded-xl text-red-400 transition-all text-[11px] font-bold"
-                                                    >
-                                                        <span className="material-symbols-outlined !text-[16px]">person_remove</span>
-                                                        إزالة
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openModal("block", user)}
-                                                        title="حظر الحساب نهائياً"
-                                                        className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-red-500/10 border border-slate-700 hover:border-red-500/30 rounded-xl text-slate-500 hover:text-red-500 transition-all text-[11px] font-bold"
-                                                    >
-                                                        <span className="material-symbols-outlined !text-[16px]">block</span>
-                                                        حظر
-                                                    </button>
-                                                </div>
+                    <div className="divide-y divide-slate-800/30">
+                        {filteredStaff.map((user) => (
+                            <div key={user.id}
+                                onClick={() => openStaffDetail(user)}
+                                className="flex items-center justify-between px-6 py-4 hover:bg-white/[0.03] transition-colors cursor-pointer group"
+                            >
+                                {/* Left: Name & Info */}
+                                <div className="flex items-center gap-4 flex-1 min-w-0">
+                                    <div className={`size-12 rounded-2xl flex items-center justify-center border-2 transition-all shrink-0 ${isOwner(user) ? 'bg-gradient-to-br from-amber-500/20 to-amber-600/10 border-amber-500/30' : 'bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700 group-hover:border-emerald-500/50'}`}>
+                                        <span className={`material-symbols-outlined !text-xl ${isOwner(user) ? 'text-amber-400' : 'text-slate-400 group-hover:text-emerald-400 transition-colors'}`}>
+                                            {isOwner(user) ? 'shield_person' : 'person'}
+                                        </span>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="text-sm font-black text-white leading-tight flex items-center gap-2 flex-wrap">
+                                            {user.name || "بدون اسم"}
+                                            {isOwner(user) && (
+                                                <span className="text-[8px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded border border-amber-500/20 font-black uppercase">مالك المشروع</span>
                                             )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        </div>
+                                        <div className="text-[10px] text-slate-500 truncate">{user.email || user.phone}</div>
+                                    </div>
+                                </div>
+
+                                {/* Center: Roles */}
+                                <div className="hidden md:flex flex-wrap gap-1 mx-4 max-w-[300px]">
+                                    {user.userRoles.map(ur => (
+                                        <span key={ur.role.id} className="text-[9px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700">
+                                            {ur.role.name}
+                                        </span>
+                                    ))}
+                                </div>
+
+                                {/* Right: Status + Arrow */}
+                                <div className="flex items-center gap-4 shrink-0">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`size-2.5 rounded-full ${getStatusDot(user.currentAdminStatus)}`}></div>
+                                        <span className="text-[10px] font-bold text-slate-400">{getStatusLabel(user.currentAdminStatus)}</span>
+                                    </div>
+                                    <span className="material-symbols-outlined text-slate-700 group-hover:text-emerald-400 transition-colors !text-lg">chevron_left</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </section>
 
                 {/* Invitations & Quick Links */}
                 <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 space-y-6">
-                        {/* Create Invite Form */}
+                        {/* Invite Form */}
                         <div className="bg-slate-900/40 border border-slate-800 rounded-3xl p-6">
                             <h3 className="text-sm font-bold mb-4 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-emerald-400 !text-sm">person_add</span>
@@ -367,17 +308,17 @@ export default function StaffManagementPage() {
                                 <div className="space-y-4">
                                     <input type="email" placeholder="البريد الإلكتروني (اختياري)"
                                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs focus:border-emerald-500/50 outline-none"
-                                        value={inviteForm.email} onChange={(e) => setInviteForm(prev => ({ ...prev, email: e.target.value }))} />
+                                        value={inviteForm.email} onChange={(e) => setInviteForm(p => ({ ...p, email: e.target.value }))} />
                                     <input type="text" placeholder="رقم الهاتف (اختياري)"
                                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs focus:border-emerald-500/50 outline-none"
-                                        value={inviteForm.phone} onChange={(e) => setInviteForm(prev => ({ ...prev, phone: e.target.value }))} />
+                                        value={inviteForm.phone} onChange={(e) => setInviteForm(p => ({ ...p, phone: e.target.value }))} />
                                 </div>
                                 <div className="space-y-4">
                                     <select title="اختر الدور الوظيفي"
                                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs focus:border-emerald-500/50 outline-none text-slate-400"
-                                        value={inviteForm.roleId} onChange={(e) => setInviteForm(prev => ({ ...prev, roleId: e.target.value }))}>
+                                        value={inviteForm.roleId} onChange={(e) => setInviteForm(p => ({ ...p, roleId: e.target.value }))}>
                                         <option value="">اختر الدور الوظيفي</option>
-                                        {roles.filter(r => r.name !== "OWNER").map(role => (
+                                        {allRoles.filter(r => r.name !== "OWNER").map(role => (
                                             <option key={role.id} value={role.id}>{role.name}</option>
                                         ))}
                                     </select>
@@ -389,7 +330,7 @@ export default function StaffManagementPage() {
                             </div>
                         </div>
 
-                        {/* Active Invites */}
+                        {/* Invites List */}
                         <div className="bg-slate-950/40 border border-slate-800 rounded-3xl overflow-hidden">
                             <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/40">
                                 <h3 className="text-sm font-bold flex items-center gap-2 text-slate-300">
@@ -399,27 +340,25 @@ export default function StaffManagementPage() {
                             </div>
                             <div className="max-h-[400px] overflow-y-auto">
                                 {invites.length === 0 ? (
-                                    <div className="p-10 text-center text-slate-500 text-xs">لا يوجد دعوات معلقة حالياً</div>
+                                    <div className="p-10 text-center text-slate-500 text-xs">لا يوجد دعوات معلقة</div>
                                 ) : (
                                     <div className="divide-y divide-slate-800/50">
-                                        {invites.map((invite) => (
-                                            <div key={invite.id} className="p-4 flex items-center justify-between hover:bg-white/[0.01] transition-colors">
+                                        {invites.map((inv) => (
+                                            <div key={inv.id} className="p-4 flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`size-2 rounded-full ${invite.status === 'PENDING' ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`}></div>
+                                                    <div className={`size-2 rounded-full ${inv.status === 'PENDING' ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`}></div>
                                                     <div>
-                                                        <div className="text-[11px] font-bold">{invite.role.name}</div>
-                                                        <div className="text-[10px] text-slate-500">{invite.email || invite.phone}</div>
-                                                        <div className="text-[9px] text-slate-600 mt-0.5 font-mono">{invite.code}</div>
+                                                        <div className="text-[11px] font-bold">{inv.role.name}</div>
+                                                        <div className="text-[10px] text-slate-500">{inv.email || inv.phone}</div>
+                                                        <div className="text-[9px] text-slate-600 mt-0.5 font-mono">{inv.code}</div>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-3">
-                                                    <span className={`text-[9px] px-2 py-0.5 rounded border ${invite.status === 'PENDING' ? 'text-amber-400 border-amber-400/20' : invite.status === 'USED' ? 'text-emerald-400 border-emerald-400/20' : 'text-red-400 border-red-400/20'}`}>
-                                                        {invite.status === 'PENDING' ? 'قيد الانتظار' : invite.status === 'USED' ? 'تم الاستخدام' : 'ملغية'}
+                                                    <span className={`text-[9px] px-2 py-0.5 rounded border ${inv.status === 'PENDING' ? 'text-amber-400 border-amber-400/20' : inv.status === 'USED' ? 'text-emerald-400 border-emerald-400/20' : 'text-red-400 border-red-400/20'}`}>
+                                                        {inv.status === 'PENDING' ? 'قيد الانتظار' : inv.status === 'USED' ? 'تم الاستخدام' : 'ملغية'}
                                                     </span>
-                                                    {invite.status === 'PENDING' && (
-                                                        <button onClick={() => handleRevokeInvite(invite.id)} className="text-[10px] text-slate-400 hover:text-red-400 transition-colors">
-                                                            إلغاء
-                                                        </button>
+                                                    {inv.status === 'PENDING' && (
+                                                        <button onClick={(e) => { e.stopPropagation(); handleRevokeInvite(inv.id); }} className="text-[10px] text-slate-400 hover:text-red-400 transition-colors">إلغاء</button>
                                                     )}
                                                 </div>
                                             </div>
@@ -435,98 +374,156 @@ export default function StaffManagementPage() {
                         <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-3xl p-6">
                             <h4 className="text-xs font-black text-emerald-400 uppercase tracking-tighter mb-4">نشاط فريق العمل</h4>
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[11px] text-slate-400">النشطين الآن</span>
-                                    <span className="text-sm font-bold text-emerald-400">{staff.filter(s => s.currentAdminStatus === 'ONLINE').length}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-[11px] text-slate-400">إجمالي الفريق</span>
-                                    <span className="text-sm font-bold text-white">{staff.length}</span>
-                                </div>
+                                <div className="flex items-center justify-between"><span className="text-[11px] text-slate-400">النشطين الآن</span><span className="text-sm font-bold text-emerald-400">{staff.filter(s => s.currentAdminStatus === 'ONLINE').length}</span></div>
+                                <div className="flex items-center justify-between"><span className="text-[11px] text-slate-400">إجمالي الفريق</span><span className="text-sm font-bold text-white">{staff.length}</span></div>
                             </div>
                         </div>
-
                         <Link href="/admin/staff/leaderboard" className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-6 hover:bg-emerald-500/20 transition-all group">
-                            <div className="flex items-center gap-4">
-                                <div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400"><span className="material-symbols-outlined">leaderboard</span></div>
-                                <div><h4 className="text-sm font-bold">قائمة المتصدرين</h4><p className="text-[10px] text-slate-500">الأكثر كفاءة ونشاطاً</p></div>
-                            </div>
-                            <span className="material-symbols-outlined text-slate-600 group-hover:text-emerald-400 translate-x-2 group-hover:translate-x-0 transition-all">arrow_back</span>
+                            <div className="flex items-center gap-4"><div className="size-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400"><span className="material-symbols-outlined">leaderboard</span></div><div><h4 className="text-sm font-bold">قائمة المتصدرين</h4><p className="text-[10px] text-slate-500">الأكثر كفاءة ونشاطاً</p></div></div>
+                            <span className="material-symbols-outlined text-slate-600 group-hover:text-emerald-400 transition-all">arrow_back</span>
                         </Link>
-
                         <Link href="/admin/staff/activity" className="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-3xl p-6 hover:border-slate-600 transition-all group">
-                            <div className="flex items-center gap-4">
-                                <div className="size-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400"><span className="material-symbols-outlined">history</span></div>
-                                <div><h4 className="text-sm font-bold">سجلات النشاط</h4><p className="text-[10px] text-slate-500">مراجعة العمليات اليومية</p></div>
-                            </div>
-                            <span className="material-symbols-outlined text-slate-600 group-hover:text-emerald-400 translate-x-2 group-hover:translate-x-0 transition-all">arrow_back</span>
+                            <div className="flex items-center gap-4"><div className="size-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400"><span className="material-symbols-outlined">history</span></div><div><h4 className="text-sm font-bold">سجلات النشاط</h4><p className="text-[10px] text-slate-500">مراجعة العمليات اليومية</p></div></div>
+                            <span className="material-symbols-outlined text-slate-600 group-hover:text-emerald-400 transition-all">arrow_back</span>
                         </Link>
-
                         <Link href="/admin/access" className="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-3xl p-6 hover:border-slate-600 transition-all group">
-                            <div className="flex items-center gap-4">
-                                <div className="size-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400"><span className="material-symbols-outlined">settings</span></div>
-                                <div><h4 className="text-sm font-bold">إدارة الصلاحيات</h4><p className="text-[10px] text-slate-500">تعديل الأدوار والقوانين</p></div>
-                            </div>
-                            <span className="material-symbols-outlined text-slate-600 group-hover:text-emerald-400 translate-x-2 group-hover:translate-x-0 transition-all">arrow_back</span>
+                            <div className="flex items-center gap-4"><div className="size-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400"><span className="material-symbols-outlined">settings</span></div><div><h4 className="text-sm font-bold">إدارة الصلاحيات</h4><p className="text-[10px] text-slate-500">تعديل الأدوار والقوانين</p></div></div>
+                            <span className="material-symbols-outlined text-slate-600 group-hover:text-emerald-400 transition-all">arrow_back</span>
                         </Link>
                     </div>
                 </section>
             </main>
 
-            {/* ═══════════════ CONFIRMATION MODAL ═══════════════ */}
-            {modal.type && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
-                    <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md p-8 animate-in fade-in zoom-in-95 duration-200 shadow-2xl shadow-black/50">
+            {/* ═══════════ STAFF DETAIL MODAL ═══════════ */}
+            {selectedUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.75)" }} onClick={closeStaffDetail}>
+                    <div className="bg-[#0c1120] border border-slate-700 rounded-3xl w-full max-w-lg shadow-2xl shadow-black/60 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                         {/* Header */}
-                        <div className="flex items-center gap-4 mb-6">
-                            <div className={`size-14 rounded-2xl ${modalConfig[modal.type].bgColor} flex items-center justify-center`}>
-                                <span className={`material-symbols-outlined !text-3xl ${modalConfig[modal.type].color}`}>
-                                    {modalConfig[modal.type].icon}
+                        <div className="p-6 border-b border-slate-800 flex items-center gap-4">
+                            <div className={`size-14 rounded-2xl flex items-center justify-center border-2 ${isOwner(selectedUser) ? 'bg-amber-500/10 border-amber-500/30' : 'bg-emerald-500/10 border-emerald-500/30'}`}>
+                                <span className={`material-symbols-outlined !text-2xl ${isOwner(selectedUser) ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                    {isOwner(selectedUser) ? 'shield_person' : 'person'}
                                 </span>
                             </div>
+                            <div className="flex-1">
+                                <h3 className="text-lg font-black text-white">{selectedUser.name || "بدون اسم"}</h3>
+                                <p className="text-[10px] text-slate-500">{selectedUser.email || selectedUser.phone}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className={`size-2.5 rounded-full ${getStatusDot(selectedUser.currentAdminStatus)}`}></div>
+                                <span className="text-[10px] font-bold text-slate-400">{getStatusLabel(selectedUser.currentAdminStatus)}</span>
+                            </div>
+                            <button onClick={closeStaffDetail} className="p-1.5 hover:bg-slate-800 rounded-xl transition-colors">
+                                <span className="material-symbols-outlined text-slate-500 hover:text-white">close</span>
+                            </button>
+                        </div>
+
+                        {/* Roles / Permissions */}
+                        <div className="p-6 border-b border-slate-800">
+                            <h4 className="text-[10px] text-slate-500 uppercase font-black tracking-wider mb-4">الأدوار والصلاحيات الممنوحة</h4>
+
+                            {isOwner(selectedUser) ? (
+                                <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 text-center">
+                                    <span className="text-amber-400 text-xs font-bold">🔒 مالك المشروع — جميع الصلاحيات ممنوحة تلقائياً ولا يمكن تعديلها</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {allRoles.filter(r => r.name !== "OWNER").map(role => {
+                                            const isActive = editedRoleIds.includes(role.id);
+                                            return (
+                                                <button key={role.id} onClick={() => toggleRole(role.id)}
+                                                    className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border text-xs font-bold transition-all text-right ${isActive
+                                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                                        : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'
+                                                    }`}>
+                                                    <div className={`size-5 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${isActive ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600'}`}>
+                                                        {isActive && <span className="material-symbols-outlined !text-xs text-white">check</span>}
+                                                    </div>
+                                                    {role.name}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Save Button */}
+                                    <button onClick={handleSaveRoles} disabled={!rolesChanged || savingRoles}
+                                        className={`w-full mt-4 py-3 rounded-xl text-xs font-black transition-all ${rolesChanged
+                                            ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
+                                            : 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                                        }`}>
+                                        {savingRoles ? "جاري الحفظ..." : rolesChanged ? "💾 حفظ التعديلات" : "لم يتم إجراء تغييرات"}
+                                    </button>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Danger Zone */}
+                        {!isOwner(selectedUser) && (
+                            <div className="p-6">
+                                <h4 className="text-[10px] text-red-400/60 uppercase font-black tracking-wider mb-4">منطقة الخطر</h4>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button onClick={() => openActionModal("warn", selectedUser)}
+                                        className="flex flex-col items-center gap-2 py-4 rounded-xl bg-amber-500/5 border border-amber-500/20 hover:bg-amber-500/10 text-amber-400 transition-all">
+                                        <span className="material-symbols-outlined !text-xl">warning</span>
+                                        <span className="text-[10px] font-bold">تحذير</span>
+                                    </button>
+                                    <button onClick={() => openActionModal("remove", selectedUser)}
+                                        className="flex flex-col items-center gap-2 py-4 rounded-xl bg-red-500/5 border border-red-500/20 hover:bg-red-500/10 text-red-400 transition-all">
+                                        <span className="material-symbols-outlined !text-xl">person_remove</span>
+                                        <span className="text-[10px] font-bold">فصل</span>
+                                    </button>
+                                    <button onClick={() => openActionModal("block", selectedUser)}
+                                        className="flex flex-col items-center gap-2 py-4 rounded-xl bg-slate-800 border border-slate-700 hover:bg-red-500/10 hover:border-red-500/20 text-slate-500 hover:text-red-400 transition-all">
+                                        <span className="material-symbols-outlined !text-xl">block</span>
+                                        <span className="text-[10px] font-bold">حظر</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* ═══════════ ACTION CONFIRMATION MODAL ═══════════ */}
+            {actionModal.type && actionModal.user && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.8)" }}>
+                    <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-md p-8 shadow-2xl shadow-black/50">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className={`size-14 rounded-2xl ${actionConfig[actionModal.type].bg} flex items-center justify-center`}>
+                                <span className={`material-symbols-outlined !text-3xl ${actionConfig[actionModal.type].color}`}>{actionConfig[actionModal.type].icon}</span>
+                            </div>
                             <div>
-                                <h3 className="text-base font-black">{modalConfig[modal.type].title}</h3>
-                                <p className="text-[10px] text-slate-500 mt-1">{modalConfig[modal.type].description}</p>
+                                <h3 className="text-base font-black">{actionConfig[actionModal.type].title}</h3>
+                                <p className="text-[10px] text-slate-500 mt-1">{actionConfig[actionModal.type].desc}</p>
                             </div>
                         </div>
 
-                        {/* Target Info */}
                         <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 mb-6">
                             <div className="text-[9px] text-slate-500 uppercase font-black tracking-wider mb-1">الموظف المستهدف</div>
-                            <div className="text-sm font-bold text-white">{modal.userName}</div>
+                            <div className="text-sm font-bold text-white">{actionModal.user.name || "بدون اسم"}</div>
                         </div>
 
-                        {/* Reason Input (for warn/block) */}
-                        {(modal.type === "warn" || modal.type === "block") && (
+                        {(actionModal.type === "warn" || actionModal.type === "block") && (
                             <div className="mb-6">
                                 <label className="text-[10px] text-slate-500 uppercase font-black tracking-wider block mb-2">
-                                    {modal.type === "warn" ? "سبب التحذير *" : "سبب الحظر (اختياري)"}
+                                    {actionModal.type === "warn" ? "سبب التحذير *" : "سبب الحظر (اختياري)"}
                                 </label>
                                 <textarea
                                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs focus:border-emerald-500/50 outline-none resize-none h-24"
                                     placeholder="اكتب السبب هنا..."
-                                    value={modalReason}
-                                    onChange={(e) => setModalReason(e.target.value)}
+                                    value={actionReason}
+                                    onChange={(e) => setActionReason(e.target.value)}
                                     autoFocus
                                 />
                             </div>
                         )}
 
-                        {/* Actions */}
                         <div className="flex gap-3">
-                            <button
-                                onClick={closeModal}
-                                className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl text-xs transition-all"
-                                disabled={modalLoading}
-                            >
-                                إلغاء
-                            </button>
-                            <button
-                                onClick={executeModalAction}
-                                disabled={modalLoading}
-                                className={`flex-1 text-white font-bold py-3 rounded-xl text-xs transition-all ${modalConfig[modal.type].btnColor} ${modalLoading ? 'opacity-50' : ''}`}
-                            >
-                                {modalLoading ? "جاري التنفيذ..." : modalConfig[modal.type].btnText}
+                            <button onClick={closeAction} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl text-xs transition-all" disabled={actionLoading}>إلغاء</button>
+                            <button onClick={executeAction} disabled={actionLoading}
+                                className={`flex-1 text-white font-bold py-3 rounded-xl text-xs transition-all ${actionConfig[actionModal.type].btn} ${actionLoading ? 'opacity-50' : ''}`}>
+                                {actionLoading ? "جاري التنفيذ..." : actionConfig[actionModal.type].btnText}
                             </button>
                         </div>
                     </div>
