@@ -1,8 +1,9 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { db } from "@/lib/db";
 import { compare } from "bcryptjs";
+
+import { db } from "@/lib/db";
 
 interface AuthUser {
   id: string;
@@ -23,6 +24,21 @@ interface Credentials {
   password: string;
 }
 
+type DbUserSnapshot = {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  role: string;
+  userType: string;
+  status: string;
+  isVerified: boolean;
+  isLocked: boolean;
+  lockReason: string | null;
+};
+
+const PERMISSIONS_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+
 declare module "next-auth" {
   interface Session {
     user: AuthUser & {
@@ -38,11 +54,13 @@ declare module "next-auth/jwt" {
     userType?: string;
     phone?: string;
     email?: string;
+    name?: string;
     status?: string;
     isVerified?: boolean;
     isLocked?: boolean;
     lockReason?: string | null;
     permissions?: string[];
+    permissionsRefreshedAt?: number;
   }
 }
 
@@ -77,6 +95,51 @@ async function loadUserPermissions(userId: string): Promise<string[]> {
   return Array.from(permissions);
 }
 
+async function loadUserSnapshot(userId: string): Promise<DbUserSnapshot | null> {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      role: true,
+      userType: true,
+      status: true,
+      isVerified: true,
+      isLocked: true,
+      lockReason: true,
+    },
+  });
+
+  return user;
+}
+
+async function loadAuthState(userId: string) {
+  const [user, permissions] = await Promise.all([
+    loadUserSnapshot(userId),
+    loadUserPermissions(userId),
+  ]);
+
+  return { user, permissions };
+}
+
+function shouldRefreshToken(token: {
+  id?: string;
+  permissions?: string[];
+  permissionsRefreshedAt?: number;
+  role?: string;
+  userType?: string;
+  status?: string;
+}) {
+  if (!token.id) return false;
+  if (!token.permissions) return true;
+  if (!token.role || !token.userType || !token.status) return true;
+  if (!token.permissionsRefreshedAt) return true;
+
+  return Date.now() - token.permissionsRefreshedAt > PERMISSIONS_REFRESH_INTERVAL_MS;
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db) as NextAuthOptions["adapter"],
   providers: [
@@ -99,7 +162,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email or Phone is required");
         }
 
-        const user = await (db.user.findFirst as any)({
+        const user = await db.user.findFirst({
           where: {
             OR: [
               email ? { email } : null,
@@ -123,11 +186,12 @@ export const authOptions: NextAuthOptions = {
             lockReason: true,
           },
         });
-        if (!user || !(user as any).password) {
+
+        if (!user || !user.password) {
           throw new Error("Invalid credentials");
         }
 
-        const isValid = await compare(password, (user as any).password);
+        const isValid = await compare(password, user.password);
 
         if (!isValid) {
           throw new Error("Invalid credentials");
@@ -156,32 +220,68 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger }) {
       if (user) {
         const authUser = user as AuthUser;
+        const authState = await loadAuthState(authUser.id);
 
-        token.id = authUser.id;
-        token.role = authUser.role ?? undefined;
-        token.userType = authUser.userType ?? undefined;
-        token.phone = authUser.phone ?? undefined;
-        token.email = authUser.email ?? undefined;
-        token.status = authUser.status ?? undefined;
-        token.isVerified = authUser.isVerified ?? undefined;
-        token.isLocked = authUser.isLocked ?? undefined;
-        token.lockReason = authUser.lockReason ?? undefined;
-        token.permissions = await loadUserPermissions(authUser.id);
+        if (!authState.user) {
+          return token;
+        }
+
+        token.id = authState.user.id;
+        token.name = authState.user.name ?? undefined;
+        token.role = authState.user.role ?? undefined;
+        token.userType = authState.user.userType ?? undefined;
+        token.phone = authState.user.phone ?? undefined;
+        token.email = authState.user.email ?? undefined;
+        token.status = authState.user.status ?? undefined;
+        token.isVerified = authState.user.isVerified ?? undefined;
+        token.isLocked = authState.user.isLocked ?? undefined;
+        token.lockReason = authState.user.lockReason ?? undefined;
+        token.permissions = authState.permissions;
+        token.permissionsRefreshedAt = Date.now();
+
+        return token;
       }
 
       if (trigger === "update" && token.id) {
-        token.permissions = await loadUserPermissions(token.id);
+        const authState = await loadAuthState(token.id);
 
-        const dbUser = await (db.user.findUnique as any)({
-          where: { id: token.id },
-          select: { userType: true, role: true, status: true },
-        });
-
-        if (dbUser) {
-          token.userType = (dbUser as any).userType;
-          token.role = (dbUser as any).role;
-          token.status = (dbUser as any).status;
+        if (!authState.user) {
+          return token;
         }
+
+        token.name = authState.user.name ?? undefined;
+        token.role = authState.user.role ?? undefined;
+        token.userType = authState.user.userType ?? undefined;
+        token.phone = authState.user.phone ?? undefined;
+        token.email = authState.user.email ?? undefined;
+        token.status = authState.user.status ?? undefined;
+        token.isVerified = authState.user.isVerified ?? undefined;
+        token.isLocked = authState.user.isLocked ?? undefined;
+        token.lockReason = authState.user.lockReason ?? undefined;
+        token.permissions = authState.permissions;
+        token.permissionsRefreshedAt = Date.now();
+
+        return token;
+      }
+
+      if (shouldRefreshToken(token)) {
+        const authState = await loadAuthState(token.id);
+
+        if (!authState.user) {
+          return token;
+        }
+
+        token.name = authState.user.name ?? undefined;
+        token.role = authState.user.role ?? undefined;
+        token.userType = authState.user.userType ?? undefined;
+        token.phone = authState.user.phone ?? undefined;
+        token.email = authState.user.email ?? undefined;
+        token.status = authState.user.status ?? undefined;
+        token.isVerified = authState.user.isVerified ?? undefined;
+        token.isLocked = authState.user.isLocked ?? undefined;
+        token.lockReason = authState.user.lockReason ?? undefined;
+        token.permissions = authState.permissions;
+        token.permissionsRefreshedAt = Date.now();
       }
 
       return token;
@@ -190,6 +290,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id;
+        session.user.name = token.name;
         session.user.role = token.role;
         session.user.userType = token.userType;
         session.user.phone = token.phone;
