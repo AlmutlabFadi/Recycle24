@@ -53,7 +53,9 @@ dist/
 
 # Local backups and scratch artifacts
 backups/
+_backup-*/
 *.bak
+*.bak-*
 finance-extract/
 finance-api-files-only.txt
 finance-audit-clean.txt
@@ -62,10 +64,14 @@ finance-schema-audit.txt
 finance-schema-only.txt
 finance-source-only.txt
 ledger-files-only.txt
+schema-current.txt
+fix-locales.js
+
+# Temp test scripts
+test-policy.js
+test-smtp.js
+test-smtp.ts
+test-transfer.js
 
 # Runtime uploads
 public/uploads/
-
-*.bak
-*.bak-*
-schema-current.txtfix-locales.js
