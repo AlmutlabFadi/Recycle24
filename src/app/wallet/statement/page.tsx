@@ -83,6 +83,9 @@ export default function WalletStatementPage() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [currency, setCurrency] = useState<"SYP" | "USD">("SYP");
+  const [filterType, setFilterType] = useState<"month" | "custom">("month");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [statement, setStatement] = useState<StatementData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,10 +95,15 @@ export default function WalletStatementPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/wallet/statement?year=${year}&month=${month}&currency=${currency}`,
-        { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
-      );
+      let url = `/api/wallet/statement?currency=${currency}`;
+      if (filterType === "custom" && fromDate && toDate) {
+        url += `&fromDate=${fromDate}&toDate=${toDate}`;
+      } else {
+        url += `&year=${year}&month=${month}`;
+      }
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` }, cache: "no-store"
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to load statement");
       setStatement(data.statement);
@@ -104,7 +112,7 @@ export default function WalletStatementPage() {
     } finally {
       setLoading(false);
     }
-  }, [year, month, currency, token]);
+  }, [year, month, currency, token, filterType, fromDate, toDate]);
 
   useEffect(() => {
     void fetchStatement();
@@ -138,31 +146,72 @@ export default function WalletStatementPage() {
           </button>
         </div>
 
-        {/* Year and Month selectors */}
-        <div className="flex gap-2">
-          <select
-            value={year}
-            aria-label="Year"
-            title="Year"
-            onChange={(e) => setYear(Number(e.target.value))}
-            className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none"
+        {/* Filter Type Toggle */}
+        <div className="flex gap-2 mb-2">
+          <button
+            onClick={() => setFilterType("month")}
+            className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-all ${
+              filterType === "month" ? "bg-slate-700 text-white" : "text-slate-500 hover:text-white bg-slate-800"
+            }`}
           >
-            {yearsAvailable.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-          <select
-            value={month}
-            aria-label="Month"
-            title="Month"
-            onChange={(e) => setMonth(Number(e.target.value))}
-            className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none"
+            حسب الشهر
+          </button>
+          <button
+            onClick={() => setFilterType("custom")}
+            className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-all ${
+              filterType === "custom" ? "bg-slate-700 text-white" : "text-slate-500 hover:text-white bg-slate-800"
+            }`}
           >
-            {MONTHS_AR.map((m, i) => (
-              <option key={i + 1} value={i + 1}>{m}</option>
-            ))}
-          </select>
+            فترة مخصصة
+          </button>
         </div>
+
+        {filterType === "month" ? (
+          /* Year and Month selectors */
+          <div className="flex gap-2">
+            <select
+              value={year}
+              aria-label="Year"
+              onChange={(e) => setYear(Number(e.target.value))}
+              className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none"
+            >
+              {yearsAvailable.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <select
+              value={month}
+              aria-label="Month"
+              onChange={(e) => setMonth(Number(e.target.value))}
+              className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none"
+            >
+              {MONTHS_AR.map((m, i) => (
+                <option key={i + 1} value={i + 1}>{m}</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          /* Custom Date Selectors */
+          <div className="flex gap-2 items-center">
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none"
+              placeholder="من تاريخ"
+              title="من تاريخ"
+            />
+            <span className="text-slate-500 text-xs">إلى</span>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(e) => setToDate(e.target.value)}
+              className="flex-1 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none"
+              placeholder="إلى تاريخ"
+              title="إلى تاريخ"
+            />
+          </div>
+        )}
       </div>
 
       {/* Section Tabs */}
@@ -200,7 +249,9 @@ export default function WalletStatementPage() {
             {/* Balance Summary Card */}
             <div className="rounded-2xl border border-slate-700/50 bg-gradient-to-b from-surface-dark to-slate-900 p-5">
               <h3 className="text-sm font-bold text-slate-400 mb-4">
-                ملخص {MONTHS_AR[month - 1]} {year} ({currency})
+                {filterType === "month" 
+                  ? `ملخص ${MONTHS_AR[month - 1]} ${year} (${currency})`
+                  : `ملخص مخصص (${currency})`}
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>

@@ -2,17 +2,17 @@
 
 import React from "react";
 import { FinanceDebtRow } from "../_lib/types";
-import { AdminRole } from "../_lib/permissions";
+import { PermissionContext } from "../_lib/permissions";
 import { FinanceDebtsTable } from "../_components/finance-debts-table";
 
 interface DebtsViewProps {
   debts: FinanceDebtRow[];
   isLoading: boolean;
-  currentUserRole: AdminRole;
+  permissionContext: PermissionContext;
   onActionSelect: (actionType: string, recordId: string) => void;
 }
 
-export function DebtsView({ debts, isLoading, currentUserRole, onActionSelect }: DebtsViewProps) {
+export function DebtsView({ debts, isLoading, permissionContext, onActionSelect }: DebtsViewProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between border-r-4 border-rose-600 pr-4 py-1">
@@ -24,7 +24,7 @@ export function DebtsView({ debts, isLoading, currentUserRole, onActionSelect }:
       <FinanceDebtsTable 
         debts={debts} 
         isLoading={isLoading} 
-        currentUserRole={currentUserRole} 
+        permissionContext={permissionContext} 
         onActionSelect={onActionSelect} 
       />
     </div>

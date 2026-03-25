@@ -4,14 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import HeaderWithBack from "@/components/HeaderWithBack";
+import OTPModal from "@/components/OTPModal";
 import { useToast } from "@/contexts/ToastContext";
 import { useWallet } from "@/hooks/useWallet";
 
 const paymentMethods = [
-  { id: "haram", name: "Haram", icon: "🏦", description: "Cash branch transfer" },
-  { id: "syriatel", name: "Syriatel Cash", icon: "📱", description: "Syriatel wallet transfer" },
-  { id: "mtn", name: "MTN Cash", icon: "📲", description: "MTN wallet transfer" },
-  { id: "al_fouad", name: "Al Fouad", icon: "🏪", description: "Branch transfer" },
+  { id: "haram", name: "Haram", icon: "", description: "Cash branch transfer" },
+  { id: "syriatel", name: "Syriatel Cash", icon: "", description: "Syriatel wallet transfer" },
+  { id: "mtn", name: "MTN Cash", icon: "", description: "MTN wallet transfer" },
+  { id: "al_fouad", name: "Al Fouad", icon: "", description: "Branch transfer" },
 ] as const;
 
 const presetAmountsSYP = [50000, 100000, 250000, 500000, 1000000];
@@ -24,6 +25,8 @@ export default function WalletDepositPage() {
   const [referenceNumber, setReferenceNumber] = useState<string>("");
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [otpOpen, setOtpOpen] = useState(false);
+  const [otpExpiresIn, setOtpExpiresIn] = useState(120);
 
   const { deposit } = useWallet();
   const { addToast } = useToast();
@@ -60,10 +63,16 @@ export default function WalletDepositPage() {
     setIsSubmitting(true);
 
     try {
-      const success = await deposit(numericAmount, selectedMethod, referenceNumber, currency);
+      const response = await deposit(numericAmount, selectedMethod, referenceNumber, currency);
 
-      if (!success) {
-        addToast("Failed to post deposit.", "error");
+      if (response.requiresOTP) {
+        setOtpExpiresIn(response.expiresIn || 120);
+        setOtpOpen(true);
+        return; // Pause the flow, the OTP modal will handle the rest
+      }
+
+      if (!response.success) {
+        addToast(response.error || "Failed to post deposit.", "error");
         return;
       }
 
@@ -78,6 +87,26 @@ export default function WalletDepositPage() {
       addToast("An error occurred while posting the deposit.", "error");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleOTPSubmit = async (otpCode: string) => {
+    try {
+      const response = await deposit(numericAmount, selectedMethod, referenceNumber, currency, otpCode);
+      if (!response.success) {
+        addToast(response.error || "Failed to verify OTP.", "error");
+        if (response.error?.includes("منتهي الصلاحية")) {
+           setOtpOpen(false); // Close it if it's expired so they can re-request
+        }
+        return;
+      }
+      
+      setOtpOpen(false);
+      addToast("Deposit posted successfully.", "success");
+      setStep(4);
+      setTimeout(() => { router.push("/wallet"); }, 1500);
+    } catch (error) {
+       addToast("An error occurred while posting.", "error");
     }
   };
 
@@ -127,7 +156,7 @@ export default function WalletDepositPage() {
                   currency === "SYP" ? "bg-primary text-white shadow-sm" : "text-slate-400 hover:text-white"
                 }`}
               >
-                SYP (ل.س)
+                SYP
               </button>
               <button
                 onClick={() => { setCurrency("USD"); setAmount(""); }}
@@ -135,7 +164,7 @@ export default function WalletDepositPage() {
                   currency === "USD" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
                 }`}
               >
-                USD ($)
+                USD
               </button>
             </div>
 
@@ -188,7 +217,7 @@ export default function WalletDepositPage() {
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <span className="text-3xl">{method.icon}</span>
+                    
 
                     <div className="flex-1">
                       <h3 className="font-bold text-white">{method.name}</h3>
@@ -333,6 +362,13 @@ export default function WalletDepositPage() {
           </div>
         </div>
       )}
+
+      <OTPModal
+        isOpen={otpOpen}
+        expiresInSeconds={otpExpiresIn}
+        onClose={() => setOtpOpen(false)}
+        onSubmit={handleOTPSubmit}
+      />
     </div>
   );
 }

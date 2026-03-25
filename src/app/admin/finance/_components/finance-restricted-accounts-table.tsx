@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { FinanceRestrictionRow } from "../_lib/types";
@@ -8,7 +8,7 @@ import { FinanceActionMenu } from "./finance-action-menu";
 interface FinanceRestrictedAccountsTableProps {
   accounts: FinanceRestrictionRow[];
   isLoading: boolean;
-  currentUserRole: AdminRole;
+  permissionContext: PermissionContext;
   onActionSelect: (actionType: string, recordId: string) => void;
 }
 
@@ -52,7 +52,7 @@ function getRestrictionClasses(type: FinanceRestrictionRow["restrictionType"]) {
 export function FinanceRestrictedAccountsTable({
   accounts,
   isLoading,
-  currentUserRole,
+  permissionContext,
   onActionSelect,
 }: FinanceRestrictedAccountsTableProps) {
   if (isLoading) {
@@ -90,7 +90,7 @@ export function FinanceRestrictedAccountsTable({
 
         <tbody className="divide-y divide-slate-100">
           {accounts.map((acc) => {
-            const permissionCtx: PermissionContext = { role: currentUserRole };
+            const rowContext: PermissionContext = { ...permissionContext, selectedRow: acc as any };
             const recordId = `${acc.accountId}:${acc.restrictionType}`;
 
             return (
@@ -153,7 +153,7 @@ export function FinanceRestrictedAccountsTable({
 
                 <td className="px-5 py-4 align-top text-left">
                   <FinanceActionMenu
-                    context={permissionCtx}
+                    context={rowContext}
                     recordId={recordId}
                     recordType="ACCOUNT"
                     onSelectAction={onActionSelect}

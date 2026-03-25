@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { FinanceDebtRow } from "../_lib/types";
@@ -8,7 +8,7 @@ import { FinanceActionMenu } from "./finance-action-menu";
 interface FinanceDebtsTableProps {
   debts: FinanceDebtRow[];
   isLoading: boolean;
-  currentUserRole: AdminRole;
+  permissionContext: PermissionContext;
   onActionSelect: (actionType: string, recordId: string) => void;
 }
 
@@ -73,7 +73,7 @@ function getDebtTypeLabel(type: FinanceDebtRow["debtType"]) {
 export function FinanceDebtsTable({
   debts,
   isLoading,
-  currentUserRole,
+  permissionContext,
   onActionSelect,
 }: FinanceDebtsTableProps) {
   if (isLoading) {
@@ -110,7 +110,7 @@ export function FinanceDebtsTable({
 
         <tbody className="divide-y divide-slate-100">
           {debts.map((debt) => {
-            const permissionCtx: PermissionContext = { role: currentUserRole };
+            const rowContext: PermissionContext = { ...permissionContext, selectedRow: debt as any };
 
             return (
               <tr key={debt.id} className="transition-colors hover:bg-slate-50">
@@ -177,7 +177,7 @@ export function FinanceDebtsTable({
 
                 <td className="px-5 py-4 align-top text-left">
                   <FinanceActionMenu
-                    context={permissionCtx}
+                    context={rowContext}
                     recordId={debt.id}
                     recordType="DEBT"
                     onSelectAction={onActionSelect}

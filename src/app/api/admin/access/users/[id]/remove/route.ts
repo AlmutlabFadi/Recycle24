@@ -6,7 +6,7 @@ const OWNER_EMAIL = process.env.OWNER_EMAIL || "emixdigitall@gmail.com";
 
 export async function DELETE(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const access = await requirePermission(PERMISSIONS.MANAGE_ACCESS);
@@ -14,7 +14,7 @@ export async function DELETE(
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
         }
 
-        const targetUserId = params.id;
+        const { id: targetUserId } = await params;
 
         // OWNER protection: cannot remove the project owner
         const targetUser = await db.user.findUnique({
@@ -30,25 +30,20 @@ export async function DELETE(
         }
 
         await db.$transaction(async (tx) => {
-            // 1. Remove all roles
-            await tx.userRole.deleteMany({
-                where: { userId: targetUserId },
-            });
+            // Invalidate all active sessions for this user
+            await tx.session.deleteMany({ where: { userId: targetUserId } });
 
-            // 2. Revert User fields
-            await tx.user.update({
+            // 1. Remove all roles
+            await tx.userRole.deleteMany({ where: { userId: targetUserId } });
+
+            // 2. Revert User fields and set admin status
+            await (tx.user.update as any)({
                 where: { id: targetUserId },
                 data: {
-                    userType: "CLIENT",
-                    role: "CLIENT",
-                } as any,
+                    status: "REMOVED",
+                    currentAdminStatus: "OFFLINE",
+                },
             });
-
-            // 3. Set admin status to OFFLINE (separate call to avoid type conflict)
-            await tx.$executeRawUnsafe(
-                `UPDATE "User" SET "currentAdminStatus" = 'OFFLINE' WHERE "id" = $1`,
-                targetUserId
-            );
 
             // 3. Log the action
             await tx.securityLog.create({

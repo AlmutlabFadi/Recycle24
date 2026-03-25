@@ -1,4 +1,4 @@
-import type { FinanceRequestType } from "./types";
+﻿import type { FinanceRequestType } from "./types";
 
 export type FinanceSupportedActionType =
   | "APPROVE_FIRST_STAGE"
@@ -50,11 +50,7 @@ export function isBackendSupportedAction(
     actionType === "APPROVE_FINAL_STAGE" ||
     actionType === "REJECT"
   ) {
-    return (
-      requestType === "DEPOSIT" ||
-      requestType === "PAYOUT" ||
-      requestType === "TRANSFER"
-    );
+    return requestType === "DEPOSIT" || requestType === "PAYOUT" || requestType === "TRANSFER";
   }
 
   return false;

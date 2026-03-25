@@ -2,20 +2,20 @@
 
 import React from "react";
 import { FinanceRestrictionRow } from "../_lib/types";
-import { AdminRole } from "../_lib/permissions";
+import { PermissionContext } from "../_lib/permissions";
 import { FinanceRestrictedAccountsTable } from "../_components/finance-restricted-accounts-table";
 
 interface RestrictedAccountsViewProps {
   accounts: FinanceRestrictionRow[];
   isLoading: boolean;
-  currentUserRole: AdminRole;
+  permissionContext: PermissionContext;
   onActionSelect: (actionType: string, recordId: string) => void;
 }
 
 export function RestrictedAccountsView({
   accounts,
   isLoading,
-  currentUserRole,
+  permissionContext,
   onActionSelect,
 }: RestrictedAccountsViewProps) {
   return (
@@ -35,7 +35,7 @@ export function RestrictedAccountsView({
       <FinanceRestrictedAccountsTable
         accounts={accounts}
         isLoading={isLoading}
-        currentUserRole={currentUserRole}
+        permissionContext={permissionContext}
         onActionSelect={onActionSelect}
       />
     </div>

@@ -13,7 +13,7 @@ import {
 } from "@/lib/finance/policy";
 import { LedgerEnforcementService } from "@/lib/ledger/enforcement";
 import { LedgerPostingService } from "@/lib/ledger/service";
-import { Currency, HoldStatus } from "@/lib/ledger/types";
+import { Currency, HoldStatus, LedgerAccountSlug, TransactionType } from "@/lib/ledger/types";
 import { elapsedMs, logPerf, nowMs } from "@/lib/server/perf";
 import { enforceInMemoryRateLimit } from "@/lib/security/request-rate-limit";
 
@@ -47,6 +47,8 @@ interface WalletSnapshot {
   totalHeldUSD: number;
   availableBalanceSYP: number;
   availableBalanceUSD: number;
+  holdsBreakdownSYP: { type: string; amount: number }[];
+  holdsBreakdownUSD: { type: string; amount: number }[];
   debtSnapshot: Awaited<
     ReturnType<typeof LedgerEnforcementService.getDebtSnapshot>
   >;
@@ -118,15 +120,17 @@ async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
     Currency.USD
   );
 
-  const [activeHoldsSYP, activeHoldsUSD] = await Promise.all([
-    db.ledgerHold.aggregate({
+  const [holdsSYP, holdsUSD] = await Promise.all([
+    db.ledgerHold.groupBy({
+      by: ["referenceType"],
       where: {
         accountId: ledgerAccountSYP.id,
         status: HoldStatus.OPEN,
       },
       _sum: { amount: true },
     }),
-    db.ledgerHold.aggregate({
+    db.ledgerHold.groupBy({
+      by: ["referenceType"],
       where: {
         accountId: ledgerAccountUSD.id,
         status: HoldStatus.OPEN,
@@ -135,10 +139,12 @@ async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
     })
   ]);
 
-  const totalHeldSYP = activeHoldsSYP._sum.amount ?? 0;
+  const holdsBreakdownSYP = holdsSYP.map(h => ({ type: h.referenceType ?? "UNKNOWN", amount: h._sum.amount ?? 0 }));
+  const totalHeldSYP = holdsBreakdownSYP.reduce((sum, h) => sum + h.amount, 0);
   const availableBalanceSYP = ledgerAccountSYP.balance - totalHeldSYP;
 
-  const totalHeldUSD = activeHoldsUSD._sum.amount ?? 0;
+  const holdsBreakdownUSD = holdsUSD.map(h => ({ type: h.referenceType ?? "UNKNOWN", amount: h._sum.amount ?? 0 }));
+  const totalHeldUSD = holdsBreakdownUSD.reduce((sum, h) => sum + h.amount, 0);
   const availableBalanceUSD = ledgerAccountUSD.balance - totalHeldUSD;
 
   let wallet = await db.wallet.findUnique({
@@ -177,6 +183,8 @@ async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
     totalHeldUSD,
     availableBalanceSYP,
     availableBalanceUSD,
+    holdsBreakdownSYP,
+    holdsBreakdownUSD,
     debtSnapshot,
   };
 }
@@ -254,6 +262,8 @@ export async function GET(_request: NextRequest) {
         verifiedBalanceUSD: snapshot.ledgerAccountUSD.balance,
         availableBalanceUSD: snapshot.availableBalanceUSD,
         heldAmountUSD: snapshot.totalHeldUSD,
+        holdsBreakdownSYP: snapshot.holdsBreakdownSYP,
+        holdsBreakdownUSD: snapshot.holdsBreakdownUSD,
         debtDetails:
           snapshot.debtSnapshot.details.length > 0
             ? snapshot.debtSnapshot.details
@@ -317,12 +327,33 @@ export async function POST(request: NextRequest) {
     const requestNote = parseNonEmptyString(body?.requestNote);
     const currency =
       normalizeCurrency(body?.currency ?? Currency.SYP) ?? null;
+    const otpCode = parseNonEmptyString(body?.otpCode);
 
     if (!amount || !method || !currency) {
       return NextResponse.json(
         { error: "Amount, method, and valid currency are required" },
         { status: 400 }
       );
+    }
+
+    // 🛡️ FINANCIAL 2FA (OTP) INTERCEPTOR 🛡️
+    const { SecurityOTPService } = await import("@/lib/security/otp");
+    if (!otpCode) {
+      await SecurityOTPService.generateOTP(auth.userId, "DEPOSIT", undefined, {
+        amount,
+        currency,
+        target: method,
+      });
+      return NextResponse.json({
+        requiresOTP: true,
+        message: "يرجى إدخال رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني. الرمز صالح لمدة 120 ثانية.",
+        expiresIn: 120
+      });
+    }
+
+    const isValidOTP = await SecurityOTPService.verifyOTP(auth.userId, "DEPOSIT", otpCode);
+    if (!isValidOTP) {
+      return NextResponse.json({ error: "رمز التحقق غير صحيح أو منتهي الصلاحية. يرجى طلب رمز جديد." }, { status: 400 });
     }
 
     try {
@@ -363,34 +394,144 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const createdRequest = await db.depositRequest.create({
-      data: {
-        accountId: account.id,
-        userId: auth.userId,
-        amount,
-        currency,
-        method,
-        proofUrl: proofUrl ?? undefined,
-        requestNote: requestNote ?? undefined,
-        status: "PENDING",
-      },
-      select: {
-        id: true,
-        accountId: true,
-        userId: true,
-        amount: true,
-        currency: true,
-        method: true,
-        proofUrl: true,
-        requestNote: true,
-        reviewNote: true,
-        status: true,
-        reviewedById: true,
-        reviewedAt: true,
-        completedAt: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    const result = await db.$transaction(async (tx) => {
+      const createdRequest = await tx.depositRequest.create({
+        data: {
+          accountId: account.id,
+          userId: auth.userId,
+          amount,
+          currency,
+          method,
+          proofUrl: proofUrl ?? undefined,
+          requestNote: requestNote ?? undefined,
+          status: "COMPLETED",
+          approvalStage: "NONE",
+          completedAt: new Date(),
+        },
+        select: {
+          id: true,
+          accountId: true,
+          userId: true,
+          amount: true,
+          currency: true,
+          method: true,
+          proofUrl: true,
+          requestNote: true,
+          reviewNote: true,
+          status: true,
+          reviewedById: true,
+          reviewedAt: true,
+          completedAt: true,
+          createdAt: true,
+          updatedAt: true,
+          account: {
+            select: {
+              id: true,
+              slug: true,
+              balance: true,
+              currency: true,
+            },
+          },
+        },
+      });
+
+      const ledgerResult = await LedgerPostingService.postEntryInTransaction(
+        tx as never,
+        {
+          type: TransactionType.WALLET_DEPOSIT,
+          description: `Auto-approved deposit request ${createdRequest.id}`,
+          idempotencyKey: `deposit-approve:${createdRequest.id}`,
+          lines: [
+            {
+              accountSlug: LedgerAccountSlug.SYSTEM_LIQUIDITY_POOL,
+              amount: -createdRequest.amount,
+              description: `Auto-approved deposit funding for request ${createdRequest.id}`,
+            },
+            {
+              accountSlug: createdRequest.account.slug,
+              amount: createdRequest.amount,
+              description: `Deposit request ${createdRequest.id} credited`,
+            },
+          ],
+          metadata: {
+            depositRequestId: createdRequest.id,
+            accountId: createdRequest.accountId,
+            userId: createdRequest.userId,
+            method: createdRequest.method,
+            proofUrl: createdRequest.proofUrl,
+            requestNote: createdRequest.requestNote,
+            reviewedByUserId: "SYSTEM",
+            approvedByUserId: null,
+          },
+        },
+      );
+
+      const updatedAccount = await tx.ledgerAccount.findUnique({
+        where: { id: createdRequest.accountId },
+        select: {
+          id: true,
+          slug: true,
+          balance: true,
+        },
+      });
+
+      await tx.wallet.upsert({
+        where: {
+          userId: createdRequest.userId,
+        },
+        update:
+          createdRequest.currency === Currency.SYP
+            ? { balanceSYP: updatedAccount?.balance ?? createdRequest.account.balance }
+            : { balanceUSD: updatedAccount?.balance ?? createdRequest.account.balance },
+        create: {
+          userId: createdRequest.userId,
+          balanceSYP:
+            createdRequest.currency === Currency.SYP
+              ? updatedAccount?.balance ?? createdRequest.account.balance
+              : 0,
+          balanceUSD:
+            createdRequest.currency === Currency.USD
+              ? updatedAccount?.balance ?? createdRequest.account.balance
+              : 0,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorRole: "SYSTEM",
+          actorId: "SYSTEM",
+          action: "FINANCE_DEPOSIT_REQUEST_AUTO_COMPLETED",
+          entityType: "DepositRequest",
+          entityId: createdRequest.id,
+          beforeJson: {
+            status: "PENDING",
+          },
+          afterJson: {
+            status: createdRequest.status,
+            approvalStage: "NONE",
+            completedAt: createdRequest.completedAt,
+            ledgerBalanceAfter: updatedAccount?.balance ?? null,
+          },
+        },
+      });
+
+      return {
+        kind: "committed" as const,
+        createdRequest,
+        updatedAccount,
+        notifications: ledgerResult.notifications,
+      };
+    });
+
+    await LedgerPostingService.dispatchNotifications(result.notifications);
+
+    const { NotificationService } = await import("@/lib/notifications/service");
+    await NotificationService.create({
+      userId: result.createdRequest.userId,
+      title: "✅ تم قبول الإيداع فوراً",
+      message: `تمت إضافة ${result.createdRequest.amount.toLocaleString()} ${result.createdRequest.currency} إلى محفظتك بنجاح بفضل ميزة الإيداع الفوري.`,
+      type: "SUCCESS",
+      link: "/wallet",
     });
 
     logPerf("api.wallet.post", {
@@ -400,13 +541,13 @@ export async function POST(request: NextRequest) {
       amount,
       method,
       currency,
-      requestId: createdRequest.id,
+      requestId: result.createdRequest.id,
     });
 
     return NextResponse.json({
       success: true,
-      message: "Deposit request created successfully",
-      depositRequest: createdRequest,
+      message: "Deposit request created and approved auto-magically",
+      depositRequest: result.createdRequest,
     });
   } catch (error) {
     logPerf("api.wallet.post", {
@@ -463,12 +604,33 @@ export async function PUT(request: NextRequest) {
     const requestNote = parseNonEmptyString(body?.requestNote);
     const currency =
       normalizeCurrency(body?.currency ?? Currency.SYP) ?? null;
+    const otpCode = parseNonEmptyString(body?.otpCode);
 
     if (!amount || !method || !destination || !currency) {
       return NextResponse.json(
         { error: "Amount, method, destination, and valid currency are required" },
         { status: 400 }
       );
+    }
+
+    // 🛡️ FINANCIAL 2FA (OTP) INTERCEPTOR 🛡️
+    const { SecurityOTPService } = await import("@/lib/security/otp");
+    if (!otpCode) {
+      await SecurityOTPService.generateOTP(auth.userId, "WITHDRAWAL", undefined, {
+        amount,
+        currency,
+        target: `${method} / ${destination}`,
+      });
+      return NextResponse.json({
+        requiresOTP: true,
+        message: "يرجى إدخال رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني. الرمز صالح لمدة 120 ثانية.",
+        expiresIn: 120
+      });
+    }
+
+    const isValidOTP = await SecurityOTPService.verifyOTP(auth.userId, "WITHDRAWAL", otpCode);
+    if (!isValidOTP) {
+      return NextResponse.json({ error: "رمز التحقق غير صحيح أو منتهي الصلاحية. يرجى طلب رمز جديد." }, { status: 400 });
     }
 
     try {

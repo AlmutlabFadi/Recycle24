@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useWallet } from "@/hooks/useWallet";
+import OTPModal from "@/components/OTPModal";
 
 export default function WalletTransferPage() {
   const router = useRouter();
@@ -19,6 +20,8 @@ export default function WalletTransferPage() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [otpOpen, setOtpOpen] = useState(false);
+  const [otpExpiresIn, setOtpExpiresIn] = useState(120);
 
   const availableBalance = currency === "SYP" ? wallet?.availableBalanceSYP : wallet?.availableBalanceUSD;
   const balance = Number(availableBalance ?? 0);
@@ -59,6 +62,12 @@ export default function WalletTransferPage() {
 
       const data = await res.json();
       
+      if (data.requiresOTP) {
+        setOtpExpiresIn(data.expiresIn || 120);
+        setOtpOpen(true);
+        return;
+      }
+
       if (!res.ok) {
         throw new Error(data.error || "حدث خطأ غير معروف أثناء التحويل.");
       }
@@ -72,6 +81,43 @@ export default function WalletTransferPage() {
       setError(err.message);
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleOTPSubmit(otpCode: string) {
+    try {
+      const res = await fetch("/api/wallet/transfer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          receiverPhoneOrEmail: receiver,
+          amount,
+          currency,
+          otpCode,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        addToast(data.error || "فشل التحقق من الرمز.", "error");
+        if (data.error?.includes("منتهي الصلاحية")) {
+           setOtpOpen(false);
+        }
+        return;
+      }
+
+      setOtpOpen(false);
+      addToast("تم إرسال طلب التحويل بنجاح، بانتظار موافقة الإدارة.", "success");
+      
+      setTimeout(() => {
+        router.push("/wallet");
+      }, 1500);
+    } catch (err: any) {
+      addToast("حدث خطأ أثناء الاتصال.", "error");
     }
   }
 
@@ -208,6 +254,13 @@ export default function WalletTransferPage() {
 
         </div>
       </main>
+
+      <OTPModal
+        isOpen={otpOpen}
+        expiresInSeconds={otpExpiresIn}
+        onClose={() => setOtpOpen(false)}
+        onSubmit={handleOTPSubmit}
+      />
     </div>
   );
 }

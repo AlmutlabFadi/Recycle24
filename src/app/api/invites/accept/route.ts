@@ -38,6 +38,17 @@ export async function POST(request: NextRequest) {
                 where: { id: invite.id },
                 data: { status: "USED", usedById: userId, usedAt: new Date() },
             });
+            // Also update the primary user record to reflect their new status
+            await (tx.user.update as any)({
+                where: { id: userId },
+                data: { 
+                    role: "ADMIN",
+                    userType: "ADMIN",
+                    status: "ACTIVE",
+                    isVerified: true,
+                    adminAccessEnabled: true
+                }
+            });
         });
 
         return NextResponse.json({ success: true });

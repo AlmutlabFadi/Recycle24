@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { createContext, useContext, ReactNode, useCallback, useState, useEffect } from "react";
 import { useSession, signIn, signOut, SessionProvider } from "next-auth/react";
@@ -19,6 +19,7 @@ interface User {
   userType: "TRADER" | "CLIENT" | "ADMIN" | "DRIVER" | "GOVERNMENT";
   status: string;
   role?: string;
+  adminAccessEnabled?: boolean;
 }
 
 interface AuthContextType {
@@ -51,7 +52,8 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
       if (savedRole) {
         setActiveRoleState(savedRole);
       } else {
-        const defaultRole = (user.userType as ActiveRole) || "CLIENT";
+        // 🛠️ FIX: Default to ADMIN if they are staff, otherwise CLIENT
+        const defaultRole = user.userType === "ADMIN" ? "ADMIN" : (user.userType as ActiveRole) || "CLIENT";
         setActiveRoleState(defaultRole);
         localStorage.setItem(`activeRole_${user.id}`, defaultRole);
       }
@@ -80,10 +82,15 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     if (result?.error) {
       throw new Error(result.error);
     }
-    // Check role and redirect ADMIN to dashboard
+    // Check userType and redirect ADMIN to the control tower
     const sessRes = await fetch('/api/auth/session');
     const sess = sessRes.ok ? await sessRes.json().catch(() => null) : null;
-    window.location.href = sess?.user?.role === 'ADMIN' ? '/dashboard' : '/';
+    
+    if (sess?.user?.userType === 'ADMIN') {
+        window.location.href = '/admin/dashboard';
+    } else {
+        window.location.href = '/dashboard';
+    }
   }, []);
 
   const loginWithEmail = useCallback(async (email: string, password: string) => {
@@ -95,10 +102,15 @@ function AuthProviderInner({ children }: { children: ReactNode }) {
     if (result?.error) {
       throw new Error(result.error);
     }
-    // Check role and redirect ADMIN to dashboard
+    // Check userType and redirect ADMIN to the control tower
     const sessRes2 = await fetch('/api/auth/session');
     const sess = sessRes2.ok ? await sessRes2.json().catch(() => null) : null;
-    window.location.href = sess?.user?.role === 'ADMIN' ? '/dashboard' : '/';
+    
+    if (sess?.user?.userType === 'ADMIN') {
+        window.location.href = '/admin/dashboard';
+    } else {
+        window.location.href = '/dashboard';
+    }
   }, []);
 
   const registerWithPhone = useCallback(async (phone: string, password: string, name: string, userType: string, titleId?: string, gender?: Gender) => {

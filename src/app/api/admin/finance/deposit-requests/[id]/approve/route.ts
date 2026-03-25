@@ -1,10 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
-import {
-  getDepositApprovalDecision,
-  isAwaitingFinalApproval,
-} from "@/lib/finance/approval-policy";
 import { LedgerPostingService } from "@/lib/ledger/service";
 import { Currency, LedgerAccountSlug, TransactionType } from "@/lib/ledger/types";
 import { requirePermission } from "@/lib/rbac";
@@ -32,7 +28,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (!auth.ok) {
       return NextResponse.json(
         { error: "Unauthorized" },
-        { status: auth.status }
+        { status: auth.status },
       );
     }
 
@@ -41,7 +37,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (!requestId) {
       return NextResponse.json(
         { error: "Deposit request id is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -84,7 +80,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           kind: "error" as const,
           response: NextResponse.json(
             { error: "Deposit request not found" },
-            { status: 404 }
+            { status: 404 },
           ),
         };
       }
@@ -107,93 +103,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
             {
               error: `Deposit request cannot be approved from status ${depositRequest.status}`,
             },
-            { status: 409 }
+            { status: 409 },
           ),
         };
       }
 
-      if (depositRequest.currency !== Currency.SYP && depositRequest.currency !== Currency.USD) {
+      if (
+        depositRequest.currency !== Currency.SYP &&
+        depositRequest.currency !== Currency.USD
+      ) {
         return {
           kind: "error" as const,
           response: NextResponse.json(
             { error: "Only SYP and USD deposit approvals are supported currently" },
-            { status: 400 }
-          ),
-        };
-      }
-
-      const approvalDecision = getDepositApprovalDecision(
-        depositRequest.currency as Currency,
-        depositRequest.amount
-      );
-
-      if (
-        approvalDecision === "REQUIRES_SECOND_APPROVER" &&
-        !isAwaitingFinalApproval(depositRequest.approvalStage)
-      ) {
-        const stagedRequest = await tx.depositRequest.update({
-          where: { id: depositRequest.id },
-          data: {
-            status: "UNDER_REVIEW",
-            reviewedById: auth.userId,
-            reviewedAt: new Date(),
-            reviewNote: reviewNote ?? depositRequest.reviewNote ?? undefined,
-            approvalStage: "AWAITING_FINAL_APPROVAL",
-          },
-          select: {
-            id: true,
-            status: true,
-            approvalStage: true,
-            reviewedById: true,
-            reviewedAt: true,
-            reviewNote: true,
-            amount: true,
-            currency: true,
-            method: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        });
-
-        await tx.auditLog.create({
-          data: {
-            actorRole: "ADMIN",
-            actorId: auth.userId,
-            action: "FINANCE_DEPOSIT_REQUEST_ESCALATED_FOR_FINAL_APPROVAL",
-            entityType: "DepositRequest",
-            entityId: stagedRequest.id,
-            beforeJson: {
-              status: depositRequest.status,
-              approvalStage: depositRequest.approvalStage,
-            },
-            afterJson: {
-              status: stagedRequest.status,
-              approvalStage: stagedRequest.approvalStage,
-              reviewedById: stagedRequest.reviewedById,
-              reviewedAt: stagedRequest.reviewedAt,
-            },
-          },
-        });
-
-        return {
-          kind: "staged" as const,
-          stagedRequest,
-        };
-      }
-
-      if (
-        approvalDecision === "REQUIRES_SECOND_APPROVER" &&
-        depositRequest.reviewedById &&
-        depositRequest.reviewedById === auth.userId
-      ) {
-        return {
-          kind: "error" as const,
-          response: NextResponse.json(
-            {
-              error:
-                "Final approval requires a second finance admin different from the first reviewer",
-            },
-            { status: 409 }
+            { status: 400 },
           ),
         };
       }
@@ -223,10 +146,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
             method: depositRequest.method,
             proofUrl: depositRequest.proofUrl,
             requestNote: depositRequest.requestNote,
-            reviewedByUserId: depositRequest.reviewedById ?? null,
-            approvedByUserId: auth.userId,
+            reviewedByUserId: auth.userId,
+            approvedByUserId: null,
           },
-        }
+        },
       );
 
       const updatedAccount = await tx.ledgerAccount.findUnique({
@@ -242,13 +165,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
         where: {
           userId: depositRequest.userId,
         },
-        update: depositRequest.currency === Currency.SYP 
-          ? { balanceSYP: updatedAccount?.balance ?? depositRequest.account.balance }
-          : { balanceUSD: updatedAccount?.balance ?? depositRequest.account.balance },
+        update:
+          depositRequest.currency === Currency.SYP
+            ? { balanceSYP: updatedAccount?.balance ?? depositRequest.account.balance }
+            : { balanceUSD: updatedAccount?.balance ?? depositRequest.account.balance },
         create: {
           userId: depositRequest.userId,
-          balanceSYP: depositRequest.currency === Currency.SYP ? (updatedAccount?.balance ?? depositRequest.account.balance) : 0,
-          balanceUSD: depositRequest.currency === Currency.USD ? (updatedAccount?.balance ?? depositRequest.account.balance) : 0,
+          balanceSYP:
+            depositRequest.currency === Currency.SYP
+              ? updatedAccount?.balance ?? depositRequest.account.balance
+              : 0,
+          balanceUSD:
+            depositRequest.currency === Currency.USD
+              ? updatedAccount?.balance ?? depositRequest.account.balance
+              : 0,
         },
       });
 
@@ -256,17 +186,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
         where: { id: depositRequest.id },
         data: {
           status: "COMPLETED",
-          reviewedById: depositRequest.reviewedById ?? auth.userId,
-          reviewedAt: depositRequest.reviewedAt ?? new Date(),
-          approvedById:
-            approvalDecision === "REQUIRES_SECOND_APPROVER"
-              ? auth.userId
-              : null,
-          approvedAt:
-            approvalDecision === "REQUIRES_SECOND_APPROVER"
-              ? new Date()
-              : null,
-          approvalStage: "FINAL_APPROVED",
+          reviewedById: auth.userId,
+          reviewedAt: new Date(),
+          approvedById: null,
+          approvedAt: null,
+          approvalStage: "NONE",
           completedAt: new Date(),
           reviewNote: reviewNote ?? depositRequest.reviewNote ?? undefined,
         },
@@ -296,7 +220,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         data: {
           actorRole: "ADMIN",
           actorId: auth.userId,
-          action: "FINANCE_DEPOSIT_REQUEST_APPROVED",
+          action: "FINANCE_DEPOSIT_REQUEST_COMPLETED",
           entityType: "DepositRequest",
           entityId: completedRequest.id,
           beforeJson: {
@@ -309,8 +233,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
             approvalStage: completedRequest.approvalStage,
             reviewedById: completedRequest.reviewedById,
             reviewedAt: completedRequest.reviewedAt,
-            approvedById: completedRequest.approvedById,
-            approvedAt: completedRequest.approvedAt,
             completedAt: completedRequest.completedAt,
             ledgerBalanceAfter: updatedAccount?.balance ?? null,
           },
@@ -329,30 +251,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return result.response;
     }
 
-    if (result.kind === "committed") {
-      await LedgerPostingService.dispatchNotifications(result.notifications);
-      
-      const { NotificationService } = await import("@/lib/notifications/service");
-      await NotificationService.create({
-        userId: result.completedRequest.userId,
-        title: "✅ تم قبول طلب الإيداع",
-        message: `تم إضافة ${result.completedRequest.amount.toLocaleString()} ${result.completedRequest.currency} إلى محفظتك بنجاح.`,
-        type: "SUCCESS",
-        link: "/wallet",
-      });
-    }
+    await LedgerPostingService.dispatchNotifications(result.notifications);
 
-    if (result.kind === "staged") {
-      return NextResponse.json({
-        success: true,
-        message: "Deposit request moved to final approval stage",
-        depositRequest: result.stagedRequest,
-      });
-    }
+    const { NotificationService } = await import("@/lib/notifications/service");
+    await NotificationService.create({
+      userId: result.completedRequest.userId,
+      title: "✅ تم قبول طلب الإيداع",
+      message: `تمت إضافة ${result.completedRequest.amount.toLocaleString()} ${result.completedRequest.currency} إلى محفظتك بنجاح.`,
+      type: "SUCCESS",
+      link: "/wallet",
+    });
 
     return NextResponse.json({
       success: true,
-      message: "Deposit request approved successfully",
+      message: "Deposit request completed successfully",
       depositRequest: result.completedRequest,
       ledgerAccount: result.updatedAccount,
     });
@@ -364,8 +276,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         success: false,
         error: "Failed to approve deposit request",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

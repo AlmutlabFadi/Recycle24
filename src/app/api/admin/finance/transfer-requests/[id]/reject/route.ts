@@ -60,7 +60,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         throw new Error("ALREADY_REJECTED");
       }
 
-      if (transferReq.status !== "PENDING") {
+      if (!["PENDING", "UNDER_REVIEW"].includes(transferReq.status)) {
         throw new Error("INVALID_STATUS");
       }
 

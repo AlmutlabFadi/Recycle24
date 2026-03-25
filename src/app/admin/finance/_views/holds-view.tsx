@@ -2,17 +2,17 @@
 
 import React from "react";
 import { FinanceHoldRow } from "../_lib/types";
-import { AdminRole } from "../_lib/permissions";
+import { PermissionContext } from "../_lib/permissions";
 import { FinanceHoldsTable } from "../_components/finance-holds-table";
 
 interface HoldsViewProps {
   holds: FinanceHoldRow[];
   isLoading: boolean;
-  currentUserRole: AdminRole;
+  permissionContext: PermissionContext;
   onActionSelect: (actionType: string, recordId: string) => void;
 }
 
-export function HoldsView({ holds, isLoading, currentUserRole, onActionSelect }: HoldsViewProps) {
+export function HoldsView({ holds, isLoading, permissionContext, onActionSelect }: HoldsViewProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between border-r-4 border-amber-500 pr-4 py-1">
@@ -24,7 +24,7 @@ export function HoldsView({ holds, isLoading, currentUserRole, onActionSelect }:
       <FinanceHoldsTable 
         holds={holds} 
         isLoading={isLoading} 
-        currentUserRole={currentUserRole} 
+        permissionContext={permissionContext} 
         onActionSelect={onActionSelect} 
       />
     </div>

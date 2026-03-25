@@ -1,18 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import HeaderWithBack from "@/components/HeaderWithBack";
+import OTPModal from "@/components/OTPModal";
 import { useToast } from "@/contexts/ToastContext";
 import { useWallet } from "@/hooks/useWallet";
 
-const withdrawalMethods = [
-  { id: "haram", name: "Haram", icon: "🏦", minAmount: 50000 },
-  { id: "syriatel", name: "Syriatel Cash", icon: "📱", minAmount: 10000 },
-  { id: "mtn", name: "MTN Cash", icon: "📲", minAmount: 10000 },
-  { id: "al_fouad", name: "Al Fouad", icon: "🏪", minAmount: 50000 },
-] as const;
+type SupportedCurrency = "SYP" | "USD";
+
+type WithdrawalMethod = {
+  id: "haram" | "syriatel" | "mtn" | "al_fouad";
+  name: string;
+};
+
+const withdrawalMethods: WithdrawalMethod[] = [
+  { id: "haram", name: "Haram" },
+  { id: "syriatel", name: "Syriatel Cash" },
+  { id: "mtn", name: "MTN Cash" },
+  { id: "al_fouad", name: "Al Fouad" },
+];
+
+function getMinimumWithdrawalAmount(currency: SupportedCurrency): number {
+  return currency === "USD" ? 10 : 1_000;
+}
+
+function formatAmount(value: number, currency: SupportedCurrency): string {
+  const safeValue = Number.isFinite(value) ? value : 0;
+
+  return safeValue.toLocaleString("en-US", {
+    minimumFractionDigits: currency === "USD" ? 2 : 0,
+    maximumFractionDigits: currency === "USD" ? 2 : 0,
+  });
+}
 
 export default function WalletWithdrawPage() {
   const [amount, setAmount] = useState<string>("");
@@ -20,19 +41,33 @@ export default function WalletWithdrawPage() {
   const [accountNumber, setAccountNumber] = useState<string>("");
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currency, setCurrency] = useState<"SYP" | "USD">("SYP");
+  const [currency, setCurrency] = useState<SupportedCurrency>("SYP");
+  const [otpOpen, setOtpOpen] = useState(false);
+  const [otpExpiresIn, setOtpExpiresIn] = useState(120);
 
   const { wallet, withdraw } = useWallet();
   const { addToast } = useToast();
   const router = useRouter();
 
-  const balanceTarget = currency === "SYP" ? wallet?.availableBalanceSYP : wallet?.availableBalanceUSD;
+  const balanceTarget =
+    currency === "SYP" ? wallet?.availableBalanceSYP : wallet?.availableBalanceUSD;
   const balance = Number(balanceTarget ?? 0);
 
-  const numericAmount = Number.parseInt(amount || "0", 10) || 0;
-  const selectedMethodMeta = withdrawalMethods.find((method) => method.id === selectedMethod);
+  const numericAmount =
+    currency === "USD"
+      ? Number.parseFloat(amount || "0") || 0
+      : Number.parseInt(amount || "0", 10) || 0;
 
-  const isAmountValid = numericAmount >= (selectedMethodMeta?.minAmount ?? 0);
+  const selectedMethodMeta = withdrawalMethods.find(
+    (method) => method.id === selectedMethod,
+  );
+
+  const minimumAmount = useMemo(
+    () => getMinimumWithdrawalAmount(currency),
+    [currency],
+  );
+
+  const isAmountValid = numericAmount >= minimumAmount;
   const hasEnoughBalance = balance >= numericAmount;
 
   const canGoFromStep1 = numericAmount > 0 && hasEnoughBalance;
@@ -40,6 +75,7 @@ export default function WalletWithdrawPage() {
     selectedMethod.length > 0 &&
     accountNumber.trim().length > 0 &&
     isAmountValid;
+
   const canSubmit =
     numericAmount > 0 &&
     selectedMethod.length > 0 &&
@@ -47,6 +83,8 @@ export default function WalletWithdrawPage() {
     isAmountValid &&
     hasEnoughBalance &&
     !isSubmitting;
+
+  const presetAmounts = currency === "SYP" ? [1_000, 5_000, 45_000] : [10, 25, 50];
 
   const handleNext = () => {
     if (step === 1 && canGoFromStep1) {
@@ -68,10 +106,21 @@ export default function WalletWithdrawPage() {
     setIsSubmitting(true);
 
     try {
-      const success = await withdraw(numericAmount, selectedMethod, accountNumber, currency);
+      const response = await withdraw(
+        numericAmount,
+        selectedMethod,
+        accountNumber.trim(),
+        currency,
+      );
 
-      if (!success) {
-        addToast("Failed to post withdrawal.", "error");
+      if (response.requiresOTP) {
+        setOtpExpiresIn(response.expiresIn || 120);
+        setOtpOpen(true);
+        return;
+      }
+
+      if (!response.success) {
+        addToast(response.error || "Failed to post withdrawal.", "error");
         return;
       }
 
@@ -89,6 +138,33 @@ export default function WalletWithdrawPage() {
     }
   };
 
+  const handleOTPSubmit = async (otpCode: string) => {
+    try {
+      const response = await withdraw(
+        numericAmount,
+        selectedMethod,
+        accountNumber.trim(),
+        currency,
+        otpCode,
+      );
+
+      if (!response.success) {
+        addToast(response.error || "Failed to verify OTP.", "error");
+        if (response.error?.includes("منتهي الصلاحية")) {
+           setOtpOpen(false);
+        }
+        return;
+      }
+
+      setOtpOpen(false);
+      addToast("Withdrawal posted successfully.", "success");
+      setStep(4);
+      setTimeout(() => { router.push("/wallet"); }, 1500);
+    } catch (error) {
+       addToast("An error occurred while posting.", "error");
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-bg-dark font-display">
       <HeaderWithBack title="Wallet Withdrawal" />
@@ -102,8 +178,8 @@ export default function WalletWithdrawPage() {
                 s < step || (step === 4 && s === 3)
                   ? "bg-green-500 text-white"
                   : s === step
-                  ? "bg-primary text-white"
-                  : "bg-slate-700 text-slate-500"
+                    ? "bg-primary text-white"
+                    : "bg-slate-700 text-slate-500"
               }`}
             >
               {s < step || (step === 4 && s === 3) ? (
@@ -128,53 +204,84 @@ export default function WalletWithdrawPage() {
           <span className="text-sm text-slate-400">Available balance</span>
           <div className="text-2xl font-bold text-white">
             {currency === "USD" ? "$" : ""}
-            {balance.toLocaleString()} <span className="text-sm">{currency}</span>
+            {formatAmount(balance, currency)} <span className="text-sm">{currency}</span>
           </div>
         </div>
 
         {step === 1 && (
           <section className="mb-6">
-            <h2 className="mb-4 text-lg font-bold text-white">Withdrawal amount & currency</h2>
+            <h2 className="mb-4 text-lg font-bold text-white">
+              Withdrawal amount & currency
+            </h2>
 
             <div className="mb-4 flex rounded-xl bg-slate-800 p-1">
               <button
-                onClick={() => { setCurrency("SYP"); setAmount(""); }}
+                onClick={() => {
+                  setCurrency("SYP");
+                  setAmount("");
+                  setSelectedMethod("");
+                }}
                 className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
-                  currency === "SYP" ? "bg-primary text-white shadow-sm" : "text-slate-400 hover:text-white"
+                  currency === "SYP"
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
-                SYP (ل.س)
+                SYP
               </button>
+
               <button
-                onClick={() => { setCurrency("USD"); setAmount(""); }}
+                onClick={() => {
+                  setCurrency("USD");
+                  setAmount("");
+                  setSelectedMethod("");
+                }}
                 className={`flex-1 rounded-lg py-2 text-sm font-bold transition-all ${
-                  currency === "USD" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+                  currency === "USD"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
-                USD ($)
+                USD
               </button>
             </div>
 
             <div className="rounded-xl border border-slate-700 bg-surface-highlight p-4">
               <input
                 type="number"
+                inputMode="decimal"
+                min={minimumAmount}
+                step={currency === "USD" ? "0.01" : "1"}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount"
+                placeholder={
+                  currency === "USD"
+                    ? "Enter amount in USD"
+                    : "Enter amount in SYP"
+                }
                 className="w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-center text-lg text-white transition-colors focus:border-primary focus:outline-none"
               />
 
               <div className="mt-3 flex gap-2">
-                {(currency === "SYP" ? [50000, 100000, 250000] : [10, 50, 100]).map((preset) => (
+                {presetAmounts.map((preset) => (
                   <button
                     key={preset}
                     onClick={() => setAmount(String(preset))}
                     className="flex-1 rounded-lg bg-slate-700 px-3 py-2 text-sm text-slate-300 transition-colors hover:bg-slate-600"
                   >
-                    {preset.toLocaleString()}
+                    {currency === "USD" ? "$" : ""}
+                    {formatAmount(preset, currency)}
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="mt-3 text-center text-sm text-slate-400">
+              Minimum withdrawal:
+              <span className="ml-1 font-bold text-white">
+                {currency === "USD" ? "$" : ""}
+                {formatAmount(minimumAmount, currency)} {currency}
+              </span>
             </div>
 
             {numericAmount > 0 && (
@@ -184,7 +291,7 @@ export default function WalletWithdrawPage() {
                     <span className="text-slate-400">Amount</span>
                     <span className="text-white">
                       {currency === "USD" ? "$" : ""}
-                      {numericAmount.toLocaleString()} {currency}
+                      {formatAmount(numericAmount, currency)} {currency}
                     </span>
                   </div>
 
@@ -193,7 +300,7 @@ export default function WalletWithdrawPage() {
                       <span className="text-slate-400">Ledger deduction</span>
                       <span className="font-bold text-primary">
                         {currency === "USD" ? "$" : ""}
-                        {numericAmount.toLocaleString()} {currency}
+                        {formatAmount(numericAmount, currency)} {currency}
                       </span>
                     </div>
                   </div>
@@ -202,6 +309,12 @@ export default function WalletWithdrawPage() {
                 {!hasEnoughBalance && (
                   <p className="mt-2 text-center text-sm text-red-400">
                     Insufficient available balance.
+                  </p>
+                )}
+
+                {numericAmount > 0 && !isAmountValid && (
+                  <p className="mt-2 text-center text-sm text-red-400">
+                    The entered amount is below the minimum withdrawal limit.
                   </p>
                 )}
               </div>
@@ -216,20 +329,18 @@ export default function WalletWithdrawPage() {
                 <button
                   key={method.id}
                   onClick={() => setSelectedMethod(method.id)}
-                  className={`w-full rounded-xl border-2 p-4 text-right transition-all ${
+                  className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
                     selectedMethod === method.id
                       ? "border-primary bg-primary/10"
                       : "border-slate-700 bg-surface-highlight hover:border-slate-600"
                   }`}
                 >
-                  <div className="flex items-center gap-4">
-                    <span className="text-3xl">{method.icon}</span>
-
+                  <div className="flex items-center justify-between gap-4">
                     <div className="flex-1">
                       <h3 className="font-bold text-white">{method.name}</h3>
                       <p className="text-sm text-slate-400">
                         Minimum: {currency === "USD" ? "$" : ""}
-                        {method.minAmount.toLocaleString()} {currency}
+                        {formatAmount(minimumAmount, currency)} {currency}
                       </p>
                     </div>
 
@@ -253,7 +364,7 @@ export default function WalletWithdrawPage() {
 
             {selectedMethod && !isAmountValid && (
               <p className="mt-3 text-sm text-red-400">
-                The amount is below the minimum for the selected method.
+                The amount is below the minimum for the selected currency.
               </p>
             )}
           </section>
@@ -267,7 +378,7 @@ export default function WalletWithdrawPage() {
               <span className="text-slate-400">Amount</span>
               <span className="text-white">
                 {currency === "USD" ? "$" : ""}
-                {numericAmount.toLocaleString()} {currency}
+                {formatAmount(numericAmount, currency)} {currency}
               </span>
             </div>
 
@@ -286,7 +397,7 @@ export default function WalletWithdrawPage() {
                 <span className="text-slate-300">Posted withdrawal</span>
                 <span className="text-primary">
                   {currency === "USD" ? "$" : ""}
-                  {numericAmount.toLocaleString()} {currency}
+                  {formatAmount(numericAmount, currency)} {currency}
                 </span>
               </div>
             </div>
@@ -299,7 +410,7 @@ export default function WalletWithdrawPage() {
               Withdrawal posted
             </h2>
             <p className="text-sm text-slate-300">
-              The wallet balance was updated immediately.
+              The withdrawal request was submitted successfully.
             </p>
           </section>
         )}
@@ -329,6 +440,13 @@ export default function WalletWithdrawPage() {
           )}
         </div>
       )}
+
+      <OTPModal
+        isOpen={otpOpen}
+        expiresInSeconds={otpExpiresIn}
+        onClose={() => setOtpOpen(false)}
+        onSubmit={handleOTPSubmit}
+      />
     </div>
   );
 }

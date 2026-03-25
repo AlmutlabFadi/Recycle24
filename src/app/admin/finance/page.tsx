@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -14,12 +14,15 @@ import {
   FinanceRequestType,
 } from "./_lib/types";
 import { financeAdapter } from "./_lib/adapter";
+import { useSession } from "next-auth/react";
+import { useToast } from "@/contexts/ToastContext";
 import {
   AdminRole,
   canViewAudit,
   canViewDebts,
   canViewHolds,
   canViewRestrictions,
+  PermissionContext,
 } from "./_lib/permissions";
 
 import { FinanceOpsHeader } from "./_components/finance-ops-header";
@@ -38,8 +41,7 @@ import { DebtsView } from "./_views/debts-view";
 import { RestrictedAccountsView } from "./_views/restricted-view";
 import { AuditView } from "./_views/audit-view";
 
-const CURRENT_ROLE: AdminRole = "FINANCE_MANAGER";
-const CURRENT_USER_LABEL = "مدير العمليات المالية";
+// RBAC constants removed in favor of session identity
 
 function getInitialFilters(): FinanceQueueFilters {
   return {
@@ -60,6 +62,23 @@ function getInitialFilters(): FinanceQueueFilters {
 }
 
 export default function AdminFinancePage() {
+  const { data: session } = useSession();
+  const { addToast } = useToast();
+
+  const userRole = (session?.user?.role as AdminRole) || "SUPPORT";
+  const userPermissions = session?.user?.permissions || [];
+
+  const permissionContext: PermissionContext = {
+    role: userRole,
+    permissions: userPermissions,
+  };
+
+  const currentRoleLabel =
+    userRole === "SUPER_ADMIN" ? "المدير العام" :
+    userRole === "FINANCE_MANAGER" ? "مدير العمليات المالية" :
+    userPermissions.includes("FINANCE_FINAL_APPROVE") ? "مدير اعتماد نهائي" :
+    "مسؤول الدعم الفني";
+
   const [activeTab, setActiveTab] = useState<FinancePageTab>("REQUESTS");
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
 
@@ -101,7 +120,9 @@ export default function AdminFinancePage() {
 
     try {
       if (activeTab === "REQUESTS") {
+        console.log("[AdminFinancePage] Fetching requests with filters:", filters);
         const data = await financeAdapter.getRequestsQueue(filters);
+        console.log("[AdminFinancePage] Got requests data:", data.length, "items");
         setRequests(data);
       } else if (activeTab === "HOLDS") {
         const data = await financeAdapter.getActiveHolds();
@@ -119,7 +140,7 @@ export default function AdminFinancePage() {
 
       setLastRefreshedAt(new Date());
     } catch (error) {
-      console.error(error);
+      console.error("[AdminFinancePage] fetchListData ERROR:", error);
     } finally {
       setIsLoadingList(false);
     }
@@ -204,6 +225,10 @@ export default function AdminFinancePage() {
       }
     } catch (error) {
       console.error(error);
+      addToast(
+        error instanceof Error ? error.message : "حدث خطأ غير متوقع",
+        "error"
+      );
     } finally {
       setIsSubmittingAction(false);
     }
@@ -292,22 +317,22 @@ export default function AdminFinancePage() {
     {
       id: "HOLDS",
       label: "الأرصدة المحجوزة والتأمينات",
-      show: canViewHolds({ role: CURRENT_ROLE }),
+      show: canViewHolds(permissionContext),
     },
     {
       id: "DEBTS",
       label: "الديون والعمولات المستحقة",
-      show: canViewDebts({ role: CURRENT_ROLE }),
+      show: canViewDebts(permissionContext),
     },
     {
       id: "RESTRICTED",
       label: "الحسابات المقيدة والمجمدة",
-      show: canViewRestrictions({ role: CURRENT_ROLE }),
+      show: canViewRestrictions(permissionContext),
     },
     {
       id: "AUDIT",
       label: "سجل التدقيق والإجراءات",
-      show: canViewAudit({ role: CURRENT_ROLE }),
+      show: canViewAudit(permissionContext),
     },
   ];
 
@@ -318,7 +343,7 @@ export default function AdminFinancePage() {
           lastRefreshedAt={lastRefreshedAt}
           criticalAlerts={summary ? summary.failedRequestsToday + summary.overdueDebts : 0}
           highRiskAccounts={summary?.highRiskAccounts ?? 0}
-          currentUserLabel={CURRENT_USER_LABEL}
+          currentUserLabel={currentRoleLabel}
           onRefresh={handleRefreshAll}
         />
 
@@ -394,7 +419,7 @@ export default function AdminFinancePage() {
                 <RequestsView
                   requests={requests}
                   isLoading={isLoadingList}
-                  currentUserRole={CURRENT_ROLE}
+                  permissionContext={permissionContext}
                   onRowClick={handleRowClick}
                   onActionSelect={handleOpenActionModal}
                 />
@@ -405,7 +430,7 @@ export default function AdminFinancePage() {
               <HoldsView
                 holds={holds}
                 isLoading={isLoadingList}
-                currentUserRole={CURRENT_ROLE}
+                permissionContext={permissionContext}
                 onActionSelect={(actionType, recordId) =>
                   handleOpenActionModal(actionType, recordId, undefined, {
                     recordType: "HOLD",
@@ -418,7 +443,7 @@ export default function AdminFinancePage() {
               <DebtsView
                 debts={debts}
                 isLoading={isLoadingList}
-                currentUserRole={CURRENT_ROLE}
+                permissionContext={permissionContext}
                 onActionSelect={(actionType, recordId) =>
                   handleOpenActionModal(actionType, recordId, undefined, {
                     recordType: "DEBT",
@@ -431,7 +456,7 @@ export default function AdminFinancePage() {
               <RestrictedAccountsView
                 accounts={restrictions}
                 isLoading={isLoadingList}
-                currentUserRole={CURRENT_ROLE}
+                permissionContext={permissionContext}
                 onActionSelect={(actionType, recordId) =>
                   handleOpenActionModal(actionType, recordId, undefined, {
                     recordType: "ACCOUNT",
@@ -448,15 +473,15 @@ export default function AdminFinancePage() {
       </div>
 
       <FinanceDetailDrawer
-  isOpen={isDrawerOpen}
-  detail={detailData}
-  isLoading={isLoadingDetail}
-  onClose={() => setIsDrawerOpen(false)}
-  currentUserRole={CURRENT_ROLE}
-  onActionSelect={(actionType, recordId, options) =>
-    handleOpenActionModal(actionType, recordId, detailData ?? undefined, options)
-  }
-/>
+        isOpen={isDrawerOpen}
+        detail={detailData}
+        isLoading={isLoadingDetail}
+        onClose={() => setIsDrawerOpen(false)}
+        permissionContext={permissionContext}
+        onActionSelect={(actionType, recordId, options) =>
+          handleOpenActionModal(actionType, recordId, detailData ?? undefined, options)
+        }
+      />
 
       <FinanceActionModal
         isOpen={Boolean(actionModalPayload)}

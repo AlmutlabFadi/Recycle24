@@ -1,4 +1,4 @@
-import { Currency } from "@/lib/ledger/types";
+﻿import { Currency } from "@/lib/ledger/types";
 
 export type WalletRequestType = "deposit" | "payout";
 
@@ -13,7 +13,7 @@ const POLICY_BY_CURRENCY: Record<Currency, CurrencyPolicy | null> = {
   [Currency.SYP]: {
     depositMin: 50_000,
     depositMax: 500_000_000,
-    payoutMin: 50_000,
+    payoutMin: 1_000,
     payoutMax: 200_000_000,
   },
   [Currency.USD]: {
@@ -46,7 +46,7 @@ export function ensureSupportedWalletCurrency(currency: Currency) {
   const policy = POLICY_BY_CURRENCY[currency];
 
   if (!policy) {
-    throw new Error("Only SYP wallet operations are supported currently");
+    throw new Error("Only SYP and USD wallet operations are supported currently");
   }
 
   return policy;

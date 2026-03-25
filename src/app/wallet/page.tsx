@@ -64,6 +64,30 @@ export default function WalletPage() {
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [verificationError, setVerificationError] = useState<string | null>(null);
+  
+  const [copiedId, setCopiedId] = useState<'SYP' | 'USD' | null>(null);
+
+  const getWalletId = (currency: 'SYP' | 'USD') => {
+    const baseId = (wallet?.id || user?.id || '') + currency;
+    if (!baseId) return 'R24-' + currency + '-0000-0000-00' + (currency === 'SYP' ? '01' : '02');
+    let hash = 0;
+    for (let i = 0; i < baseId.length; i++) {
+      hash = Math.imul(31, hash) + baseId.charCodeAt(i) | 0;
+    }
+    const str = Math.abs(hash).toString().padStart(10, '3141592653');
+    const p1 = str.slice(0, 4);
+    const p2 = str.slice(4, 8);
+    const p3 = str.slice(8, 10);
+    return `R24-${currency}-${p1}-${p2}-${p3}${currency === 'SYP' ? '01' : '02'}`;
+  };
+
+  const handleCopy = (currency: 'SYP' | 'USD') => {
+    const id = getWalletId(currency);
+    if (!id) return;
+    navigator.clipboard.writeText(id).catch(() => {});
+    setCopiedId(currency);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -339,51 +363,57 @@ export default function WalletPage() {
 
             <div className="relative z-10 flex flex-col gap-6">
               {/* SYP Balance */}
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-slate-400 text-xs font-display mb-1 tracking-wide">الرصيد المتاح (ليرة سورية)</p>
-                  <div className="flex items-baseline gap-2">
-                    <h2 className="text-4xl sm:text-5xl font-bold text-white font-english tracking-tight drop-shadow-md">
-                      {wallet?.availableBalanceSYP?.toLocaleString() || "0"}
-                    </h2>
-                    <span className="text-white/60 text-sm font-bold">SYP</span>
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-slate-400 text-xs font-display mb-1 tracking-wide">الرصيد المتاح (ليرة سورية)</p>
+                      <div className="flex items-baseline gap-2">
+                        <h2 className="text-4xl sm:text-5xl font-bold text-white font-english tracking-tight drop-shadow-md">
+                          {wallet?.availableBalanceSYP?.toLocaleString() || "0"}
+                        </h2>
+                        <span className="text-white/60 text-sm font-bold">SYP</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 mt-1">
+                    <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg border border-slate-700/50 w-fit">
+                      <span className="text-xs font-english text-slate-300 font-mono tracking-wider">{getWalletId('SYP')}</span>
+                      <button onClick={() => handleCopy('SYP')} className="text-slate-500 hover:text-white transition-colors flex items-center justify-center p-1 rounded-md hover:bg-white/10" title="نسخ المعرف">
+                        <span className="material-symbols-outlined !text-[14px]">
+                          {copiedId === 'SYP' ? 'check' : 'content_copy'}
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </div>
-                
-                {wallet?.heldAmountSYP && wallet.heldAmountSYP > 0 ? (
-                  <div className="text-left bg-white/5 rounded-xl p-2 px-3 backdrop-blur-sm border border-white/10">
-                    <p className="text-[10px] text-white/50 mb-1 font-display uppercase tracking-wider">محجوز (تأمينات)</p>
-                    <p className="text-sm font-bold text-white/80 font-english dir-ltr">
-                      {wallet.heldAmountSYP.toLocaleString()} SYP
-                    </p>
-                  </div>
-                ) : null}
-              </div>
 
               {/* Divider */}
               <div className="w-full h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent opacity-50"></div>
 
-              {/* USD Balance */}
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-slate-400 text-xs font-display mb-1 tracking-wide">الرصيد المتاح (دولار أمريكي)</p>
-                  <div className="flex items-baseline gap-2">
-                    <h2 className="text-2xl sm:text-3xl font-bold text-emerald-400 font-english tracking-tight drop-shadow-md">
-                      ${wallet?.availableBalanceUSD?.toLocaleString() || "0"}
-                    </h2>
-                    <span className="text-emerald-400/60 text-xs font-bold">USD</span>
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-slate-400 text-xs font-display mb-1 tracking-wide">الرصيد المتاح (دولار أمريكي)</p>
+                      <div className="flex items-baseline gap-2">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-emerald-400 font-english tracking-tight drop-shadow-md">
+                          ${wallet?.availableBalanceUSD?.toLocaleString() || "0"}
+                        </h2>
+                        <span className="text-emerald-400/60 text-xs font-bold">USD</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-3 mt-1">
+                    <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg border border-slate-700/50 w-fit">
+                      <span className="text-xs font-english text-emerald-400/70 font-mono tracking-wider">{getWalletId('USD')}</span>
+                      <button onClick={() => handleCopy('USD')} className="text-emerald-500 hover:text-emerald-300 transition-colors flex items-center justify-center p-1 rounded-md hover:bg-emerald-500/10" title="نسخ المعرف">
+                        <span className="material-symbols-outlined !text-[14px]">
+                          {copiedId === 'USD' ? 'check' : 'content_copy'}
+                        </span>
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                {wallet?.heldAmountUSD && wallet.heldAmountUSD > 0 ? (
-                  <div className="text-left bg-emerald-500/5 rounded-xl p-2 px-3 backdrop-blur-sm border border-emerald-500/10">
-                    <p className="text-[10px] text-emerald-400/60 mb-1 font-display uppercase tracking-wider">محجوز (تأمينات)</p>
-                    <p className="text-sm font-bold text-emerald-400/90 font-english dir-ltr">
-                      ${wallet.heldAmountUSD.toLocaleString()}
-                    </p>
-                  </div>
-                ) : null}
-              </div>
             </div>
           </div>
         </div>
@@ -447,6 +477,63 @@ export default function WalletPage() {
             </div>
           </Link>
         </div>
+
+        {/* Dynamic Dedicated Holds Section */}
+        {((wallet?.holdsBreakdownSYP && wallet.holdsBreakdownSYP.length > 0) || 
+          (wallet?.holdsBreakdownUSD && wallet.holdsBreakdownUSD.length > 0)) && (
+          <div className="mx-4 mt-6">
+            <h2 className="text-sm font-bold text-white mb-3">تفاصيل المبالغ المحجوزة الحالية</h2>
+            <div className="flex flex-col gap-2">
+              {wallet?.holdsBreakdownSYP && wallet.holdsBreakdownSYP.length > 0 && wallet.holdsBreakdownSYP.map(hold => {
+                const isAuction = hold.type.includes('AUCTION');
+                return (
+                  <Link 
+                    key={`hold-syp-${hold.type}`}
+                    href="/wallet/statement" 
+                    className="flex items-center justify-between bg-surface-dark border border-slate-700/50 p-4 rounded-xl hover:bg-surface-highlight transition-all active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`size-10 rounded-full flex items-center justify-center shrink-0 ${isAuction ? "bg-orange-500/10 text-orange-400" : "bg-blue-500/10 text-blue-400"}`}>
+                        <span className="material-symbols-outlined !text-[20px]">{isAuction ? "gavel" : "hourglass_empty"}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white">{isAuction ? "تأمين مزاد (محجوز)" : "عمليات قيد المعالجة"}</p>
+                        <p className="text-[10px] text-slate-400">انقر هنا لتتبع تفاصيل المبالغ المحجوزة بدقة</p>
+                      </div>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-white font-english dir-ltr">{hold.amount.toLocaleString()} SYP</p>
+                    </div>
+                  </Link>
+                );
+              })}
+              
+              {wallet?.holdsBreakdownUSD && wallet.holdsBreakdownUSD.length > 0 && wallet.holdsBreakdownUSD.map(hold => {
+                const isAuction = hold.type.includes('AUCTION');
+                return (
+                  <Link 
+                    key={`hold-usd-${hold.type}`}
+                    href="/wallet/statement" 
+                    className="flex items-center justify-between bg-surface-dark border border-slate-700/50 p-4 rounded-xl hover:bg-surface-highlight transition-all active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`size-10 rounded-full flex items-center justify-center shrink-0 ${isAuction ? "bg-orange-500/10 text-orange-400" : "bg-blue-500/10 text-blue-400"}`}>
+                        <span className="material-symbols-outlined !text-[20px]">{isAuction ? "gavel" : "hourglass_empty"}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-white">{isAuction ? "تأمين مزاد (محجوز)" : "عمليات قيد المعالجة"}</p>
+                        <p className="text-[10px] text-slate-400">انقر هنا لتتبع تفاصيل المبالغ المحجوزة بدقة</p>
+                      </div>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-emerald-400 font-english dir-ltr">${hold.amount.toLocaleString()}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="mt-6 px-4">
           <div className="flex items-center justify-between mb-4">

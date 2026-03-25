@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
-export default function InviteAcceptPage({ params }: { params: { code: string } }) {
+export default function InviteAcceptPage({ params }: { params: Promise<{ code: string }> }) {
+    const { code } = use(params);
     const router = useRouter();
+    const { update } = useSession();
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
     const [message, setMessage] = useState("الانضمام إلى فريق العمل يتطلب تأكيداً نهائياً.");
 
@@ -14,18 +17,35 @@ export default function InviteAcceptPage({ params }: { params: { code: string } 
             const response = await fetch("/api/invites/accept", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ code: params.code }),
+                body: JSON.stringify({ code }),
             });
             const data = await response.json();
             if (!response.ok) {
                 throw new Error(data.error || "تعذر قبول الدعوة");
             }
+
+            // Force NextAuth session refresh to pick up new ADMIN role/type
+            const updatedSession = await update();
+            
+            // Explicitly set activeRole in localStorage to prevent redirection to client account
+            const userId = (updatedSession as any)?.user?.id;
+            if (userId) {
+                localStorage.setItem(`activeRole_${userId}`, 'ADMIN');
+            }
+
             setStatus("success");
-            setMessage("تم تفعيل الدعوة بنجاح. يمكنك الآن الوصول إلى الأقسام المصرح بها.");
-            setTimeout(() => router.push("/dashboard"), 1200);
+            setMessage("تم تفعيل الدعوة بنجاح. يتم توجيهك الآن إلى لوحة التحكم...");
+            setTimeout(() => {
+                window.location.href = "/admin/dashboard";
+            }, 1500);
         } catch (error) {
             setStatus("error");
-            setMessage(error instanceof Error ? error.message : "حدث خطأ غير متوقع");
+            const errorMsg = error instanceof Error ? error.message : "حدث خطأ غير متوقع";
+            if (errorMsg === "Unauthorized") {
+                setMessage("يجب عليك تسجيل الدخول أولاً لتتمكن من قبول هذه الدعوة.");
+            } else {
+                setMessage(errorMsg);
+            }
         }
     };
 

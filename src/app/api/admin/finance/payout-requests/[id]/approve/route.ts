@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
-import {
-  getPayoutApprovalDecision,
-  isAwaitingFinalApproval,
-} from "@/lib/finance/approval-policy";
+import { evaluateApproval } from "@/app/admin/finance/_lib/policy-engine";
 import { LedgerPostingService } from "@/lib/ledger/service";
 import { Currency, LedgerAccountSlug, TransactionType } from "@/lib/ledger/types";
 import { requirePermission } from "@/lib/rbac";
@@ -32,7 +29,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (!auth.ok) {
       return NextResponse.json(
         { error: "Unauthorized" },
-        { status: auth.status }
+        { status: auth.status },
       );
     }
 
@@ -41,7 +38,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (!requestId) {
       return NextResponse.json(
         { error: "Payout request id is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -86,7 +83,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           kind: "error" as const,
           response: NextResponse.json(
             { error: "Payout request not found" },
-            { status: 404 }
+            { status: 404 },
           ),
         };
       }
@@ -109,30 +106,76 @@ export async function POST(request: NextRequest, context: RouteContext) {
             {
               error: `Payout request cannot be approved from status ${payoutRequest.status}`,
             },
-            { status: 409 }
+            { status: 409 },
           ),
         };
       }
 
-      if (payoutRequest.currency !== Currency.SYP && payoutRequest.currency !== Currency.USD) {
+      if (
+        payoutRequest.currency !== Currency.SYP &&
+        payoutRequest.currency !== Currency.USD
+      ) {
         return {
           kind: "error" as const,
           response: NextResponse.json(
             { error: "Only SYP and USD payout approvals are supported currently" },
-            { status: 400 }
+            { status: 400 },
           ),
         };
       }
 
-      const approvalDecision = getPayoutApprovalDecision(
-        payoutRequest.currency as Currency,
-        payoutRequest.amount
-      );
+      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-      if (
-        approvalDecision === "REQUIRES_SECOND_APPROVER" &&
-        !isAwaitingFinalApproval(payoutRequest.approvalStage)
-      ) {
+      const last24hRequests = await tx.payoutRequest.findMany({
+        where: {
+          userId: payoutRequest.userId,
+          id: { not: payoutRequest.id },
+          createdAt: { gte: oneDayAgo },
+        },
+        select: { createdAt: true },
+        orderBy: { createdAt: "asc" },
+      });
+
+      let activePenaltyUntil = 0;
+      let validRequests: number[] = [];
+
+      for (const req of last24hRequests) {
+        const t = req.createdAt.getTime();
+        if (t <= activePenaltyUntil) {
+          continue; // Made during an active penalty, doesn't count toward a new break
+        }
+
+        validRequests = validRequests.filter((vt) => t - vt <= 24 * 60 * 60 * 1000);
+        validRequests.push(t);
+
+        if (validRequests.length >= 3) {
+          activePenaltyUntil = t + 4 * 60 * 60 * 1000;
+          validRequests = [];
+        }
+      }
+
+      const now = Date.now();
+      let velocityTriggered = false;
+
+      if (now <= activePenaltyUntil) {
+        velocityTriggered = true;
+      } else {
+        validRequests = validRequests.filter((vt) => now - vt <= 24 * 60 * 60 * 1000);
+        validRequests.push(now);
+        if (validRequests.length >= 3) {
+          velocityTriggered = true;
+        }
+      }
+
+      const policy = evaluateApproval({
+        type: "WITHDRAWAL",
+        amount: payoutRequest.amount,
+        currency: payoutRequest.currency as "SYP" | "USD",
+        userId: payoutRequest.userId,
+        velocityTriggered,
+      });
+
+      if (policy.requiresFinalApproval && payoutRequest.status === "PENDING") {
         const stagedRequest = await tx.payoutRequest.update({
           where: { id: payoutRequest.id },
           data: {
@@ -174,6 +217,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
               approvalStage: stagedRequest.approvalStage,
               reviewedById: stagedRequest.reviewedById,
               reviewedAt: stagedRequest.reviewedAt,
+              policyFlags: policy.flags,
             },
           },
         });
@@ -185,7 +229,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
       }
 
       if (
-        approvalDecision === "REQUIRES_SECOND_APPROVER" &&
+        policy.requiresFinalApproval &&
         payoutRequest.reviewedById &&
         payoutRequest.reviewedById === auth.userId
       ) {
@@ -193,10 +237,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
           kind: "error" as const,
           response: NextResponse.json(
             {
-              error:
-                "Final approval requires a second finance admin different from the first reviewer",
+              error: "Final approval requires a second finance admin different from the first reviewer",
             },
-            { status: 409 }
+            { status: 409 },
           ),
         };
       }
@@ -206,7 +249,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           kind: "error" as const,
           response: NextResponse.json(
             { error: "Account is locked by debt rules" },
-            { status: 423 }
+            { status: 423 },
           ),
         };
       }
@@ -216,7 +259,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           kind: "error" as const,
           response: NextResponse.json(
             { error: "Insufficient ledger balance for payout approval" },
-            { status: 409 }
+            { status: 409 },
           ),
         };
       }
@@ -246,10 +289,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
             method: payoutRequest.method,
             destination: payoutRequest.destination,
             requestNote: payoutRequest.requestNote,
-            reviewedByUserId: payoutRequest.reviewedById ?? null,
-            approvedByUserId: auth.userId,
+            reviewedByUserId: payoutRequest.reviewedById ?? auth.userId,
+            approvedByUserId: policy.requiresFinalApproval ? auth.userId : null,
+            policyFlags: policy.flags,
           },
-        }
+        },
       );
 
       const updatedAccount = await tx.ledgerAccount.findUnique({
@@ -265,13 +309,20 @@ export async function POST(request: NextRequest, context: RouteContext) {
         where: {
           userId: payoutRequest.userId,
         },
-        update: payoutRequest.currency === Currency.SYP
-          ? { balanceSYP: updatedAccount?.balance ?? payoutRequest.account.balance }
-          : { balanceUSD: updatedAccount?.balance ?? payoutRequest.account.balance },
+        update:
+          payoutRequest.currency === Currency.SYP
+            ? { balanceSYP: updatedAccount?.balance ?? payoutRequest.account.balance }
+            : { balanceUSD: updatedAccount?.balance ?? payoutRequest.account.balance },
         create: {
           userId: payoutRequest.userId,
-          balanceSYP: payoutRequest.currency === Currency.SYP ? (updatedAccount?.balance ?? payoutRequest.account.balance) : 0,
-          balanceUSD: payoutRequest.currency === Currency.USD ? (updatedAccount?.balance ?? payoutRequest.account.balance) : 0,
+          balanceSYP:
+            payoutRequest.currency === Currency.SYP
+              ? updatedAccount?.balance ?? payoutRequest.account.balance
+              : 0,
+          balanceUSD:
+            payoutRequest.currency === Currency.USD
+              ? updatedAccount?.balance ?? payoutRequest.account.balance
+              : 0,
         },
       });
 
@@ -281,15 +332,9 @@ export async function POST(request: NextRequest, context: RouteContext) {
           status: "COMPLETED",
           reviewedById: payoutRequest.reviewedById ?? auth.userId,
           reviewedAt: payoutRequest.reviewedAt ?? new Date(),
-          approvedById:
-            approvalDecision === "REQUIRES_SECOND_APPROVER"
-              ? auth.userId
-              : null,
-          approvedAt:
-            approvalDecision === "REQUIRES_SECOND_APPROVER"
-              ? new Date()
-              : null,
-          approvalStage: "FINAL_APPROVED",
+          approvedById: policy.requiresFinalApproval ? auth.userId : null,
+          approvedAt: policy.requiresFinalApproval ? new Date() : null,
+          approvalStage: policy.requiresFinalApproval ? "FINAL_APPROVED" : "NONE",
           processedAt: new Date(),
           completedAt: new Date(),
           reviewNote: reviewNote ?? payoutRequest.reviewNote ?? undefined,
@@ -341,6 +386,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             processedAt: completedRequest.processedAt,
             completedAt: completedRequest.completedAt,
             ledgerBalanceAfter: updatedAccount?.balance ?? null,
+            policyFlags: policy.flags,
           },
         },
       });
@@ -357,19 +403,6 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return result.response;
     }
 
-    if (result.kind === "committed") {
-      await LedgerPostingService.dispatchNotifications(result.notifications);
-
-      const { NotificationService } = await import("@/lib/notifications/service");
-      await NotificationService.create({
-        userId: result.completedRequest.userId,
-        title: "✅ تم قبول طلب السحب",
-        message: `تمت معالجة طلب السحب الخاص بك بمبلغ ${result.completedRequest.amount.toLocaleString()} ${result.completedRequest.currency} بنجاح.`,
-        type: "SUCCESS",
-        link: "/wallet",
-      });
-    }
-
     if (result.kind === "staged") {
       return NextResponse.json({
         success: true,
@@ -377,6 +410,17 @@ export async function POST(request: NextRequest, context: RouteContext) {
         payoutRequest: result.stagedRequest,
       });
     }
+
+    await LedgerPostingService.dispatchNotifications(result.notifications);
+
+    const { NotificationService } = await import("@/lib/notifications/service");
+    await NotificationService.create({
+      userId: result.completedRequest.userId,
+      title: "✅ تم قبول طلب السحب",
+      message: `تمت معالجة طلب السحب الخاص بك بمبلغ ${result.completedRequest.amount.toLocaleString()} ${result.completedRequest.currency} بنجاح.`,
+      type: "SUCCESS",
+      link: "/wallet",
+    });
 
     return NextResponse.json({
       success: true,
@@ -392,8 +436,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         success: false,
         error: "Failed to approve payout request",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-

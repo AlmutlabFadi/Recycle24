@@ -27,6 +27,9 @@ export async function POST(req: Request) {
         }
 
         await db.$transaction(async (tx) => {
+            // 0. Invalidate all active sessions for this user
+            await tx.session.deleteMany({ where: { userId } });
+
             // 1. Lock the account
             await tx.user.update({
                 where: { id: userId },
@@ -34,7 +37,7 @@ export async function POST(req: Request) {
                     isLocked: true,
                     lockReason: reason || "تم الحظر بواسطة الإدارة",
                     currentAdminStatus: "OFFLINE",
-                },
+                } as any,
             });
 
             // 2. Remove all roles

@@ -7,190 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum DriverStatus {
-  PENDING
-  UNDER_REVIEW
-  VERIFIED
-  ACTIVE
-  SUSPENDED
-}
-
-enum DocType {
-  ID_CARD
-  LICENSE
-  VEHICLE_REG
-  INSURANCE
-  SELFIE
-}
-
-enum DocStatus {
-  UPLOADED
-  UNDER_REVIEW
-  APPROVED
-  REJECTED
-  EXPIRED
-}
-
-enum OrderStatus {
-  CREATED
-  OFFERED
-  ASSIGNED
-  PICKED_UP
-  OUT_FOR_DELIVERY
-  DELIVERED
-  DELIVERY_FAILED
-  CANCELED
-}
-
-enum AssignmentStatus {
-  OFFERED
-  ACCEPTED
-  DECLINED
-  CANCELED
-  EXPIRED
-}
-
-enum TicketStatus {
-  OPEN
-  PENDING
-  RESOLVED
-  CLOSED
-}
-
-enum RewardType {
-  BONUS
-  PENALTY
-  ADJUSTMENT
-}
-
-enum RewardStatus {
-  PENDING
-  APPROVED
-  PAID
-  REJECTED
-}
-
-enum AuditActorRole {
-  ADMIN
-  SUPPORT
-  DRIVER
-  SYSTEM
-}
-
-enum AuctionType {
-  PRIVATE
-  GOVERNMENT
-}
-
-enum AuctionWorkflowStatus {
-  DRAFT
-  PENDING_APPROVAL
-  SCHEDULED
-  OPEN
-  UNDER_REVIEW
-  AWAITING_WINNER_CONFIRMATION
-  AWAITING_PAYMENT_PROOF
-  AWAITING_DELIVERY
-  AWAITING_INSPECTION
-  COMPLETED
-  DISPUTED
-  CANCELED
-  FAILED
-}
-
-enum AuctionParticipantWorkflowStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  SUSPENDED
-  WITHDRAWN
-}
-
-enum AuctionDepositWorkflowStatus {
-  NONE
-  PENDING
-  HELD
-  VERIFIED
-  EXEMPT
-  RELEASED
-  FORFEITED
-  REJECTED
-}
-
-enum BidWorkflowStatus {
-  ACTIVE
-  OUTBID
-  WINNING
-  FINALIZED
-  DISQUALIFIED
-  REJECTED
-}
-
-enum AuctionExtensionStage {
-  NONE
-  FIRST
-  SECOND
-  THIRD
-  FINAL_CLOSED
-}
-
-enum AuctionPenaltyType {
-  DEPOSIT_FORFEITURE
-  ACCOUNT_FREEZE
-  TEMP_BAN
-  LEGAL_ESCALATION
-}
-
-enum AuctionDisputeStatus {
-  OPEN
-  UNDER_REVIEW
-  RESOLVED
-  REJECTED
-  ESCALATED
-}
-
-enum AuctionDomain {
-  ASSET_SALE
-  SERVICE_PROCUREMENT
-}
-
-enum AuctionDirection {
-  FORWARD
-  REVERSE
-}
-
-enum AuctionPricingMode {
-  LOT_BASED
-  BUNDLE_BASED
-}
-
-enum AuctionWinnerSelectionMode {
-  PER_LOT
-  SINGLE_WINNER
-}
-
-enum AuctionLotStatus {
-  DRAFT
-  OPEN
-  CLOSED
-  AWARDED
-  FAILED
-  CANCELLED
-}
-
-enum AuctionDepositMode {
-  NONE
-  FIXED
-  PERCENTAGE
-}
-
-enum AuctionParticipantLotWorkflowStatus {
-  SELECTED
-  APPROVED
-  REJECTED
-  WITHDRAWN
-}
-
 model User {
   id                         String                      @id @default(cuid())
   phone                      String?                     @unique
@@ -236,38 +52,49 @@ model User {
   showPhone                  Boolean                     @default(false)
   hideWarehouseLocation      Boolean                     @default(false)
   allowFactoryContact        Boolean                     @default(true)
+  breakTimes                 String?
+  currentAdminStatus         String                      @default("OFFLINE")
+  adminAccessEnabled         Boolean                     @default(true)
+  dailyWorkHours             Float?
+  lastActiveAt               DateTime?
+  vacationDays               Int                         @default(0)
   achievements               Achievement[]
   auctions                   Auction[]
   auctionParticipations      AuctionParticipant[]
+  auctionPenalties           AuctionPenalty[]
   bids                       Bid[]
   deals                      Deal[]                      @relation("buyer")
   soldDeals                  Deal[]                      @relation("seller")
+  depositRequests            DepositRequest[]
+  deviceSessions             DeviceSession[]
+  driver                     Driver?
   knowledgeItems             KnowledgeItem[]
   notifications              Notification[]
+  payoutRequests             PayoutRequest[]
   alerts                     PriceAlert[]
   recyclePoints              RecyclePoints?
+  reviewsReceived            Review[]                    @relation("reviewee")
+  reviewsGiven               Review[]                    @relation("reviewer")
   safetyChecklistSubmissions SafetyChecklistSubmission[]
   safetyIncidentReports      SafetyIncidentReport[]
   safetyIncidentStatusLogs   SafetyIncidentStatusLog[]
   safetyTrainingRequests     SafetyTrainingRequest[]
   securityLogs               SecurityLog[]
+  securityOTPs               SecurityOTP[]
   sessions                   Session[]
+  staffActivities            StaffActivity[]
   invitesCreated             StaffInvite[]
   invitesUsed                StaffInvite[]               @relation("InviteUsedBy")
+  issuedWarnings             StaffWarning[]              @relation("WarningIssuer")
+  staffWarnings              StaffWarning[]
   StolenReport               StolenReport[]
   supportTickets             SupportTicket[]
   trader                     Trader?
-  driver                     Driver?
+  receivedTransfers          TransferRequest[]           @relation("ReceiverTransfers")
+  sentTransfers              TransferRequest[]           @relation("SenderTransfers")
   userRoles                  UserRole[]
   subscription               UserSubscription?
   wallet                     Wallet?
-  depositRequests            DepositRequest[]
-  payoutRequests             PayoutRequest[]
-  sentTransfers              TransferRequest[]           @relation("SenderTransfers")
-  receivedTransfers          TransferRequest[]           @relation("ReceiverTransfers")
-  reviewsReceived            Review[]                    @relation("reviewee")
-  reviewsGiven               Review[]                    @relation("reviewer")
-  auctionPenalties           AuctionPenalty[]
 }
 
 model Notification {
@@ -313,23 +140,23 @@ model Trader {
   verifiedAt                DateTime?
   createdAt                 DateTime         @default(now())
   updatedAt                 DateTime         @updatedAt
+  missingDocuments          String[]         @default([])
+  rejectionReason           String?
   chamberMembershipYear     Int?
   chamberRegistrationNumber String?
   chamberSerialNumber       String?
-  dateOfBirth               DateTime?
   expiryDate                DateTime?
-  fatherName                String?
   governorate               String?
   issueDate                 DateTime?
-  missingDocuments          String[]         @default([])
-  motherName                String?
   registrationNumber        String?
-  rejectionReason           String?
   taxNumber                 String?
+  dateOfBirth               DateTime?
+  fatherName                String?
+  motherName                String?
   fieldStatuses             Json?            @default("{}")
-  trustScore                Float            @default(0.0)
-  totalReviews              Int              @default(0)
   successRate               Float            @default(100.0)
+  totalReviews              Int              @default(0)
+  trustScore                Float            @default(0.0)
   user                      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   documents                 TraderDocument[]
 
@@ -351,92 +178,77 @@ model TraderDocument {
 }
 
 model Auction {
-  id              String @id @default(cuid())
-  sellerId        String
-  title           String
-  category        String
-  weight          Float
-  weightUnit      String @default("KG")
-  location        String
-  startingBid     Float
-  buyNowPrice     Float?
-  securityDeposit Float  @default(0)
-  entryFee        Float  @default(0)
-  duration        Int
-
-  status         String                @default("SCHEDULED")
-  type           AuctionType           @default(PRIVATE)
-  workflowStatus AuctionWorkflowStatus @default(DRAFT)
-  
-  auctionDomain       AuctionDomain         @default(ASSET_SALE)
-  auctionDirection    AuctionDirection      @default(FORWARD)
-  currency            String                @default("SYP")
-  pricingModeV2       AuctionPricingMode    @default(LOT_BASED)
-  winnerSelectionMode AuctionWinnerSelectionMode @default(PER_LOT)
-
-  jurisdictionCountry String?
-  jurisdictionCity    String?
-  governingLaw        String?
-  disputeWindowHours  Int?
-
-  scheduledAt     DateTime?
-  startedAt       DateTime?
-  endsAt          DateTime?
-  originalEndsAt  DateTime?
-  effectiveEndsAt DateTime?
-  extensionCount  Int                   @default(0)
-  extensionStage  AuctionExtensionStage @default(NONE)
-  lastExtensionAt DateTime?
-  isFinallyClosed Boolean               @default(false)
-
-  winnerId      String?
-  winningBidId  String?
-  finalPrice    Float?
-  currentBid    Float?
-  reservePrice  Float?
-  finalClosedAt DateTime?
-
-  depositPercent Float @default(0)
-
-  requiresESign     Boolean @default(true)
-  govWaiverRequired Boolean @default(false)
-  govWaiverFileUrl  String?
-
-  // Financial fields
-  pricingMode             String @default("unified") // unified, per_material
-  startingBidCurrency     String @default("SYP")
-  startingBidUnit         String @default("total") // total, ton, kg, piece
-  buyNowPriceCurrency     String @default("SYP")
-  securityDepositCurrency String @default("SYP")
-  securityDepositMethod   String @default("platform")
-
-  // Preview fields
-  allowPreview     Boolean   @default(false)
-  previewStartDate DateTime?
-  previewEndDate   DateTime?
-  previewStartTime String?
-  previewEndTime   String?
-
-  // Additional details
-  notes                String?
-  shipmentDurationDays Int?
-  organization         String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  seller       User                 @relation(fields: [sellerId], references: [id])
-  lots         AuctionLot[]
-  items        AuctionItem[]
-  documents    AuctionDocument[]
-  images       AuctionImage[]
-  participants AuctionParticipant[]
-  participantLots AuctionParticipantLot[]
-  bids         Bid[]
-  events       AuctionEventLog[]
-  disputes     AuctionDispute[]
-  penalties    AuctionPenalty[]
-  version      Int                  @default(0)
+  id                      String                     @id @default(cuid())
+  sellerId                String
+  title                   String
+  category                String
+  weight                  Float
+  weightUnit              String                     @default("KG")
+  location                String
+  startingBid             Float
+  buyNowPrice             Float?
+  securityDeposit         Float                      @default(0)
+  entryFee                Float                      @default(0)
+  duration                Int
+  status                  String                     @default("SCHEDULED")
+  scheduledAt             DateTime?
+  startedAt               DateTime?
+  endsAt                  DateTime?
+  winnerId                String?
+  finalPrice              Float?
+  currentBid              Float?
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+  depositPercent          Float                      @default(0)
+  effectiveEndsAt         DateTime?
+  extensionCount          Int                        @default(0)
+  extensionStage          AuctionExtensionStage      @default(NONE)
+  finalClosedAt           DateTime?
+  govWaiverFileUrl        String?
+  govWaiverRequired       Boolean                    @default(false)
+  isFinallyClosed         Boolean                    @default(false)
+  lastExtensionAt         DateTime?
+  originalEndsAt          DateTime?
+  requiresESign           Boolean                    @default(true)
+  reservePrice            Float?
+  type                    AuctionType                @default(PRIVATE)
+  winningBidId            String?
+  workflowStatus          AuctionWorkflowStatus      @default(DRAFT)
+  allowPreview            Boolean                    @default(false)
+  buyNowPriceCurrency     String                     @default("SYP")
+  notes                   String?
+  organization            String?
+  previewEndDate          DateTime?
+  previewEndTime          String?
+  previewStartDate        DateTime?
+  previewStartTime        String?
+  pricingMode             String                     @default("unified")
+  securityDepositCurrency String                     @default("SYP")
+  securityDepositMethod   String                     @default("platform")
+  shipmentDurationDays    Int?
+  startingBidCurrency     String                     @default("SYP")
+  startingBidUnit         String                     @default("total")
+  version                 Int                        @default(0)
+  auctionDirection        AuctionDirection           @default(FORWARD)
+  auctionDomain           AuctionDomain              @default(ASSET_SALE)
+  currency                String                     @default("SYP")
+  disputeWindowHours      Int?
+  governingLaw            String?
+  jurisdictionCountry     String?
+  pricingModeV2           AuctionPricingMode         @default(LOT_BASED)
+  winnerSelectionMode     AuctionWinnerSelectionMode @default(PER_LOT)
+  jurisdictionCity        String?
+  seller                  User                       @relation(fields: [sellerId], references: [id])
+  disputes                AuctionDispute[]
+  documents               AuctionDocument[]
+  events                  AuctionEventLog[]
+  images                  AuctionImage[]
+  items                   AuctionItem[]
+  lots                    AuctionLot[]
+  participants            AuctionParticipant[]
+  participantLots         AuctionParticipantLot[]
+  penalties               AuctionPenalty[]
+  bids                    Bid[]
 
   @@index([sellerId])
   @@index([category])
@@ -449,37 +261,33 @@ model Auction {
 }
 
 model AuctionLot {
-  id             String            @id @default(cuid())
-  auctionId      String
-  lineNo         Int
-  title          String
-  description    String?
-  category       String
-  quantity       Float
-  unit           String
-  pricingUnit    String
-  startingPrice  Float
-  reservePrice   Float?
-  buyNowPrice    Float?
-  
-  direction      AuctionDirection  @default(FORWARD)
-  currency       String            @default("SYP")
-
-  depositModeOverride   AuctionDepositMode @default(NONE)
-  depositAmountOverride Float              @default(0)
-  
-  currentBestBid Float?
-  winningBidId   String?
-  winnerId       String?
-  finalPrice     Float?
-  status         AuctionLotStatus  @default(DRAFT)
-  version        Int               @default(0)
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
-
-  auction         Auction               @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  bids            Bid[]
-  participantLots AuctionParticipantLot[]
+  id                    String                  @id @default(cuid())
+  auctionId             String
+  title                 String
+  description           String?
+  quantity              Float
+  unit                  String
+  currency              String                  @default("SYP")
+  direction             AuctionDirection        @default(FORWARD)
+  startingPrice         Float
+  reservePrice          Float?
+  buyNowPrice           Float?
+  depositModeOverride   AuctionDepositMode      @default(NONE)
+  depositAmountOverride Float                   @default(0)
+  status                AuctionLotStatus        @default(DRAFT)
+  winnerId              String?
+  winningBidId          String?
+  finalPrice            Float?
+  version               Int                     @default(0)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  category              String
+  currentBestBid        Float?
+  lineNo                Int
+  pricingUnit           String
+  auction               Auction                 @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  participantLots       AuctionParticipantLot[]
+  bids                  Bid[]
 
   @@index([auctionId])
   @@index([status])
@@ -508,7 +316,7 @@ model AuctionDocument {
   fileUrl   String
   fileName  String?
   fileType  String?
-  fileSize  Int? // Size in bytes
+  fileSize  Int?
   createdAt DateTime @default(now())
   auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
 
@@ -516,33 +324,30 @@ model AuctionDocument {
 }
 
 model AuctionParticipant {
-  id                  String   @id @default(cuid())
-  auctionId           String
-  userId              String
-  depositPaid         Float    @default(0)
-  entryFeePaid        Float    @default(0)
-  isExempt            Boolean  @default(false)
-  depositStatus       String   @default("HELD")
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  agreedToCommission  Boolean  @default(false)
-  agreedToDataSharing Boolean  @default(false)
-  agreedToInvoice     Boolean  @default(false)
-  agreedToPrivacy     Boolean  @default(false)
-  agreedToTerms       Boolean  @default(false)
-  hasInspectedGoods   Boolean  @default(false)
-
-  workflowStatus        AuctionParticipantWorkflowStatus @default(PENDING)
-  depositWorkflowStatus AuctionDepositWorkflowStatus     @default(NONE)
+  id                    String                           @id @default(cuid())
+  auctionId             String
+  userId                String
+  depositPaid           Float                            @default(0)
+  entryFeePaid          Float                            @default(0)
+  isExempt              Boolean                          @default(false)
+  depositStatus         String                           @default("HELD")
+  createdAt             DateTime                         @default(now())
+  updatedAt             DateTime                         @updatedAt
+  agreedToCommission    Boolean                          @default(false)
+  agreedToDataSharing   Boolean                          @default(false)
+  agreedToPrivacy       Boolean                          @default(false)
+  agreedToTerms         Boolean                          @default(false)
+  agreedToInvoice       Boolean                          @default(false)
+  hasInspectedGoods     Boolean                          @default(false)
+  approvedAt            DateTime?
   depositHoldId         String?
-
-  approvedAt      DateTime?
-  rejectedAt      DateTime?
-  rejectionReason String?
-
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id])
-  selectedLots AuctionParticipantLot[]
+  depositWorkflowStatus AuctionDepositWorkflowStatus     @default(NONE)
+  rejectedAt            DateTime?
+  rejectionReason       String?
+  workflowStatus        AuctionParticipantWorkflowStatus @default(PENDING)
+  auction               Auction                          @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user                  User                             @relation(fields: [userId], references: [id])
+  selectedLots          AuctionParticipantLot[]
 
   @@unique([auctionId, userId])
   @@index([auctionId])
@@ -553,21 +358,20 @@ model AuctionParticipant {
 }
 
 model AuctionParticipantLot {
-  id                     String                             @id @default(cuid())
-  participantId          String
-  auctionId              String
-  lotId                  String
-  isSelected             Boolean                            @default(true)
-  depositRequired        Float                              @default(0)
-  depositHoldId          String?
-  depositWorkflowStatus  AuctionDepositWorkflowStatus       @default(NONE)
-  workflowStatus         AuctionParticipantLotWorkflowStatus @default(SELECTED)
-  createdAt              DateTime                           @default(now())
-  updatedAt              DateTime                           @updatedAt
-
-  participant AuctionParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
-  auction     Auction            @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  lot         AuctionLot         @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  id                    String                              @id @default(cuid())
+  auctionId             String
+  participantId         String
+  lotId                 String
+  isSelected            Boolean                             @default(true)
+  depositHoldId         String?
+  depositWorkflowStatus AuctionDepositWorkflowStatus        @default(NONE)
+  workflowStatus        AuctionParticipantLotWorkflowStatus @default(SELECTED)
+  createdAt             DateTime                            @default(now())
+  updatedAt             DateTime                            @updatedAt
+  depositRequired       Float                               @default(0)
+  auction               Auction                             @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  lot                   AuctionLot                          @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  participant           AuctionParticipant                  @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   @@unique([participantId, lotId])
   @@index([participantId])
@@ -589,24 +393,21 @@ model AuctionImage {
 }
 
 model Bid {
-  id         String  @id @default(cuid())
-  auctionId  String
-  lotId      String?
-  bidderId   String
-  amount     Float
-  requestKey String? @unique
-
-  participantId String?
-  status        BidWorkflowStatus @default(ACTIVE)
-
+  id              String            @id @default(cuid())
+  auctionId       String
+  bidderId        String
+  amount          Float
+  createdAt       DateTime          @default(now())
   acceptedAt      DateTime?
+  participantId   String?
   rejectedAt      DateTime?
   rejectionReason String?
-  createdAt       DateTime  @default(now())
-
-  auction Auction    @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  lot     AuctionLot? @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  bidder  User       @relation(fields: [bidderId], references: [id])
+  status          BidWorkflowStatus @default(ACTIVE)
+  requestKey      String?           @unique
+  lotId           String?
+  auction         Auction           @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  bidder          User              @relation(fields: [bidderId], references: [id])
+  lot             AuctionLot?       @relation(fields: [lotId], references: [id], onDelete: Cascade)
 
   @@index([auctionId, createdAt])
   @@index([auctionId, amount])
@@ -622,8 +423,7 @@ model AuctionEventLog {
   eventType String
   payload   Json?
   createdAt DateTime @default(now())
-
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
 
   @@index([auctionId, createdAt])
   @@index([eventType, createdAt])
@@ -639,8 +439,7 @@ model AuctionDispute {
   resolution  String?
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
-
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  auction     Auction              @relation(fields: [auctionId], references: [id], onDelete: Cascade)
 
   @@index([auctionId, status])
 }
@@ -654,9 +453,8 @@ model AuctionPenalty {
   reason     String
   createdAt  DateTime           @default(now())
   resolvedAt DateTime?
-
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id])
+  auction    Auction            @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user       User               @relation(fields: [userId], references: [id])
 
   @@index([auctionId, userId])
   @@index([userId, type])
@@ -671,16 +469,16 @@ model Deal {
   weight         Float
   totalAmount    Float
   platformFee    Float
-  currency       String        @default("SYP")
   status         String        @default("PENDING")
   contractSigned Boolean       @default(false)
   signedAt       DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  currency       String        @default("SYP")
   buyer          User          @relation("buyer", fields: [buyerId], references: [id])
   seller         User          @relation("seller", fields: [sellerId], references: [id])
-  transactions   Transaction[]
   reviews        Review[]
+  transactions   Transaction[]
 
   @@index([sellerId])
   @@index([buyerId])
@@ -1028,22 +826,22 @@ model SafetyIncidentReport {
   reporterName        String?
   reporterPhone       String?
   reporterRole        String?
-  reporterCompanyName String?
   incidentType        String
   severity            String                    @default("MEDIUM")
   location            String
-  governorate         String?
-  city                String?
-  street              String?
-  locationUrl         String?
-  latitude            Float?
-  longitude           Float?
-  locationAccuracy    Int?
   description         String
   immediateAction     String?
   status              String                    @default("IN_REVIEW")
   createdAt           DateTime                  @default(now())
   updatedAt           DateTime                  @updatedAt
+  city                String?
+  governorate         String?
+  latitude            Float?
+  locationAccuracy    Int?
+  locationUrl         String?
+  longitude           Float?
+  street              String?
+  reporterCompanyName String?
   user                User?                     @relation(fields: [userId], references: [id])
   statusLogs          SafetyIncidentStatusLog[]
 
@@ -1074,7 +872,6 @@ model SafetyTrainingSession {
   description     String?
   level           String                  @default("BASIC")
   location        String
-  contactWhatsapp String?
   startDate       DateTime
   durationHours   Int
   capacity        Int
@@ -1083,6 +880,7 @@ model SafetyTrainingSession {
   status          String                  @default("OPEN")
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
+  contactWhatsapp String?
   requests        SafetyTrainingRequest[]
 
   @@index([status])
@@ -1095,11 +893,6 @@ model SafetyTrainingRequest {
   requesterName         String?
   requesterPhone        String?
   requesterRole         String?
-  requesterCompanyName  String?
-  governorate           String?
-  city                  String?
-  street                String?
-  locationUrl           String?
   sessionId             String?
   requestedSessionTitle String?
   preferredDate         DateTime?
@@ -1109,6 +902,11 @@ model SafetyTrainingRequest {
   status                String                 @default("PENDING")
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
+  city                  String?
+  governorate           String?
+  locationUrl           String?
+  requesterCompanyName  String?
+  street                String?
   session               SafetyTrainingSession? @relation(fields: [sessionId], references: [id])
   user                  User?                  @relation(fields: [userId], references: [id])
 
@@ -1207,21 +1005,21 @@ model LedgerAccount {
   balance           Float                 @default(0)
   metadata          Json?
   status            String                @default("ACTIVE")
-  debtStartedAt     DateTime?
-  debtDueAt         DateTime?
-  debtStatus        String                @default("CLEAR")
-  lockedByDebt      Boolean               @default(false)
-  debtLockReason    String?
-  creditLimit       Float                 @default(0)
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
+  creditLimit       Float                 @default(0)
+  debtStartedAt     DateTime?
+  debtDueAt         DateTime?
+  debtLockReason    String?
+  debtStatus        String                @default("CLEAR")
+  lockedByDebt      Boolean               @default(false)
+  waiverPolicies    AccountWaiverPolicy[]
+  depositRequests   DepositRequest[]
   lines             JournalLine[]
   holds             LedgerHold[]
-  depositRequests   DepositRequest[]
   payoutRequests    PayoutRequest[]
-  outgoingTransfers TransferRequest[]     @relation("SenderAccountTransfers")
   incomingTransfers TransferRequest[]     @relation("ReceiverAccountTransfers")
-  waiverPolicies    AccountWaiverPolicy[]
+  outgoingTransfers TransferRequest[]     @relation("SenderAccountTransfers")
 
   @@index([ownerId])
   @@index([slug])
@@ -1292,12 +1090,12 @@ model DepositRequest {
   reviewNote    String?
   reviewedById  String?
   reviewedAt    DateTime?
-  approvalStage String        @default("NONE")
-  approvedById  String?
-  approvedAt    DateTime?
   completedAt   DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  approvalStage String        @default("NONE")
+  approvedAt    DateTime?
+  approvedById  String?
   account       LedgerAccount @relation(fields: [accountId], references: [id])
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1320,15 +1118,15 @@ model PayoutRequest {
   reviewNote    String?
   reviewedById  String?
   reviewedAt    DateTime?
-  approvalStage String        @default("NONE")
-  approvedById  String?
-  approvedAt    DateTime?
   processedAt   DateTime?
   completedAt   DateTime?
   failedAt      DateTime?
   failureReason String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  approvalStage String        @default("NONE")
+  approvedAt    DateTime?
+  approvedById  String?
   account       LedgerAccount @relation(fields: [accountId], references: [id])
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1339,27 +1137,26 @@ model PayoutRequest {
 }
 
 model TransferRequest {
-  id                String    @id @default(cuid())
+  id                String         @id @default(cuid())
   senderId          String
   receiverId        String
   senderAccountId   String?
   receiverAccountId String?
   amount            Float
-  currency          String    @default("SYP")
-  status            String    @default("PENDING") // PENDING, APPROVED, REJECTED, FAILED
+  currency          String         @default("SYP")
+  status            String         @default("PENDING")
   referenceNote     String?
   reviewNote        String?
   reviewedById      String?
   reviewedAt        DateTime?
   completedAt       DateTime?
   failedAt          DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-
-  sender          User           @relation("SenderTransfers", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver        User           @relation("ReceiverTransfers", fields: [receiverId], references: [id], onDelete: Cascade)
-  senderAccount   LedgerAccount? @relation("SenderAccountTransfers", fields: [senderAccountId], references: [id], onDelete: Cascade)
-  receiverAccount LedgerAccount? @relation("ReceiverAccountTransfers", fields: [receiverAccountId], references: [id], onDelete: Cascade)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  receiverAccount   LedgerAccount? @relation("ReceiverAccountTransfers", fields: [receiverAccountId], references: [id], onDelete: Cascade)
+  receiver          User           @relation("ReceiverTransfers", fields: [receiverId], references: [id], onDelete: Cascade)
+  senderAccount     LedgerAccount? @relation("SenderAccountTransfers", fields: [senderAccountId], references: [id], onDelete: Cascade)
+  sender            User           @relation("SenderTransfers", fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([senderId])
   @@index([receiverId])
@@ -1393,20 +1190,20 @@ model Driver {
   status       DriverStatus         @default(PENDING)
   ratingAvg    Float                @default(0)
   ratingCount  Int                  @default(0)
-  vehicles     Vehicle[]
-  documents    DriverDocument[]
-  sessions     DriverSession[]
-  assignments  DeliveryAssignment[]
-  deliveries   Delivery[]
-  locationLogs DriverLocationLog[]
-  rewards      DriverReward[]
-  ratings      DriverRating[]
-  trustScore   Float                @default(0.0)
-  totalReviews Int                  @default(0)
-  successRate  Float                @default(100.0)
   createdAt    DateTime             @default(now())
   updatedAt    DateTime             @updatedAt
+  successRate  Float                @default(100.0)
+  totalReviews Int                  @default(0)
+  trustScore   Float                @default(0.0)
+  deliveries   Delivery[]
+  assignments  DeliveryAssignment[]
   user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents    DriverDocument[]
+  locationLogs DriverLocationLog[]
+  ratings      DriverRating[]
+  rewards      DriverReward[]
+  sessions     DriverSession[]
+  vehicles     Vehicle[]
 
   @@index([userId])
   @@index([status])
@@ -1450,17 +1247,17 @@ model DriverDocument {
 }
 
 model DriverSession {
-  id         String    @id @default(cuid())
-  driverId   String
-  deviceId   String
-  pushToken  String?
-  lastLat    Float?
-  lastLng    Float?
-  lastSeenAt DateTime?
-  isAvailable Boolean  @default(true)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  driver     Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  driverId    String
+  deviceId    String
+  pushToken   String?
+  lastLat     Float?
+  lastLng     Float?
+  lastSeenAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  isAvailable Boolean   @default(true)
+  driver      Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
 
   @@index([driverId])
   @@index([deviceId])
@@ -1487,10 +1284,10 @@ model Order {
   dropoffAddress String
   recipientName  String?
   recipientPhone String?
-  offers         DeliveryAssignment[]
-  deliveries     Delivery[]
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
+  deliveries     Delivery[]
+  offers         DeliveryAssignment[]
 
   @@index([status])
   @@index([createdAt])
@@ -1509,8 +1306,8 @@ model DeliveryAssignment {
   canceledAt   DateTime?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
-  order        Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
   driver       Driver           @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  order        Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([driverId])
@@ -1528,11 +1325,11 @@ model Delivery {
   deliveredAt      DateTime?
   failedAt         DateTime?
   failReason       String?
-  pod              ProofOfDelivery?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
-  order            Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
   driver           Driver           @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  order            Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  pod              ProofOfDelivery?
 
   @@index([orderId])
   @@index([driverId])
@@ -1619,10 +1416,9 @@ model Review {
   comment    String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
-  reviewer User  @relation("reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
-  reviewee User  @relation("reviewee", fields: [revieweeId], references: [id], onDelete: Cascade)
-  deal     Deal? @relation(fields: [dealId], references: [id])
+  deal       Deal?    @relation(fields: [dealId], references: [id])
+  reviewee   User     @relation("reviewee", fields: [revieweeId], references: [id], onDelete: Cascade)
+  reviewer   User     @relation("reviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
 
   @@index([revieweeId])
   @@index([reviewerId])
@@ -1689,18 +1485,17 @@ model CtAlert {
 }
 
 model Incident {
-  id          String   @id @default(cuid())
-  createdAt   DateTime @default(now())
-  status      String   @default("open")
-  severity    String   @default("medium")
+  id          String         @id @default(cuid())
+  createdAt   DateTime       @default(now())
+  status      String         @default("open")
+  severity    String         @default("medium")
   title       String
   summary     String?
   ownerUserId String?
-  tags        String[] @default([])
-  timeline    Json     @default("[]")
-  updatedAt   DateTime @updatedAt
-
-  links IncidentLink[]
+  tags        String[]       @default([])
+  timeline    Json           @default("[]")
+  updatedAt   DateTime       @updatedAt
+  links       IncidentLink[]
 
   @@index([status, severity])
   @@index([ownerUserId])
@@ -1712,8 +1507,7 @@ model IncidentLink {
   linkType   String
   linkId     String
   createdAt  DateTime @default(now())
-
-  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
 
   @@unique([incidentId, linkType, linkId])
   @@index([linkType, linkId])
@@ -1752,22 +1546,269 @@ model KillSwitch {
 }
 
 model Dealer {
-  id               String   @id @default(cuid())
-  name             String   // Name of the shop/agent
-  governorate      String   // e.g. دمشق، حلب، حمص
-  region           String   // e.g. المزة، حي السبيل
-  address          String   // Detailed address
-  lat              Float?   // Latitude
-  lng              Float?   // Longitude
-  contactPhone     String?
-  contactWhatsapp  String?
-  isActive         Boolean  @default(true)
-  services         String[] @default(["DEPOSIT", "WITHDRAW"]) // Types of services offered
-  workingHours     String?  // e.g. 9:00 AM - 6:00 PM
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  governorate     String
+  region          String
+  address         String
+  lat             Float?
+  lng             Float?
+  contactPhone    String?
+  contactWhatsapp String?
+  isActive        Boolean  @default(true)
+  services        String[] @default(["DEPOSIT", "WITHDRAW"])
+  workingHours    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@index([governorate])
   @@index([region])
   @@index([isActive])
+}
+
+model DeviceSession {
+  id         String   @id @default(cuid())
+  userId     String
+  deviceId   String   @unique
+  deviceType String?
+  deviceName String?
+  ipAddress  String?
+  location   String?
+  userAgent  String?
+  isTrusted  Boolean  @default(false)
+  isBlocked  Boolean  @default(false)
+  lastActive DateTime @default(now())
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([deviceId])
+}
+
+model SecurityOTP {
+  id          String   @id @default(cuid())
+  userId      String
+  code        String
+  actionType  String
+  referenceId String?
+  isUsed      Boolean  @default(false)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, actionType])
+  @@index([code])
+}
+
+model StaffActivity {
+  id        String    @id @default(cuid())
+  userId    String
+  status    String
+  startTime DateTime  @default(now())
+  endTime   DateTime?
+  duration  Int?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([startTime])
+}
+
+model StaffWarning {
+  id               String   @id @default(cuid())
+  staffId          String
+  issuerId         String
+  reason           String
+  activitySnapshot Json?
+  createdAt        DateTime @default(now())
+  issuer           User     @relation("WarningIssuer", fields: [issuerId], references: [id])
+  staff            User     @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([staffId])
+  @@index([issuerId])
+  @@index([createdAt])
+}
+
+enum DriverStatus {
+  PENDING
+  UNDER_REVIEW
+  VERIFIED
+  ACTIVE
+  SUSPENDED
+}
+
+enum DocType {
+  ID_CARD
+  LICENSE
+  VEHICLE_REG
+  INSURANCE
+  SELFIE
+}
+
+enum DocStatus {
+  UPLOADED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum OrderStatus {
+  CREATED
+  OFFERED
+  ASSIGNED
+  PICKED_UP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  DELIVERY_FAILED
+  CANCELED
+}
+
+enum AssignmentStatus {
+  OFFERED
+  ACCEPTED
+  DECLINED
+  CANCELED
+  EXPIRED
+}
+
+enum TicketStatus {
+  OPEN
+  PENDING
+  RESOLVED
+  CLOSED
+}
+
+enum RewardType {
+  BONUS
+  PENALTY
+  ADJUSTMENT
+}
+
+enum RewardStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+}
+
+enum AuditActorRole {
+  ADMIN
+  SUPPORT
+  DRIVER
+  SYSTEM
+}
+
+enum AuctionType {
+  PRIVATE
+  GOVERNMENT
+}
+
+enum AuctionWorkflowStatus {
+  DRAFT
+  PENDING_APPROVAL
+  SCHEDULED
+  OPEN
+  UNDER_REVIEW
+  AWAITING_WINNER_CONFIRMATION
+  AWAITING_PAYMENT_PROOF
+  AWAITING_DELIVERY
+  AWAITING_INSPECTION
+  COMPLETED
+  DISPUTED
+  CANCELED
+  FAILED
+}
+
+enum AuctionParticipantWorkflowStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+  WITHDRAWN
+}
+
+enum AuctionDepositWorkflowStatus {
+  NONE
+  PENDING
+  HELD
+  VERIFIED
+  EXEMPT
+  RELEASED
+  FORFEITED
+  REJECTED
+}
+
+enum BidWorkflowStatus {
+  ACTIVE
+  OUTBID
+  WINNING
+  FINALIZED
+  DISQUALIFIED
+  REJECTED
+}
+
+enum AuctionExtensionStage {
+  NONE
+  FIRST
+  SECOND
+  THIRD
+  FINAL_CLOSED
+}
+
+enum AuctionPenaltyType {
+  DEPOSIT_FORFEITURE
+  ACCOUNT_FREEZE
+  TEMP_BAN
+  LEGAL_ESCALATION
+}
+
+enum AuctionDisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+  ESCALATED
+}
+
+enum AuctionDomain {
+  ASSET_SALE
+  SERVICE_PROCUREMENT
+}
+
+enum AuctionDirection {
+  FORWARD
+  REVERSE
+}
+
+enum AuctionPricingMode {
+  LOT_BASED
+  BUNDLE_BASED
+}
+
+enum AuctionWinnerSelectionMode {
+  PER_LOT
+  SINGLE_WINNER
+}
+
+enum AuctionLotStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  AWARDED
+  FAILED
+  CANCELLED
+}
+
+enum AuctionDepositMode {
+  NONE
+  FIXED
+  PERCENTAGE
+}
+
+enum AuctionParticipantLotWorkflowStatus {
+  SELECTED
+  APPROVED
+  REJECTED
+  WITHDRAWN
 }

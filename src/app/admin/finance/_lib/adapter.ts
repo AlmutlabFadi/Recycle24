@@ -9,6 +9,9 @@ import {
   FinanceAuditRow,
   FinanceRequestType,
 } from "./types";
+import { evaluateApproval } from "./policy-engine";
+
+const apiEndpoint = process.env.NEXT_PUBLIC_API_ENDPOINT || "";
 
 type ExecuteCommandInput = {
   actionType: string;
@@ -39,7 +42,7 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
 function buildRequestQuery(filters: Partial<FinanceQueueFilters>) {
   const params = new URLSearchParams();
 
-  if (filters.status && filters.status !== "ALL") {
+  if (filters.status) {
     params.set("status", filters.status);
   }
 
@@ -73,60 +76,144 @@ function resolveRequestActionEndpoint(
   if (actionType === "APPROVE_FIRST_STAGE" || actionType === "APPROVE_FINAL_STAGE") {
     return {
       method: "POST",
-      url: `${basePath}/approve`,
+      url: `${apiEndpoint}${basePath}/approve`,
     };
   }
 
   if (actionType === "REJECT") {
     return {
       method: "POST",
-      url: `${basePath}/reject`,
+      url: `${apiEndpoint}${basePath}/reject`,
     };
   }
 
   throw new Error(`Unsupported finance action: ${actionType}`);
 }
 
-export class FinanceAdminAdapter {
-async getSummaryMetrics(): Promise<FinanceDashboardSummary> {
-  const response = await fetch("/api/admin/finance", {
-    method: "GET",
-    cache: "no-store",
-  });
-
-  const payload = await parseJsonResponse<{
-    success: boolean;
-    summary?: FinanceDashboardSummary;
-  }>(response);
-
-  if (!payload.summary) {
-    throw new Error("Finance summary payload is missing.");
+function normalizeApprovalStage(
+  approvalStage: string | null | undefined,
+): "NONE" | "AWAITING_FIRST_REVIEW" | "AWAITING_FINAL_APPROVAL" | "FINAL_APPROVED" | "REJECTED" {
+  if (
+    approvalStage === "AWAITING_FIRST_REVIEW" ||
+    approvalStage === "AWAITING_FINAL_APPROVAL" ||
+    approvalStage === "FINAL_APPROVED" ||
+    approvalStage === "REJECTED"
+  ) {
+    return approvalStage;
   }
 
-  return payload.summary;
+  return "NONE";
 }
+
+function resolveWorkflowStage(params: {
+  type: "DEPOSIT" | "PAYOUT" | "TRANSFER";
+  amount: number;
+  currency: "SYP" | "USD";
+  status: string;
+  approvalStage: string | null | undefined;
+}): "NONE" | "AWAITING_FIRST_REVIEW" | "AWAITING_FINAL_APPROVAL" | "FINAL_APPROVED" | "REJECTED" {
+  if (params.status === "REJECTED" || params.status === "FAILED" || params.status === "REVERSED") {
+    return "REJECTED";
+  }
+
+  if (params.type === "DEPOSIT") {
+    return "NONE";
+  }
+
+  const normalizedStage = normalizeApprovalStage(params.approvalStage);
+
+  const policy = evaluateApproval({
+    type: params.type === "PAYOUT" ? "WITHDRAWAL" : "TRANSFER",
+    amount: params.amount,
+    currency: params.currency,
+    userId: "system-adapter",
+    velocityTriggered: false,
+  });
+
+  if (params.status === "COMPLETED") {
+    return policy.requiresFinalApproval ? "FINAL_APPROVED" : "NONE";
+  }
+
+  if (policy.requiresFinalApproval) {
+    if (params.status === "UNDER_REVIEW" || normalizedStage === "AWAITING_FINAL_APPROVAL") {
+      return "AWAITING_FINAL_APPROVAL";
+    }
+
+    return "AWAITING_FIRST_REVIEW";
+  }
+
+  if (policy.requiresFirstApproval && params.status === "PENDING") {
+    return "AWAITING_FIRST_REVIEW";
+  }
+
+  return normalizedStage;
+}
+
+function resolveCurrentOwner(params: {
+  type: "DEPOSIT" | "PAYOUT" | "TRANSFER";
+  amount: number;
+  currency: "SYP" | "USD";
+  status: string;
+  approvalStage: string | null | undefined;
+}): string | null {
+  if (params.type === "DEPOSIT") {
+    return null;
+  }
+
+  const workflowStage = resolveWorkflowStage(params);
+
+  if (workflowStage === "AWAITING_FINAL_APPROVAL") {
+    return "FINAL_APPROVER";
+  }
+
+  if (workflowStage === "AWAITING_FIRST_REVIEW") {
+    return "REVIEWER";
+  }
+
+  return null;
+}
+
+export class FinanceAdminAdapter {
+  async getSummaryMetrics(): Promise<FinanceDashboardSummary> {
+    const response = await fetch(`${apiEndpoint}/api/admin/finance`, {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    const payload = await parseJsonResponse<{
+      success: boolean;
+      summary?: FinanceDashboardSummary;
+    }>(response);
+
+    if (!payload.summary) {
+      throw new Error("Finance summary payload is missing.");
+    }
+
+    return payload.summary;
+  }
 
   async getRequestsQueue(filters: Partial<FinanceQueueFilters>): Promise<FinanceRequestRow[]> {
     const query = buildRequestQuery(filters);
 
-    const [depositResponse, payoutResponse, transferResponse] = await Promise.all([
-      fetch(`/api/admin/finance/deposit-requests${query ? `?${query}` : ""}`, {
-        method: "GET",
-        cache: "no-store",
-      }),
-      fetch(`/api/admin/finance/payout-requests${query ? `?${query}` : ""}`, {
-        method: "GET",
-        cache: "no-store",
-      }),
-      fetch(`/api/admin/finance/transfer-requests${query ? `?${query}` : ""}`, {
-        method: "GET",
-        cache: "no-store",
-      }),
+    const depositUrl = `${apiEndpoint}/api/admin/finance/deposit-requests${query ? `?${query}` : ""}`;
+    const payoutUrl = `${apiEndpoint}/api/admin/finance/payout-requests${query ? `?${query}` : ""}`;
+    const transferUrl = `${apiEndpoint}/api/admin/finance/transfer-requests${query ? `?${query}` : ""}`;
+
+    const fetchResults = await Promise.allSettled([
+      fetch(depositUrl, { method: "GET", cache: "no-store" }).then((res) =>
+        parseJsonResponse<{ items: Array<any> }>(res),
+      ),
+      fetch(payoutUrl, { method: "GET", cache: "no-store" }).then((res) =>
+        parseJsonResponse<{ items: Array<any> }>(res),
+      ),
+      fetch(transferUrl, { method: "GET", cache: "no-store" }).then((res) =>
+        parseJsonResponse<{ items: Array<any> }>(res),
+      ),
     ]);
 
-    const depositPayload = await parseJsonResponse<{ items: Array<any> }>(depositResponse);
-    const payoutPayload = await parseJsonResponse<{ items: Array<any> }>(payoutResponse);
-    const transferPayload = await parseJsonResponse<{ items: Array<any> }>(transferResponse);
+    const depositPayload = fetchResults[0].status === "fulfilled" ? fetchResults[0].value : { items: [] };
+    const payoutPayload = fetchResults[1].status === "fulfilled" ? fetchResults[1].value : { items: [] };
+    const transferPayload = fetchResults[2].status === "fulfilled" ? fetchResults[2].value : { items: [] };
 
     const mappedDeposits: FinanceRequestRow[] = (depositPayload.items ?? []).map((item) => ({
       id: item.id,
@@ -160,13 +247,8 @@ async getSummaryMetrics(): Promise<FinanceDashboardSummary> {
         activeRestrictionCount: item.account?.lockedByDebt ? 1 : 0,
       },
       status: item.status,
-      approvalStage: item.approvalStage ?? "NONE",
-      currentOwner:
-        item.approvalStage === "AWAITING_FINAL_APPROVAL"
-          ? "FINAL_APPROVER"
-          : item.status === "PENDING"
-            ? "REVIEWER"
-            : null,
+      approvalStage: "NONE",
+      currentOwner: null,
       riskFlags: [],
       linkedReference: null,
       createdAt: item.createdAt,
@@ -207,13 +289,20 @@ async getSummaryMetrics(): Promise<FinanceDashboardSummary> {
         activeRestrictionCount: item.account?.lockedByDebt ? 1 : 0,
       },
       status: item.status,
-      approvalStage: item.approvalStage ?? "NONE",
-      currentOwner:
-        item.approvalStage === "AWAITING_FINAL_APPROVAL"
-          ? "FINAL_APPROVER"
-          : item.status === "PENDING"
-            ? "REVIEWER"
-            : null,
+      approvalStage: resolveWorkflowStage({
+        type: "PAYOUT",
+        amount: item.amount,
+        currency: item.currency,
+        status: item.status,
+        approvalStage: item.approvalStage,
+      }),
+      currentOwner: resolveCurrentOwner({
+        type: "PAYOUT",
+        amount: item.amount,
+        currency: item.currency,
+        status: item.status,
+        approvalStage: item.approvalStage,
+      }),
       riskFlags: item.account?.lockedByDebt
         ? [
             {
@@ -255,7 +344,7 @@ async getSummaryMetrics(): Promise<FinanceDashboardSummary> {
             held: 0,
             frozen: 0,
             pendingIn: 0,
-            pendingOut: item.status === "PENDING" ? item.amount : 0,
+            pendingOut: item.status === "PENDING" || item.status === "UNDER_REVIEW" ? item.amount : 0,
           },
         ],
         openDebtCount: 0,
@@ -264,8 +353,20 @@ async getSummaryMetrics(): Promise<FinanceDashboardSummary> {
         activeRestrictionCount: 0,
       },
       status: item.status,
-      approvalStage: "NONE",
-      currentOwner: item.status === "PENDING" ? "REVIEWER" : null,
+      approvalStage: resolveWorkflowStage({
+        type: "TRANSFER",
+        amount: item.amount,
+        currency: item.currency,
+        status: item.status,
+        approvalStage: item.approvalStage ?? "NONE",
+      }),
+      currentOwner: resolveCurrentOwner({
+        type: "TRANSFER",
+        amount: item.amount,
+        currency: item.currency,
+        status: item.status,
+        approvalStage: item.approvalStage ?? "NONE",
+      }),
       riskFlags: [],
       linkedReference: item.receiver
         ? {
@@ -398,7 +499,7 @@ async getSummaryMetrics(): Promise<FinanceDashboardSummary> {
   }
 
   async getActiveHolds(): Promise<FinanceHoldRow[]> {
-    const response = await fetch("/api/admin/finance/holds?status=OPEN&take=100", {
+    const response = await fetch(`${apiEndpoint}/api/admin/finance/holds?status=OPEN&take=100`, {
       method: "GET",
       cache: "no-store",
     });
@@ -416,27 +517,27 @@ async getSummaryMetrics(): Promise<FinanceDashboardSummary> {
     return payload.items;
   }
 
- async getOutstandingDebts(): Promise<FinanceDebtRow[]> {
-  const response = await fetch("/api/admin/finance/debts?take=100", {
-    method: "GET",
-    cache: "no-store",
-  });
+  async getOutstandingDebts(): Promise<FinanceDebtRow[]> {
+    const response = await fetch(`${apiEndpoint}/api/admin/finance/debts?take=100`, {
+      method: "GET",
+      cache: "no-store",
+    });
 
-  const payload = await parseJsonResponse<{
-    success?: boolean;
-    items?: FinanceDebtRow[];
-    error?: string;
-  }>(response);
+    const payload = await parseJsonResponse<{
+      success?: boolean;
+      items?: FinanceDebtRow[];
+      error?: string;
+    }>(response);
 
-  if (!payload.success || !Array.isArray(payload.items)) {
-    throw new Error(payload.error ?? "Finance debts response was invalid");
+    if (!payload.success || !Array.isArray(payload.items)) {
+      throw new Error(payload.error ?? "Finance debts response was invalid");
+    }
+
+    return payload.items;
   }
 
-  return payload.items;
-}
-
   async getRestrictedAccounts(): Promise<FinanceRestrictionRow[]> {
-    const response = await fetch("/api/admin/finance/restricted?status=ACTIVE&take=100", {
+    const response = await fetch(`${apiEndpoint}/api/admin/finance/restricted?status=ACTIVE&take=100`, {
       method: "GET",
       cache: "no-store",
     });
@@ -455,23 +556,23 @@ async getSummaryMetrics(): Promise<FinanceDashboardSummary> {
   }
 
   async getAuditTrail(): Promise<FinanceAuditRow[]> {
-  const response = await fetch("/api/admin/finance/audit?take=100", {
-    method: "GET",
-    cache: "no-store",
-  });
+    const response = await fetch(`${apiEndpoint}/api/admin/finance/audit?take=100`, {
+      method: "GET",
+      cache: "no-store",
+    });
 
-  const payload = await parseJsonResponse<{
-    success?: boolean;
-    items?: FinanceAuditRow[];
-    error?: string;
-  }>(response);
+    const payload = await parseJsonResponse<{
+      success?: boolean;
+      items?: FinanceAuditRow[];
+      error?: string;
+    }>(response);
 
-  if (!payload.success || !Array.isArray(payload.items)) {
-    throw new Error(payload.error ?? "Finance audit response was invalid");
+    if (!payload.success || !Array.isArray(payload.items)) {
+      throw new Error(payload.error ?? "Finance audit response was invalid");
+    }
+
+    return payload.items;
   }
-
-  return payload.items;
-}
 
   async executeCommand(
     command: ExecuteCommandInput,
@@ -506,3 +607,4 @@ async getSummaryMetrics(): Promise<FinanceDashboardSummary> {
 }
 
 export const financeAdapter = new FinanceAdminAdapter();
+

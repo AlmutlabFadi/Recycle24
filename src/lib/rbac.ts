@@ -34,6 +34,13 @@ const DEFAULT_PERMISSIONS = [
   { key: PERMISSIONS.ACCESS_ACADEMY, label: "الأكاديمية", description: "الوصول لمحتوى الأكاديمية" },
 ];
 
+const ATOMIC_ROLES = Object.values(PERMISSIONS).map(perm => ({
+  name: `__PERM_${perm}`,
+  description: `Atomic Permission Role for ${perm}`,
+  isSystem: true,
+  permissions: [perm],
+}));
+
 const DEFAULT_ROLES = [
   {
     name: "OWNER",
@@ -82,6 +89,7 @@ const DEFAULT_ROLES = [
       PERMISSIONS.ACCESS_ACADEMY,
     ],
   },
+  ...ATOMIC_ROLES,
 ];
 
 export async function bootstrapAccessControl() {

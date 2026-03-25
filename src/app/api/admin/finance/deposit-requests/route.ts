@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/lib/db";
 import { requirePermission } from "@/lib/rbac";
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const skip = parsePositiveInt(searchParams.get("skip"), 0, 5000);
 
     const where = {
-      ...(status === "ALL" ? {} : { status }),
+      ...(status === "ALL" ? {} : status === "PENDING" ? { status: { in: ["PENDING", "UNDER_REVIEW"] } } : { status }),
       ...(query
         ? {
             OR: [

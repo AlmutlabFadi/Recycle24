@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import { FinanceRequestRow } from "../_lib/types";
@@ -9,7 +9,7 @@ interface FinanceRequestsTableProps {
   requests: FinanceRequestRow[];
   isLoading: boolean;
   onRowClick: (row: FinanceRequestRow) => void;
-  currentUserRole: AdminRole;
+  permissionContext: PermissionContext;
   onActionSelect: (actionType: string, recordId: string, row?: FinanceRequestRow) => void;
 }
 
@@ -17,7 +17,7 @@ export function FinanceRequestsTable({
   requests,
   isLoading,
   onRowClick,
-  currentUserRole,
+  permissionContext,
   onActionSelect,
 }: FinanceRequestsTableProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -78,8 +78,8 @@ export function FinanceRequestsTable({
 
           <tbody className="divide-y divide-slate-100">
             {requests.map((row) => {
-              const permissionCtx: PermissionContext = {
-                role: currentUserRole,
+              const rowContext: PermissionContext = {
+                ...permissionContext,
                 selectedRow: row,
               };
 
@@ -212,7 +212,7 @@ export function FinanceRequestsTable({
                   >
                     <FinanceActionMenu
                       inline
-                      context={permissionCtx}
+                      context={rowContext}
                       recordId={row.id}
                       recordType="REQUEST"
                       requestType={row.type}
@@ -227,7 +227,7 @@ export function FinanceRequestsTable({
                     onClick={(event) => event.stopPropagation()}
                   >
                     <FinanceActionMenu
-                      context={permissionCtx}
+                      context={rowContext}
                       recordId={row.id}
                       recordType="REQUEST"
                       requestType={row.type}

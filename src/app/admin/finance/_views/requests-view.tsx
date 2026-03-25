@@ -1,14 +1,14 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { FinanceRequestRow } from "../_lib/types";
-import { AdminRole } from "../_lib/permissions";
+import { PermissionContext } from "../_lib/permissions";
 import { FinanceRequestsTable } from "../_components/finance-requests-table";
 
 interface RequestsViewProps {
   requests: FinanceRequestRow[];
   isLoading: boolean;
-  currentUserRole: AdminRole;
+  permissionContext: PermissionContext;
   onRowClick: (row: FinanceRequestRow) => void;
   onActionSelect: (actionType: string, recordId: string, row?: FinanceRequestRow) => void;
 }
@@ -16,7 +16,7 @@ interface RequestsViewProps {
 export function RequestsView({
   requests,
   isLoading,
-  currentUserRole,
+  permissionContext,
   onRowClick,
   onActionSelect,
 }: RequestsViewProps) {
@@ -25,7 +25,7 @@ export function RequestsView({
       <FinanceRequestsTable
         requests={requests}
         isLoading={isLoading}
-        currentUserRole={currentUserRole}
+        permissionContext={permissionContext}
         onRowClick={onRowClick}
         onActionSelect={onActionSelect}
       />

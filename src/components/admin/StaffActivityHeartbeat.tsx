@@ -27,11 +27,18 @@ export default function StaffActivityHeartbeat({ onStatusChange }: HeartbeatProp
     // Send heartbeat to server
     const sendHeartbeat = useCallback(async (s: StaffStatus) => {
         try {
-            await fetch("/api/admin/staff/heartbeat", {
+            const response = await fetch("/api/admin/staff/heartbeat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: s }),
             });
+            const data = await response.json();
+            
+            // 🛡️ SECURITY KICK-OUT: If not authorized, force logout immediately
+            if (data.authorized === false) {
+                console.log("Access revoked, signing out...");
+                window.location.href = "/api/auth/signout?callbackUrl=/";
+            }
         } catch (err) {
             console.error("Heartbeat failed", err);
         }

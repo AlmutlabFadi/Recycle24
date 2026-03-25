@@ -18,6 +18,17 @@ interface DashboardStats {
     auctions: { active: number };
 }
 
+interface ManagerInfo {
+    id: string;
+    name: string;
+    status: "ONLINE" | "IDLE" | "OFFLINE";
+}
+
+interface DeptStatus {
+    department: string;
+    managers: ManagerInfo[];
+}
+
 function formatNumber(num: number) {
     return new Intl.NumberFormat("ar-SY").format(num);
 }
@@ -25,6 +36,7 @@ function formatNumber(num: number) {
 export default function AdminCommandCenter() {
     const { user, switchRole } = useAuth();
     const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [deptManagers, setDeptManagers] = useState<DeptStatus[]>([]);
     const [loading, setLoading] = useState(true);
     const [showFallback, setShowFallback] = useState(false);
 
@@ -46,10 +58,17 @@ export default function AdminCommandCenter() {
         let isMounted = true;
         async function fetchStats() {
             try {
-                const res = await fetch("/api/admin/dashboard/stats");
-                const data = await res.json();
-                if (isMounted && data.success) {
-                    setStats(data.stats);
+                const [statsRes, managerRes] = await Promise.all([
+                    fetch("/api/admin/dashboard/stats"),
+                    fetch("/api/admin/staff/managers")
+                ]);
+                
+                const statsData = await statsRes.json();
+                const managerData = await managerRes.json();
+
+                if (isMounted) {
+                    if (statsData.success) setStats(statsData.stats);
+                    if (managerData.success) setDeptManagers(managerData.departments);
                 }
             } catch (error) {
                 console.error("Error fetching admin stats:", error);
@@ -61,17 +80,40 @@ export default function AdminCommandCenter() {
         return () => { isMounted = false; };
     }, []);
 
-    const adminModules = [
-        { id: 'users', title: 'حوكمة المستخدمين الأدوار', icon: 'person_search', href: '/admin/users', active: true },
-        { id: 'marketplace', title: 'مراقب الأسواق والمعاملات', icon: 'monitoring', href: '/admin/marketplace', active: true },
-        { id: 'finance', title: 'النظام البنكي والمالي', icon: 'account_balance', href: '/admin/finance', active: true },
-        { id: 'subscription_designer', title: 'مصمم باقات الاشتراك', icon: 'design_services', href: '/admin/subscriptions/packages', active: true },
-        { id: 'verification', title: 'التوثيق المستندي', icon: 'verified', href: '/admin/verification', count: stats?.verification.pending, active: true },
-        { id: 'auctions', title: 'مراجعة المزادات', icon: 'gavel', href: '/admin/auctions', active: true },
-        { id: 'support', title: 'مكتب الدعم', icon: 'support_agent', href: '/admin/support', count: stats?.support.open, active: true },
-        { id: 'rewards', title: 'إعدادات المكافآت', icon: 'loyalty', href: '/admin/rewards', active: true },
-        { id: 'soc', title: 'الأمن والعمليات', icon: 'security', href: '/admin/soc', active: true },
+    const allModules = [
+        { id: 'users', title: 'حوكمة المستخدمين', icon: 'person_search', href: '/admin/users', permission: 'MANAGE_USERS' },
+        { id: 'access', title: 'الأدوار والصلاحيات', icon: 'key', href: '/admin/access', permission: 'MANAGE_ACCESS' },
+        { id: 'leaderboard', title: 'متصدري الكفاءة', icon: 'military_tech', href: '/admin/staff/leaderboard', permission: 'MANAGE_ACCESS' },
+        { id: 'activity', title: 'سجلات النشاط', icon: 'history', href: '/admin/staff/activity', permission: 'MANAGE_ACCESS' },
+        { id: 'marketplace', title: 'مراقب الأسواق', icon: 'monitoring', href: '/admin/marketplace', permission: 'MANAGE_KNOWLEDGE' },
+        { id: 'finance', title: 'النظام البنكي والمالي', icon: 'account_balance', href: '/admin/finance', permissions: ['MANAGE_FINANCE', 'FINANCE_FINAL_APPROVE'] },
+        { id: 'subscription_designer', title: 'باقات الاشتراك', icon: 'design_services', href: '/admin/subscriptions/packages', permission: 'MANAGE_FINANCE' },
+        { id: 'verification', title: 'التوثيق المستندي', icon: 'verified', href: '/admin/verification', permission: 'REVIEW_DRIVER_DOCS', count: stats?.verification.pending },
+        { id: 'auctions', title: 'مراجعة المزادات', icon: 'gavel', href: '/admin/auctions', permission: 'MANAGE_KNOWLEDGE' },
+        { id: 'support', title: 'مكتب الدعم', icon: 'support_agent', href: '/admin/support', permission: 'MANAGE_SUPPORT', count: stats?.support.open },
+        { id: 'rewards', title: 'إعدادات المكافآت', icon: 'loyalty', href: '/admin/rewards', permission: 'MANAGE_REWARDS' },
+        { id: 'soc', title: 'الأمن والعمليات', icon: 'security', href: '/admin/soc', permission: 'MANAGE_ACCESS' },
     ];
+
+    const userPermissions = user?.permissions || [];
+    const adminModules = allModules.filter(m => {
+        if (m.permissions) return m.permissions.some(p => userPermissions.includes(p));
+        return userPermissions.includes(m.permission as string);
+    });
+
+    const deptPermissionMap: Record<string, string[]> = {
+        "المالية": ["MANAGE_FINANCE", "FINANCE_FINAL_APPROVE"],
+        "المستخدمين": ["MANAGE_USERS"],
+        "النقل": ["MANAGE_DRIVERS", "REVIEW_DRIVER_DOCS"],
+        "الأمن": ["MANAGE_ACCESS", "ACCESS_SAFETY"],
+        "الدعم الفني": ["MANAGE_SUPPORT"],
+    };
+
+    const visibleDepartments = deptManagers.filter(dept => {
+        const required = deptPermissionMap[dept.department];
+        if (!required) return true;
+        return required.some(p => userPermissions.includes(p));
+    });
 
     if (loading) {
         return (
@@ -86,26 +128,6 @@ export default function AdminCommandCenter() {
                     </div>
                     <h2 className="text-xl font-bold text-white mb-2 italic">جاري تهيئة مركز القيادة...</h2>
                     <p className="text-slate-500 text-xs max-w-[200px] mb-8">يتم الآن جلب بيانات الوقت الفعلي من كافة وحدات المنصة.</p>
-                    
-                    {showFallback && (
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <p className="text-amber-500 text-[10px] mb-4">يبدو أن العملية تستغرق وقتاً طويلاً...</p>
-                            <div className="flex flex-col gap-2">
-                                <button 
-                                    onClick={() => window.location.reload()} 
-                                    className="px-6 py-2 bg-white/10 text-white rounded-xl text-xs font-bold border border-white/5"
-                                >
-                                    إعادة المحاولة
-                                </button>
-                                <button 
-                                    onClick={handleSwitchToClient} 
-                                    className="px-6 py-2 bg-primary/20 text-primary rounded-xl text-xs font-bold border border-primary/20"
-                                >
-                                    التبديل للوضع العادي
-                                </button>
-                            </div>
-                        </div>
-                    )}
                 </main>
             </div>
         );
@@ -152,14 +174,12 @@ export default function AdminCommandCenter() {
                             </div>
                         </div>
                     </div>
-                    {/* Abstract design elements */}
-                    <div className="absolute top-0 left-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] -translate-x-1/2 -translate-y-1/2"></div>
                 </header>
 
                 {/* Alerts / Pending Actions Row */}
-                {(stats?.verification.pending || 0 > 0 || stats?.support.open || 0 > 0) && (
+                {(stats?.verification.pending || stats?.support.open) && (
                     <div className="flex flex-col md:flex-row gap-4 mb-8">
-                        {stats?.verification.pending ? (
+                        {stats?.verification.pending && userPermissions.includes("REVIEW_DRIVER_DOCS") ? (
                             <Link href="/admin/verification" className="flex-1 bg-amber-500/10 border border-amber-500/20 p-4 rounded-3xl flex items-center justify-between hover:bg-amber-500/20 transition group">
                                 <div className="flex items-center gap-3">
                                     <div className="size-10 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-500">
@@ -173,7 +193,7 @@ export default function AdminCommandCenter() {
                                 <span className="material-symbols-outlined text-amber-500 group-hover:translate-x-[-4px] transition">arrow_back</span>
                             </Link>
                         ) : null}
-                        {stats?.support.open ? (
+                        {stats?.support.open && userPermissions.includes("MANAGE_SUPPORT") ? (
                             <Link href="/admin/support" className="flex-1 bg-red-500/10 border border-red-500/20 p-4 rounded-3xl flex items-center justify-between hover:bg-red-500/20 transition group">
                                 <div className="flex items-center gap-3">
                                     <div className="size-10 rounded-2xl bg-red-500/20 flex items-center justify-center text-red-500">
@@ -203,7 +223,7 @@ export default function AdminCommandCenter() {
                                 <div className="size-16 rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
                                     <span className="material-symbols-outlined !text-3xl">{m.icon}</span>
                                 </div>
-                                {m.count ? (
+                                {"count" in m && m.count ? (
                                     <span className="absolute -top-1 -right-1 size-6 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg animate-pulse">
                                         {m.count}
                                     </span>
@@ -214,6 +234,55 @@ export default function AdminCommandCenter() {
                         </Link>
                     ))}
                 </div>
+
+                {/* Staff & Operations Overview */}
+                {visibleDepartments.length > 0 && (
+                    <>
+                        <h2 className="text-sm font-bold text-slate-500 mb-4 px-2">أوضاع فريق العمل المكلفين</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-12">
+                            {visibleDepartments.map((dept, idx) => (
+                                <div key={idx} className="bg-slate-900/60 border border-slate-800 rounded-3xl p-5 hover:bg-slate-900 transition">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-sm font-black text-slate-300">{dept.department}</h3>
+                                        <span className="text-[10px] text-slate-500 font-bold">المسؤولين: {dept.managers.length}</span>
+                                    </div>
+                                    <div className="space-y-3">
+                                        {dept.managers.length === 0 ? (
+                                            <p className="text-[10px] text-slate-600 italic">لا يوجد مدير مكلف حالياً</p>
+                                        ) : (
+                                            dept.managers.map((mgr) => (
+                                                <div key={mgr.id} className="flex items-center justify-between group/mgr">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="size-6 rounded-full bg-slate-800 flex items-center justify-center">
+                                                            <span className="material-symbols-outlined !text-sm text-slate-500">person</span>
+                                                        </div>
+                                                        <span className="text-xs font-bold text-white group-hover/mgr:text-primary transition">{mgr.name}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-full border border-slate-800">
+                                                        <span className={`size-1.5 rounded-full ${
+                                                            mgr.status === 'ONLINE' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 
+                                                            mgr.status === 'IDLE' ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 
+                                                            'bg-slate-700'
+                                                        }`}></span>
+                                                        <span className={`text-[9px] font-bold ${
+                                                            mgr.status === 'ONLINE' ? 'text-emerald-500' : 
+                                                            mgr.status === 'IDLE' ? 'text-amber-500' : 
+                                                            'text-slate-500'
+                                                        }`}>
+                                                            {mgr.status === 'ONLINE' ? 'متصل' : 
+                                                             mgr.status === 'IDLE' ? 'خمول' : 
+                                                             'خارج الاتصال'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
 
                 {/* Secondary Analytics Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

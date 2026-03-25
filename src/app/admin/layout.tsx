@@ -295,6 +295,35 @@ function PermissionGuard({ children, pathname }: { children: React.ReactNode; pa
 
     const requiredPermission = Object.entries(routePermissions).find(([route]) => pathname?.startsWith(route))?.[1];
 
+    // Check for Master Admin Access Toggle
+    if (user && user.adminAccessEnabled === false) {
+        return (
+            <div className="flex flex-col items-center justify-center py-32 text-center">
+                <div className="size-20 rounded-full bg-amber-500/10 flex items-center justify-center mb-6">
+                    <span className="material-symbols-outlined !text-4xl text-amber-500">hail</span>
+                </div>
+                <h2 className="text-2xl font-black text-white mb-2">الوصول مقيد حالياً</h2>
+                <p className="text-slate-400 max-w-sm font-bold text-lg mb-4">
+                    يجب مراجعة مدير المشروع
+                </p>
+                <p className="text-slate-500 text-sm max-w-xs">
+                    تم تعليق وصولك للوحة الإدارة من قبل المشرف. يرجى مراجعة المسؤول المباشر خارج أوقات العمل الرسمية.
+                </p>
+                <div className="mt-8 flex gap-4">
+                    <Link href="/dashboard" className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-xl font-bold transition">
+                        الذهاب للملف الشخصي
+                    </Link>
+                    <button 
+                        onClick={() => window.location.href = "/api/auth/signout"}
+                        className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2.5 rounded-xl font-bold transition"
+                    >
+                        تسجيل الخروج
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     if (requiredPermission && !user?.permissions?.includes(requiredPermission)) {
         return (
             <div className="flex flex-col items-center justify-center py-32 text-center">

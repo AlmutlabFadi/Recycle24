@@ -8,7 +8,7 @@ import { FinanceActionMenu } from "./finance-action-menu";
 interface FinanceHoldsTableProps {
   holds: FinanceHoldRow[];
   isLoading: boolean;
-  currentUserRole: AdminRole;
+  permissionContext: PermissionContext;
   onActionSelect: (actionType: string, recordId: string) => void;
 }
 
@@ -16,7 +16,7 @@ function formatNumber(value: number) {
   return value.toLocaleString("en-US");
 }
 
-export function FinanceHoldsTable({ holds, isLoading, currentUserRole, onActionSelect }: FinanceHoldsTableProps) {
+export function FinanceHoldsTable({ holds, isLoading, permissionContext, onActionSelect }: FinanceHoldsTableProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   if (isLoading) return <div className="p-10 text-center animate-pulse text-slate-400 font-black tracking-widest uppercase shadow-inner bg-slate-50/50 rounded-xl">جاري استعراض المبالغ المحجوزة...</div>;
@@ -39,7 +39,7 @@ export function FinanceHoldsTable({ holds, isLoading, currentUserRole, onActionS
         </thead>
         <tbody className="divide-y divide-slate-100">
           {holds.map(hold => {
-            const permissionCtx: PermissionContext = { role: currentUserRole, selectedRow: hold as any };
+            const rowContext: PermissionContext = { ...permissionContext, selectedRow: hold as any };
             const isMenuOpen = openMenuId === hold.id;
 
             return (
@@ -73,7 +73,7 @@ export function FinanceHoldsTable({ holds, isLoading, currentUserRole, onActionS
                 </td>
                 <td className={`px-5 py-4 text-center sticky left-0 bg-white group-hover:bg-blue-50/30 shadow-[4px_0_6px_-2px_rgba(0,0,0,0.05)] transition-all ${isMenuOpen ? 'z-50' : 'z-20'}`}>
                   <FinanceActionMenu 
-                    context={permissionCtx}
+                    context={rowContext}
                     recordId={hold.id}
                     recordType="HOLD"
                     onSelectAction={onActionSelect}

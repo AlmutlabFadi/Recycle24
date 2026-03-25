@@ -3,14 +3,14 @@
 import React from "react";
 import { FinanceRequestDetail } from "../_lib/types";
 import { FinanceActionMenu } from "./finance-action-menu";
-import { AdminRole } from "../_lib/permissions";
+import { PermissionContext } from "../_lib/permissions";
 
 interface FinanceDetailDrawerProps {
   isOpen: boolean;
   detail: FinanceRequestDetail | null;
   isLoading: boolean;
   onClose: () => void;
-  currentUserRole: AdminRole;
+  permissionContext: PermissionContext;
   onActionSelect: (
     actionType: string,
     recordId: string,
@@ -30,7 +30,7 @@ export function FinanceDetailDrawer({
   detail,
   isLoading,
   onClose,
-  currentUserRole,
+  permissionContext,
   onActionSelect,
 }: FinanceDetailDrawerProps) {
   if (!isOpen) return null;
@@ -66,7 +66,7 @@ export function FinanceDetailDrawer({
                 </div>
                 <FinanceActionMenu
                   inline
-                  context={{ role: currentUserRole, selectedRow: detail }}
+                  context={{ ...permissionContext, selectedRow: detail }}
                   recordId={detail.id}
                   recordType="REQUEST"
                   requestType={detail.type}

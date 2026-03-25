@@ -43,6 +43,8 @@ interface Wallet {
   verifiedBalanceUSD: number;
   availableBalanceUSD: number;
   heldAmountUSD: number;
+  holdsBreakdownSYP?: { type: string; amount: number }[];
+  holdsBreakdownUSD?: { type: string; amount: number }[];
   transactions: Transaction[];
   history: LedgerHistory[];
   debtDetails?: DebtDetails[] | null;
@@ -58,14 +60,16 @@ interface UseWalletReturn {
     amount: number,
     method: string,
     referenceNumber: string,
-    currency?: string
-  ) => Promise<boolean>;
+    currency?: string,
+    otpCode?: string
+  ) => Promise<{ success: boolean; requiresOTP?: boolean; expiresIn?: number; error?: string }>;
   withdraw: (
     amount: number,
     method: string,
     accountNumber: string,
-    currency?: string
-  ) => Promise<boolean>;
+    currency?: string,
+    otpCode?: string
+  ) => Promise<{ success: boolean; requiresOTP?: boolean; expiresIn?: number; error?: string }>;
   refresh: () => void;
 }
 
@@ -111,10 +115,11 @@ export function useWallet(): UseWalletReturn {
       amount: number,
       method: string,
       referenceNumber: string,
-      currency: string = "SYP"
-    ): Promise<boolean> => {
+      currency: string = "SYP",
+      otpCode?: string
+    ): Promise<{ success: boolean; requiresOTP?: boolean; expiresIn?: number; error?: string }> => {
       if (!user) {
-        return false;
+        return { success: false, error: "User not authenticated" };
       }
 
       try {
@@ -132,22 +137,27 @@ export function useWallet(): UseWalletReturn {
             method,
             proofUrl: referenceNumber,
             currency,
+            otpCode,
           }),
         });
 
         const data = await response.json();
+
+        if (data.requiresOTP) {
+          return { success: false, requiresOTP: true, expiresIn: data.expiresIn };
+        }
 
         if (!response.ok) {
           throw new Error(data.error || "Failed to create deposit request");
         }
 
         await fetchWallet();
-        return true;
+        return { success: true };
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Unknown deposit error";
         setError(errorMessage);
-        return false;
+        return { success: false, error: errorMessage };
       } finally {
         setIsLoading(false);
       }
@@ -160,10 +170,11 @@ export function useWallet(): UseWalletReturn {
       amount: number,
       method: string,
       accountNumber: string,
-      currency: string = "SYP"
-    ): Promise<boolean> => {
+      currency: string = "SYP",
+      otpCode?: string
+    ): Promise<{ success: boolean; requiresOTP?: boolean; expiresIn?: number; error?: string }> => {
       if (!user) {
-        return false;
+        return { success: false, error: "User not authenticated" };
       }
 
       try {
@@ -181,22 +192,27 @@ export function useWallet(): UseWalletReturn {
             method,
             destination: accountNumber,
             currency,
+            otpCode,
           }),
         });
 
         const data = await response.json();
+
+        if (data.requiresOTP) {
+          return { success: false, requiresOTP: true, expiresIn: data.expiresIn };
+        }
 
         if (!response.ok) {
           throw new Error(data.error || "Failed to create payout request");
         }
 
         await fetchWallet();
-        return true;
+        return { success: true };
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Unknown withdrawal error";
         setError(errorMessage);
-        return false;
+        return { success: false, error: errorMessage };
       } finally {
         setIsLoading(false);
       }

@@ -83,7 +83,7 @@ export default function ProfilePage() {
     const [isUpgrading, setIsUpgrading] = useState(false);
     const [safetyScore, setSafetyScore] = useState<number | null>(null);
     const isTrader = activeRole === "TRADER";
-    const isAdmin = activeRole === "ADMIN";
+    const isAdmin = activeRole === "ADMIN" || user?.role === "ADMIN";
     const dealsCount = Array.isArray((user as { deals?: unknown[] } | null)?.deals)
         ? (user as { deals?: unknown[] }).deals?.length ?? 0
         : 0;
@@ -102,18 +102,18 @@ export default function ProfilePage() {
         { icon: "settings", label: "إعدادات الحساب", href: "/settings/account" },
         { icon: "security", label: "الأمان والخصوصية", href: "/settings/security" },
         { icon: "rocket_launch", label: "مركز القيادة والتحكم", href: "/admin/dashboard" },
-        { icon: "account_balance", label: "رصيد النظام والمالية", href: "/admin/finance" },
-        { icon: "monitoring", label: "مراقبة الأسواق والمعاملات", href: "/admin/marketplace" },
-        { icon: "person_search", label: "حوكمة المستخدمين والأدوار", href: "/admin/users" },
-        { icon: "verified", label: "التوثيق المستندي", href: "/admin/verification" },
-        { icon: "design_services", label: "مصمم باقات الاشتراك", href: "/admin/subscriptions/packages" },
-        { icon: "loyalty", label: "إعدادات المكافآت", href: "/admin/rewards" },
-        { icon: "security", label: "مركز الأمان (SOC)", href: "/admin/soc" },
-        { icon: "history_edu", label: "سجل التدقيق العام", href: "/gsocc/audit" },
-        { icon: "analytics", label: "أسعار السوق (رقابة)", href: "/market" },
-        { icon: "support_agent", label: "مكتب الدعم والعمليات", href: "/admin/support" },
+        { icon: "account_balance", label: "رصيد النظام والمالية", href: "/admin/finance", permission: "MANAGE_FINANCE" },
+        { icon: "monitoring", label: "مراقبة الأسواق والمعاملات", href: "/admin/marketplace", permission: "MANAGE_KNOWLEDGE" },
+        { icon: "person_search", label: "حوكمة المستخدمين والأدوار", href: "/admin/users", permission: "MANAGE_USERS" },
+        { icon: "verified", label: "التوثيق المستندي", href: "/admin/verification", permission: "MANAGE_USERS" },
+        { icon: "design_services", label: "مصمم باقات الاشتراك", href: "/admin/subscriptions/packages", permission: "MANAGE_FINANCE" },
+        { icon: "loyalty", label: "إعدادات المكافآت", href: "/admin/rewards", permission: "MANAGE_REWARDS" },
+        { icon: "security", label: "مركز الأمان (SOC)", href: "/admin/soc", permission: "MANAGE_ACCESS" },
+        { icon: "history_edu", label: "سجل التدقيق العام", href: "/gsocc/audit", permission: "MANAGE_ACCESS" },
+        { icon: "analytics", label: "أسعار السوق (رقابة)", href: "/market", permission: "MANAGE_KNOWLEDGE" },
+        { icon: "support_agent", label: "مكتب الدعم والعمليات", href: "/admin/support", permission: "MANAGE_SUPPORT" },
         { icon: "help", label: "مركز المساعدة الإداري", href: "/help" },
-    ] : [
+    ].filter(item => !item.permission || user?.permissions?.includes(item.permission)) : [
         { icon: "settings", label: "إعدادات الحساب", href: "/settings/account" },
         { icon: "security", label: "الأمان والخصوصية", href: "/settings/security" },
         { icon: "dashboard", label: "لوحة التحكم", href: "/dashboard" },
@@ -321,7 +321,13 @@ export default function ProfilePage() {
     };
 
     const handleRoleSwitch = (role: ActiveRole) => {
-        if (role === "CLIENT" || role === "ADMIN") {
+        if (role === "ADMIN") {
+            switchRole("ADMIN");
+            window.location.href = "/admin/dashboard";
+            return;
+        }
+
+        if (role === "CLIENT") {
             switchRole(role);
             return;
         }
@@ -594,7 +600,9 @@ export default function ProfilePage() {
                                     )}
                                     
                                     <p className="text-sm text-slate-400 mt-0.5">
-                                        {isTrader ? (
+                                        {user?.role === "ADMIN" ? (
+                                            `مدير النظام • ${user.permissions?.length || 0} صلاحية`
+                                        ) : isTrader ? (
                                             `${getCompanyTypeLabel(profile.companyType)} • ${getUserTypeLabel(user?.userType || "TRADER")}`
                                         ) : (
                                             `${profile.businessType === "OTHER" ? (profile.customBusinessType || "أخرى") : getClientBusinessLabel(profile.businessType)} • عميل`

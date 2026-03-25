@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requirePermission, PERMISSIONS } from "@/lib/rbac";
+import { requirePermission, PERMISSIONS, bootstrapAccessControl } from "@/lib/rbac";
 
 export async function GET() {
     try {
@@ -9,7 +9,14 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: access.status });
         }
 
-        const users = await db.user.findMany({
+        // Auto-bootstrap if atomic roles are missing
+        const atomicRoleCount = await db.role.count({ where: { name: { startsWith: "__PERM_" } } });
+        if (atomicRoleCount === 0) {
+            console.log("Atomic roles missing. Bootstrapping...");
+            await bootstrapAccessControl();
+        }
+
+        const users = await (db.user.findMany as any)({
             where: {
                 userRoles: {
                     some: {} // Has at least one role
@@ -23,13 +30,25 @@ export async function GET() {
                 userType: true,
                 role: true,
                 currentAdminStatus: true,
+                adminAccessEnabled: true,
                 lastActiveAt: true,
                 userRoles: {
                     select: {
                         role: {
                             select: {
                                 id: true,
-                                name: true
+                                name: true,
+                                rolePermissions: {
+                                    select: {
+                                        permission: {
+                                            select: {
+                                                id: true,
+                                                key: true,
+                                                label: true
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

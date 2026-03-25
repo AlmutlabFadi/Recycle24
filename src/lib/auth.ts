@@ -1,4 +1,4 @@
-﻿import { NextAuthOptions } from "next-auth";
+import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
@@ -15,6 +15,7 @@ interface AuthUser {
   isVerified?: boolean;
   isLocked?: boolean;
   lockReason?: string | null;
+  adminAccessEnabled?: boolean;
 }
 
 interface Credentials {
@@ -42,6 +43,7 @@ declare module "next-auth/jwt" {
     isVerified?: boolean;
     isLocked?: boolean;
     lockReason?: string | null;
+    adminAccessEnabled?: boolean;
     permissions?: string[];
   }
 }
@@ -98,7 +100,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email or Phone is required");
         }
 
-        const user = await db.user.findFirst({
+        const user = await (db.user.findFirst as any)({
           where: {
             OR: [
               email ? { email } : null,
@@ -117,14 +119,15 @@ export const authOptions: NextAuthOptions = {
             isVerified: true,
             isLocked: true,
             lockReason: true,
+            adminAccessEnabled: true,
           },
         });
 
-        if (!user || !user.password) {
+        if (!user || !(user as any).password) {
           throw new Error("Invalid credentials");
         }
 
-        const isValid = await compare(password, user.password);
+        const isValid = await compare(password, (user as any).password);
 
         if (!isValid) {
           throw new Error("Invalid credentials");
@@ -141,6 +144,7 @@ export const authOptions: NextAuthOptions = {
           isVerified: user.isVerified,
           isLocked: user.isLocked,
           lockReason: user.lockReason,
+          adminAccessEnabled: (user as any).adminAccessEnabled,
         };
       },
     }),
@@ -163,11 +167,23 @@ export const authOptions: NextAuthOptions = {
         token.isVerified = authUser.isVerified ?? undefined;
         token.isLocked = authUser.isLocked ?? undefined;
         token.lockReason = authUser.lockReason ?? undefined;
+        token.adminAccessEnabled = authUser.adminAccessEnabled ?? true;
         token.permissions = await loadUserPermissions(authUser.id);
       }
 
       if (trigger === "update" && token.id) {
         token.permissions = await loadUserPermissions(token.id);
+        // Also refresh adminAccessEnabled, userType, role, and status on update
+        const dbUser = await (db.user.findUnique as any)({ 
+          where: { id: token.id }, 
+          select: { adminAccessEnabled: true, userType: true, role: true, status: true } 
+        });
+        if (dbUser) {
+          token.adminAccessEnabled = (dbUser as any).adminAccessEnabled;
+          token.userType = (dbUser as any).userType;
+          token.role = (dbUser as any).role;
+          token.status = (dbUser as any).status;
+        }
       }
 
       return token;
@@ -184,6 +200,7 @@ export const authOptions: NextAuthOptions = {
         session.user.isVerified = token.isVerified;
         session.user.isLocked = token.isLocked;
         session.user.lockReason = token.lockReason;
+        session.user.adminAccessEnabled = token.adminAccessEnabled ?? true;
         session.user.permissions = token.permissions ?? [];
       }
 

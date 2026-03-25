@@ -12,16 +12,30 @@ export async function GET(request: NextRequest) {
 
     const userId = session.user.id;
     const { searchParams } = new URL(request.url);
-    const year = parseInt(searchParams.get("year") || String(new Date().getFullYear()));
-    const month = parseInt(searchParams.get("month") || String(new Date().getMonth() + 1));
     const currency = searchParams.get("currency") || "SYP";
+    const fromDateStr = searchParams.get("fromDate");
+    const toDateStr = searchParams.get("toDate");
 
-    if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
-      return NextResponse.json({ error: "Invalid year/month" }, { status: 400 });
+    let startDate: Date;
+    let endDate: Date;
+    let year = 0;
+    let month = 0;
+
+    if (fromDateStr && toDateStr) {
+      startDate = new Date(fromDateStr);
+      endDate = new Date(toDateStr);
+      endDate.setHours(23, 59, 59, 999); // Include the whole day
+    } else {
+      year = parseInt(searchParams.get("year") || String(new Date().getFullYear()));
+      month = parseInt(searchParams.get("month") || String(new Date().getMonth() + 1));
+      
+      if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+        return NextResponse.json({ error: "Invalid year/month" }, { status: 400 });
+      }
+
+      startDate = new Date(year, month - 1, 1);
+      endDate = new Date(year, month, 1);
     }
-
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 1);
 
     const accountSlug = `USER_${userId}_${currency}`;
     const account = await db.ledgerAccount.findUnique({
