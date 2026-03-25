@@ -19,22 +19,22 @@ export const PERMISSIONS = {
 } as const;
 
 const DEFAULT_PERMISSIONS = [
-  { key: PERMISSIONS.MANAGE_ACCESS, label: "إدارة الصلاحيات", description: "إدارة الأدوار والدعوات" },
-  { key: PERMISSIONS.MANAGE_KNOWLEDGE, label: "إدارة المحتوى", description: "إضافة وتحديث محتوى المراكز" },
-  { key: PERMISSIONS.MANAGE_USERS, label: "إدارة المستخدمين", description: "توثيق الحسابات وإدارة بائعي الخردة" },
-  { key: PERMISSIONS.MANAGE_DRIVERS, label: "إدارة السائقين", description: "إدارة ملفات السائقين وحالاتهم" },
-  { key: PERMISSIONS.REVIEW_DRIVER_DOCS, label: "مراجعة وثائق السائق", description: "مراجعة وثائق السائقين واعتمادها" },
-  { key: PERMISSIONS.MANAGE_SUPPORT, label: "الدعم الفني", description: "الرد على تذاكر الدعم وحل المشكلات" },
-  { key: PERMISSIONS.MANAGE_FINANCE, label: "الإدارة المالية", description: "إدارة الاشتراكات والرسوم والتقارير" },
-  { key: PERMISSIONS.FINANCE_FINAL_APPROVE, label: "الاعتماد المالي النهائي", description: "صلاحية الاعتماد النهائي لعمليات السحب والتحويل الكبيرة" },
-  { key: PERMISSIONS.MANAGE_REWARDS, label: "نظام المكافآت", description: "إدارة نقاط التدوير والجوائز" },
-  { key: PERMISSIONS.UPLOAD_MEDIA, label: "رفع الوسائط", description: "رفع صور وفيديوهات للمحتوى" },
-  { key: PERMISSIONS.ACCESS_SAFETY, label: "مركز السلامة", description: "الوصول لمحتوى السلامة" },
-  { key: PERMISSIONS.ACCESS_CONSULTATIONS, label: "مركز الاستشارات", description: "الوصول لمحتوى الاستشارات" },
-  { key: PERMISSIONS.ACCESS_ACADEMY, label: "الأكاديمية", description: "الوصول لمحتوى الأكاديمية" },
+  { key: PERMISSIONS.MANAGE_ACCESS, label: "????? ?????????", description: "????? ??????? ????????" },
+  { key: PERMISSIONS.MANAGE_KNOWLEDGE, label: "????? ???????", description: "????? ?????? ????? ???????" },
+  { key: PERMISSIONS.MANAGE_USERS, label: "????? ??????????", description: "????? ???????? ?????? ????? ??????" },
+  { key: PERMISSIONS.MANAGE_DRIVERS, label: "????? ????????", description: "????? ????? ???????? ????????" },
+  { key: PERMISSIONS.REVIEW_DRIVER_DOCS, label: "?????? ????? ??????", description: "?????? ????? ???????? ?????????" },
+  { key: PERMISSIONS.MANAGE_SUPPORT, label: "????? ?????", description: "???? ??? ????? ????? ??? ????????" },
+  { key: PERMISSIONS.MANAGE_FINANCE, label: "??????? ???????", description: "????? ?????????? ??????? ?????????" },
+  { key: PERMISSIONS.FINANCE_FINAL_APPROVE, label: "???????? ?????? ???????", description: "?????? ???????? ??????? ??????? ????? ???????? ???????" },
+  { key: PERMISSIONS.MANAGE_REWARDS, label: "???? ????????", description: "????? ???? ??????? ????????" },
+  { key: PERMISSIONS.UPLOAD_MEDIA, label: "??? ???????", description: "??? ??? ????????? ???????" },
+  { key: PERMISSIONS.ACCESS_SAFETY, label: "???? ???????", description: "?????? ?????? ???????" },
+  { key: PERMISSIONS.ACCESS_CONSULTATIONS, label: "???? ??????????", description: "?????? ?????? ??????????" },
+  { key: PERMISSIONS.ACCESS_ACADEMY, label: "??????????", description: "?????? ?????? ??????????" },
 ];
 
-const ATOMIC_ROLES = Object.values(PERMISSIONS).map(perm => ({
+const ATOMIC_ROLES = Object.values(PERMISSIONS).map((perm) => ({
   name: `__PERM_${perm}`,
   description: `Atomic Permission Role for ${perm}`,
   isSystem: true,
@@ -44,13 +44,13 @@ const ATOMIC_ROLES = Object.values(PERMISSIONS).map(perm => ({
 const DEFAULT_ROLES = [
   {
     name: "OWNER",
-    description: "المدير الرئيسي للمشروع",
+    description: "?????? ??????? ???????",
     isSystem: true,
     permissions: Object.values(PERMISSIONS),
   },
   {
     name: "SUPPORT_LEAD",
-    description: "مسؤول الدعم الفني",
+    description: "????? ????? ?????",
     isSystem: true,
     permissions: [
       PERMISSIONS.MANAGE_SUPPORT,
@@ -61,7 +61,7 @@ const DEFAULT_ROLES = [
   },
   {
     name: "SAFETY_SUPERVISOR",
-    description: "مشرف مركز السلامة",
+    description: "???? ???? ???????",
     isSystem: true,
     permissions: [
       PERMISSIONS.MANAGE_KNOWLEDGE,
@@ -71,7 +71,7 @@ const DEFAULT_ROLES = [
   },
   {
     name: "CONSULTATIONS_SUPERVISOR",
-    description: "مشرف مركز الاستشارات",
+    description: "???? ???? ??????????",
     isSystem: true,
     permissions: [
       PERMISSIONS.MANAGE_KNOWLEDGE,
@@ -81,7 +81,7 @@ const DEFAULT_ROLES = [
   },
   {
     name: "ACADEMY_SUPERVISOR",
-    description: "مشرف الأكاديمية",
+    description: "???? ??????????",
     isSystem: true,
     permissions: [
       PERMISSIONS.MANAGE_KNOWLEDGE,
@@ -92,14 +92,43 @@ const DEFAULT_ROLES = [
   ...ATOMIC_ROLES,
 ];
 
-export async function bootstrapAccessControl() {
+let bootstrapPromise: Promise<void> | null = null;
+
+export async function isAccessControlBootstrapped() {
+  const [permissionCount, atomicRoleCount] = await Promise.all([
+    db.permission.count({
+      where: {
+        key: {
+          in: Object.values(PERMISSIONS),
+        },
+      },
+    }),
+    db.role.count({
+      where: {
+        name: {
+          startsWith: "__PERM_",
+        },
+      },
+    }),
+  ]);
+
+  return (
+    permissionCount >= Object.values(PERMISSIONS).length &&
+    atomicRoleCount >= ATOMIC_ROLES.length
+  );
+}
+
+async function bootstrapAccessControlInternal() {
   await db.$transaction(
     async (tx) => {
       const permissions = await Promise.all(
         DEFAULT_PERMISSIONS.map((permission) =>
           tx.permission.upsert({
             where: { key: permission.key },
-            update: { label: permission.label, description: permission.description },
+            update: {
+              label: permission.label,
+              description: permission.description,
+            },
             create: permission,
           })
         )
@@ -110,7 +139,10 @@ export async function bootstrapAccessControl() {
       for (const role of DEFAULT_ROLES) {
         const createdRole = await tx.role.upsert({
           where: { name: role.name },
-          update: { description: role.description, isSystem: role.isSystem },
+          update: {
+            description: role.description,
+            isSystem: role.isSystem,
+          },
           create: {
             name: role.name,
             description: role.description,
@@ -121,7 +153,10 @@ export async function bootstrapAccessControl() {
         const rolePermissionData = role.permissions
           .map((key) => permissionMap.get(key))
           .filter((id): id is string => Boolean(id))
-          .map((permissionId) => ({ roleId: createdRole.id, permissionId }));
+          .map((permissionId) => ({
+            roleId: createdRole.id,
+            permissionId,
+          }));
 
         for (const rp of rolePermissionData) {
           await tx.rolePermission.upsert({
@@ -137,15 +172,15 @@ export async function bootstrapAccessControl() {
         }
       }
 
-      // 3. Associate OWNER role only with the primary administrator
       const ownerRole = await tx.role.findUnique({
         where: { name: "OWNER" },
         select: { id: true },
       });
 
       if (ownerRole) {
-        // Only assign OWNER to the primary administrator email
-        const primaryAdminEmail = process.env.OWNER_EMAIL || "emixdigitall@gmail.com";
+        const primaryAdminEmail =
+          process.env.OWNER_EMAIL || "emixdigitall@gmail.com";
+
         const primaryUser = await tx.user.findUnique({
           where: { email: primaryAdminEmail },
           select: { id: true },
@@ -160,13 +195,31 @@ export async function bootstrapAccessControl() {
               },
             },
             update: {},
-            create: { userId: primaryUser.id, roleId: ownerRole.id },
+            create: {
+              userId: primaryUser.id,
+              roleId: ownerRole.id,
+            },
           });
         }
       }
     },
     { timeout: 60000 }
   );
+}
+
+export async function bootstrapAccessControl(force = false) {
+  if (!force) {
+    const ready = await isAccessControlBootstrapped();
+    if (ready) return;
+  }
+
+  if (!bootstrapPromise) {
+    bootstrapPromise = bootstrapAccessControlInternal().finally(() => {
+      bootstrapPromise = null;
+    });
+  }
+
+  await bootstrapPromise;
 }
 
 export async function getSessionUserId() {
