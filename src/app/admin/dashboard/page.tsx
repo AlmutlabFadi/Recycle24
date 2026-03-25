@@ -68,7 +68,7 @@ export default function AdminCommandCenter() {
 
                 if (isMounted) {
                     if (statsData.success) setStats(statsData.stats);
-                    if (managerData.success) setDeptManagers(managerData.departments);
+                    if (managerData.success) setDeptManagers(Array.isArray(managerData.departments) ? managerData.departments : []);
                 }
             } catch (error) {
                 console.error("Error fetching admin stats:", error);
@@ -109,7 +109,7 @@ export default function AdminCommandCenter() {
         "الدعم الفني": ["MANAGE_SUPPORT"],
     };
 
-    const visibleDepartments = deptManagers.filter(dept => {
+    const visibleDepartments = (Array.isArray(deptManagers) ? deptManagers : []).filter(dept => {
         const required = deptPermissionMap[dept.department];
         if (!required) return true;
         return required.some(p => userPermissions.includes(p));
@@ -322,4 +322,6 @@ export default function AdminCommandCenter() {
         </div>
     );
 }
+
+
 
