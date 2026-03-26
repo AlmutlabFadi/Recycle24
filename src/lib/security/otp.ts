@@ -3,7 +3,7 @@ import { createHash, randomInt } from "node:crypto";
 import { db } from "@/lib/db";
 import { sendEmail } from "@/lib/email/service";
 
-type OTPActionType = "WITHDRAWAL" | "DEPOSIT" | "TRANSFER" | "NEW_DEVICE";
+export type OTPActionType = "WITHDRAWAL" | "DEPOSIT" | "TRANSFER" | "NEW_DEVICE";
 
 type OTPMetadata = {
   amount?: number;
@@ -18,11 +18,28 @@ type OTPUser = {
 
 const OTP_TTL_SECONDS = 120;
 const OTP_LENGTH = 6;
+const FINANCIAL_ACTIONS = new Set<OTPActionType>(["DEPOSIT", "WITHDRAWAL", "TRANSFER"]);
 
-function normalizeReferenceId(referenceId?: string) {
+function normalizeReferenceId(referenceId?: string | null) {
   const normalized = referenceId?.trim();
-
   return normalized && normalized.length > 0 ? normalized : null;
+}
+
+function normalizeText(value?: string | null) {
+  const normalized = value?.trim();
+  return normalized && normalized.length > 0 ? normalized : "";
+}
+
+function normalizeCurrencyValue(value?: string | null) {
+  return normalizeText(value).toUpperCase();
+}
+
+function normalizeAmount(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    return "";
+  }
+
+  return value.toFixed(6);
 }
 
 function generateNumericOTP(length: number) {
@@ -49,7 +66,7 @@ function buildOTPEmail(params: {
   }
 
   if (params.metadata?.target) {
-    details.push(`الوجهة/الطريقة: ${params.metadata.target}`);
+    details.push(`الجهة/الطريقة: ${params.metadata.target}`);
   }
 
   const detailsBlock =
@@ -80,6 +97,32 @@ async function getUserEmail(userId: string): Promise<OTPUser> {
   };
 }
 
+function assertReferenceForAction(actionType: OTPActionType, referenceId: string | null) {
+  if (FINANCIAL_ACTIONS.has(actionType) && !referenceId) {
+    throw new Error(`OTP reference is required for ${actionType}`);
+  }
+}
+
+export function buildFinancialOTPReference(params: {
+  userId: string;
+  actionType: Extract<OTPActionType, "DEPOSIT" | "WITHDRAWAL" | "TRANSFER">;
+  amount: number;
+  currency: string;
+  target?: string | null;
+  note?: string | null;
+}) {
+  const payload = [
+    params.userId.trim(),
+    params.actionType.trim(),
+    normalizeAmount(params.amount),
+    normalizeCurrencyValue(params.currency),
+    normalizeText(params.target).toLowerCase(),
+    normalizeText(params.note).toLowerCase(),
+  ].join("|");
+
+  return createHash("sha256").update(payload).digest("hex");
+}
+
 export class SecurityOTPService {
   static async generateOTP(
     userId: string,
@@ -88,9 +131,10 @@ export class SecurityOTPService {
     metadata?: OTPMetadata
   ): Promise<{ code: string; expiresAt: Date }> {
     const normalizedReferenceId = normalizeReferenceId(referenceId);
+    assertReferenceForAction(actionType, normalizedReferenceId);
+
     const code = generateNumericOTP(OTP_LENGTH);
     const expiresAt = new Date(Date.now() + OTP_TTL_SECONDS * 1000);
-
     const user = await getUserEmail(userId);
 
     await db.$transaction(async (tx) => {
@@ -131,7 +175,11 @@ export class SecurityOTPService {
       metadata,
     });
 
-    await sendEmail(user.email, email.subject, email.html);
+    const sent = await sendEmail(user.email, email.subject, email.html);
+
+    if (!sent) {
+      throw new Error("OTP delivery failed");
+    }
 
     return { code, expiresAt };
   }
@@ -146,6 +194,12 @@ export class SecurityOTPService {
     const normalizedReferenceId = normalizeReferenceId(referenceId);
 
     if (!/^\d{6}$/.test(normalizedCode)) {
+      return false;
+    }
+
+    try {
+      assertReferenceForAction(actionType, normalizedReferenceId);
+    } catch {
       return false;
     }
 

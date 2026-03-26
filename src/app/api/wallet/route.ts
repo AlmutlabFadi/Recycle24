@@ -13,8 +13,12 @@ import {
 } from "@/lib/finance/policy";
 import { LedgerEnforcementService } from "@/lib/ledger/enforcement";
 import { LedgerPostingService } from "@/lib/ledger/service";
-import { Currency, HoldStatus, LedgerAccountSlug, TransactionType } from "@/lib/ledger/types";
+import { Currency, HoldStatus } from "@/lib/ledger/types";
 import { elapsedMs, logPerf, nowMs } from "@/lib/server/perf";
+import {
+  buildFinancialOTPReference,
+  SecurityOTPService,
+} from "@/lib/security/otp";
 import { enforceInMemoryRateLimit } from "@/lib/security/request-rate-limit";
 
 interface SessionUser {
@@ -107,6 +111,42 @@ function enforceWalletActionRateLimit(
   );
 }
 
+function buildDepositOtpReference(params: {
+  userId: string;
+  amount: number;
+  currency: string;
+  method: string;
+  proofUrl: string | null;
+  requestNote: string | null;
+}) {
+  return buildFinancialOTPReference({
+    userId: params.userId,
+    actionType: "DEPOSIT",
+    amount: params.amount,
+    currency: params.currency,
+    target: `${params.method}|${params.proofUrl ?? ""}`,
+    note: params.requestNote,
+  });
+}
+
+function buildWithdrawalOtpReference(params: {
+  userId: string;
+  amount: number;
+  currency: string;
+  method: string;
+  destination: string;
+  requestNote: string | null;
+}) {
+  return buildFinancialOTPReference({
+    userId: params.userId,
+    actionType: "WITHDRAWAL",
+    amount: params.amount,
+    currency: params.currency,
+    target: `${params.method}|${params.destination}`,
+    note: params.requestNote,
+  });
+}
+
 async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
   const ledgerAccountSYP = await LedgerPostingService.getOrCreateAccount(
     `USER_${userId}_SYP`,
@@ -139,11 +179,17 @@ async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
     })
   ]);
 
-  const holdsBreakdownSYP = holdsSYP.map(h => ({ type: h.referenceType ?? "UNKNOWN", amount: h._sum.amount ?? 0 }));
+  const holdsBreakdownSYP = holdsSYP.map((h) => ({
+    type: h.referenceType ?? "UNKNOWN",
+    amount: h._sum.amount ?? 0,
+  }));
   const totalHeldSYP = holdsBreakdownSYP.reduce((sum, h) => sum + h.amount, 0);
   const availableBalanceSYP = ledgerAccountSYP.balance - totalHeldSYP;
 
-  const holdsBreakdownUSD = holdsUSD.map(h => ({ type: h.referenceType ?? "UNKNOWN", amount: h._sum.amount ?? 0 }));
+  const holdsBreakdownUSD = holdsUSD.map((h) => ({
+    type: h.referenceType ?? "UNKNOWN",
+    amount: h._sum.amount ?? 0,
+  }));
   const totalHeldUSD = holdsBreakdownUSD.reduce((sum, h) => sum + h.amount, 0);
   const availableBalanceUSD = ledgerAccountUSD.balance - totalHeldUSD;
 
@@ -161,7 +207,10 @@ async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
         balanceUSD: ledgerAccountUSD.balance,
       },
     });
-  } else if (wallet.balanceSYP !== ledgerAccountSYP.balance || wallet.balanceUSD !== ledgerAccountUSD.balance) {
+  } else if (
+    wallet.balanceSYP !== ledgerAccountSYP.balance ||
+    wallet.balanceUSD !== ledgerAccountUSD.balance
+  ) {
     wallet = await db.wallet.update({
       where: {
         id: wallet.id,
@@ -211,7 +260,6 @@ async function getAuthenticatedUser(): Promise<
   return { userId: sessionUser.id };
 }
 
-// GET /api/wallet - wallet snapshot only
 export async function GET(_request: NextRequest) {
   const startedAt = nowMs();
 
@@ -288,7 +336,7 @@ export async function GET(_request: NextRequest) {
   }
 }
 
-// POST /api/wallet - create deposit request
+// POST /api/wallet - create deposit request only (no direct crediting)
 export async function POST(request: NextRequest) {
   const startedAt = nowMs();
 
@@ -325,8 +373,7 @@ export async function POST(request: NextRequest) {
     const method = parseNonEmptyString(body?.method);
     const proofUrl = parseNonEmptyString(body?.proofUrl);
     const requestNote = parseNonEmptyString(body?.requestNote);
-    const currency =
-      normalizeCurrency(body?.currency ?? Currency.SYP) ?? null;
+    const currency = normalizeCurrency(body?.currency ?? Currency.SYP) ?? null;
     const otpCode = parseNonEmptyString(body?.otpCode);
 
     if (!amount || !method || !currency) {
@@ -334,26 +381,6 @@ export async function POST(request: NextRequest) {
         { error: "Amount, method, and valid currency are required" },
         { status: 400 }
       );
-    }
-
-    // 🛡️ FINANCIAL 2FA (OTP) INTERCEPTOR 🛡️
-    const { SecurityOTPService } = await import("@/lib/security/otp");
-    if (!otpCode) {
-      await SecurityOTPService.generateOTP(auth.userId, "DEPOSIT", undefined, {
-        amount,
-        currency,
-        target: method,
-      });
-      return NextResponse.json({
-        requiresOTP: true,
-        message: "يرجى إدخال رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني. الرمز صالح لمدة 120 ثانية.",
-        expiresIn: 120
-      });
-    }
-
-    const isValidOTP = await SecurityOTPService.verifyOTP(auth.userId, "DEPOSIT", otpCode);
-    if (!isValidOTP) {
-      return NextResponse.json({ error: "رمز التحقق غير صحيح أو منتهي الصلاحية. يرجى طلب رمز جديد." }, { status: 400 });
     }
 
     try {
@@ -364,6 +391,43 @@ export async function POST(request: NextRequest) {
           error:
             error instanceof Error ? error.message : "Invalid deposit amount",
         },
+        { status: 400 }
+      );
+    }
+
+    const otpReference = buildDepositOtpReference({
+      userId: auth.userId,
+      amount,
+      currency,
+      method,
+      proofUrl,
+      requestNote,
+    });
+
+    if (!otpCode) {
+      await SecurityOTPService.generateOTP(auth.userId, "DEPOSIT", otpReference, {
+        amount,
+        currency,
+        target: method,
+      });
+
+      return NextResponse.json({
+        requiresOTP: true,
+        message: "يرجى إدخال رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني. الرمز صالح لمدة 120 ثانية.",
+        expiresIn: 120,
+      });
+    }
+
+    const isValidOTP = await SecurityOTPService.verifyOTP(
+      auth.userId,
+      "DEPOSIT",
+      otpCode,
+      otpReference
+    );
+
+    if (!isValidOTP) {
+      return NextResponse.json(
+        { error: "رمز التحقق غير صحيح أو منتهي الصلاحية أو لا يخص هذه العملية." },
         { status: 400 }
       );
     }
@@ -394,8 +458,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await db.$transaction(async (tx) => {
-      const createdRequest = await tx.depositRequest.create({
+    const createdRequest = await db.$transaction(async (tx) => {
+      const requestRecord = await tx.depositRequest.create({
         data: {
           accountId: account.id,
           userId: auth.userId,
@@ -404,9 +468,8 @@ export async function POST(request: NextRequest) {
           method,
           proofUrl: proofUrl ?? undefined,
           requestNote: requestNote ?? undefined,
-          status: "COMPLETED",
+          status: "PENDING",
           approvalStage: "NONE",
-          completedAt: new Date(),
         },
         select: {
           id: true,
@@ -424,113 +487,37 @@ export async function POST(request: NextRequest) {
           completedAt: true,
           createdAt: true,
           updatedAt: true,
-          account: {
-            select: {
-              id: true,
-              slug: true,
-              balance: true,
-              currency: true,
-            },
-          },
-        },
-      });
-
-      const ledgerResult = await LedgerPostingService.postEntryInTransaction(
-        tx as never,
-        {
-          type: TransactionType.WALLET_DEPOSIT,
-          description: `Auto-approved deposit request ${createdRequest.id}`,
-          idempotencyKey: `deposit-approve:${createdRequest.id}`,
-          lines: [
-            {
-              accountSlug: LedgerAccountSlug.SYSTEM_LIQUIDITY_POOL,
-              amount: -createdRequest.amount,
-              description: `Auto-approved deposit funding for request ${createdRequest.id}`,
-            },
-            {
-              accountSlug: createdRequest.account.slug,
-              amount: createdRequest.amount,
-              description: `Deposit request ${createdRequest.id} credited`,
-            },
-          ],
-          metadata: {
-            depositRequestId: createdRequest.id,
-            accountId: createdRequest.accountId,
-            userId: createdRequest.userId,
-            method: createdRequest.method,
-            proofUrl: createdRequest.proofUrl,
-            requestNote: createdRequest.requestNote,
-            reviewedByUserId: "SYSTEM",
-            approvedByUserId: null,
-          },
-        },
-      );
-
-      const updatedAccount = await tx.ledgerAccount.findUnique({
-        where: { id: createdRequest.accountId },
-        select: {
-          id: true,
-          slug: true,
-          balance: true,
-        },
-      });
-
-      await tx.wallet.upsert({
-        where: {
-          userId: createdRequest.userId,
-        },
-        update:
-          createdRequest.currency === Currency.SYP
-            ? { balanceSYP: updatedAccount?.balance ?? createdRequest.account.balance }
-            : { balanceUSD: updatedAccount?.balance ?? createdRequest.account.balance },
-        create: {
-          userId: createdRequest.userId,
-          balanceSYP:
-            createdRequest.currency === Currency.SYP
-              ? updatedAccount?.balance ?? createdRequest.account.balance
-              : 0,
-          balanceUSD:
-            createdRequest.currency === Currency.USD
-              ? updatedAccount?.balance ?? createdRequest.account.balance
-              : 0,
+          approvalStage: true,
         },
       });
 
       await tx.auditLog.create({
         data: {
           actorRole: "SYSTEM",
-          actorId: "SYSTEM",
-          action: "FINANCE_DEPOSIT_REQUEST_AUTO_COMPLETED",
+          actorId: auth.userId,
+          action: "FINANCE_DEPOSIT_REQUEST_CREATED",
           entityType: "DepositRequest",
-          entityId: createdRequest.id,
-          beforeJson: {
-            status: "PENDING",
-          },
+          entityId: requestRecord.id,
+          beforeJson: undefined,
           afterJson: {
-            status: createdRequest.status,
-            approvalStage: "NONE",
-            completedAt: createdRequest.completedAt,
-            ledgerBalanceAfter: updatedAccount?.balance ?? null,
+            status: requestRecord.status,
+            approvalStage: requestRecord.approvalStage,
+            amount: requestRecord.amount,
+            currency: requestRecord.currency,
+            method: requestRecord.method,
           },
         },
       });
 
-      return {
-        kind: "committed" as const,
-        createdRequest,
-        updatedAccount,
-        notifications: ledgerResult.notifications,
-      };
+      return requestRecord;
     });
-
-    await LedgerPostingService.dispatchNotifications(result.notifications);
 
     const { NotificationService } = await import("@/lib/notifications/service");
     await NotificationService.create({
-      userId: result.createdRequest.userId,
-      title: "✅ تم قبول الإيداع فوراً",
-      message: `تمت إضافة ${result.createdRequest.amount.toLocaleString()} ${result.createdRequest.currency} إلى محفظتك بنجاح بفضل ميزة الإيداع الفوري.`,
-      type: "SUCCESS",
+      userId: createdRequest.userId,
+      title: "⏳ تم إنشاء طلب الإيداع",
+      message: `تم استلام طلب إيداع بقيمة ${createdRequest.amount.toLocaleString()} ${createdRequest.currency} وهو الآن بانتظار المراجعة المالية.`,
+      type: "INFO",
       link: "/wallet",
     });
 
@@ -541,13 +528,13 @@ export async function POST(request: NextRequest) {
       amount,
       method,
       currency,
-      requestId: result.createdRequest.id,
+      requestId: createdRequest.id,
     });
 
     return NextResponse.json({
       success: true,
-      message: "Deposit request created and approved auto-magically",
-      depositRequest: result.createdRequest,
+      message: "Deposit request created successfully and is pending finance approval",
+      depositRequest: createdRequest,
     });
   } catch (error) {
     logPerf("api.wallet.post", {
@@ -602,8 +589,7 @@ export async function PUT(request: NextRequest) {
     const method = parseNonEmptyString(body?.method);
     const destination = parseNonEmptyString(body?.destination);
     const requestNote = parseNonEmptyString(body?.requestNote);
-    const currency =
-      normalizeCurrency(body?.currency ?? Currency.SYP) ?? null;
+    const currency = normalizeCurrency(body?.currency ?? Currency.SYP) ?? null;
     const otpCode = parseNonEmptyString(body?.otpCode);
 
     if (!amount || !method || !destination || !currency) {
@@ -611,26 +597,6 @@ export async function PUT(request: NextRequest) {
         { error: "Amount, method, destination, and valid currency are required" },
         { status: 400 }
       );
-    }
-
-    // 🛡️ FINANCIAL 2FA (OTP) INTERCEPTOR 🛡️
-    const { SecurityOTPService } = await import("@/lib/security/otp");
-    if (!otpCode) {
-      await SecurityOTPService.generateOTP(auth.userId, "WITHDRAWAL", undefined, {
-        amount,
-        currency,
-        target: `${method} / ${destination}`,
-      });
-      return NextResponse.json({
-        requiresOTP: true,
-        message: "يرجى إدخال رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني. الرمز صالح لمدة 120 ثانية.",
-        expiresIn: 120
-      });
-    }
-
-    const isValidOTP = await SecurityOTPService.verifyOTP(auth.userId, "WITHDRAWAL", otpCode);
-    if (!isValidOTP) {
-      return NextResponse.json({ error: "رمز التحقق غير صحيح أو منتهي الصلاحية. يرجى طلب رمز جديد." }, { status: 400 });
     }
 
     try {
@@ -641,6 +607,48 @@ export async function PUT(request: NextRequest) {
           error:
             error instanceof Error ? error.message : "Invalid payout amount",
         },
+        { status: 400 }
+      );
+    }
+
+    const otpReference = buildWithdrawalOtpReference({
+      userId: auth.userId,
+      amount,
+      currency,
+      method,
+      destination,
+      requestNote,
+    });
+
+    if (!otpCode) {
+      await SecurityOTPService.generateOTP(
+        auth.userId,
+        "WITHDRAWAL",
+        otpReference,
+        {
+          amount,
+          currency,
+          target: `${method} / ${destination}`,
+        }
+      );
+
+      return NextResponse.json({
+        requiresOTP: true,
+        message: "يرجى إدخال رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني. الرمز صالح لمدة 120 ثانية.",
+        expiresIn: 120,
+      });
+    }
+
+    const isValidOTP = await SecurityOTPService.verifyOTP(
+      auth.userId,
+      "WITHDRAWAL",
+      otpCode,
+      otpReference
+    );
+
+    if (!isValidOTP) {
+      return NextResponse.json(
+        { error: "رمز التحقق غير صحيح أو منتهي الصلاحية أو لا يخص هذه العملية." },
         { status: 400 }
       );
     }
@@ -656,8 +664,15 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const availableBalance = currency === Currency.SYP ? snapshot.availableBalanceSYP : snapshot.availableBalanceUSD;
-    const ledgerAccountId = currency === Currency.SYP ? snapshot.ledgerAccountSYP.id : snapshot.ledgerAccountUSD.id;
+    const availableBalance =
+      currency === Currency.SYP
+        ? snapshot.availableBalanceSYP
+        : snapshot.availableBalanceUSD;
+
+    const ledgerAccountId =
+      currency === Currency.SYP
+        ? snapshot.ledgerAccountSYP.id
+        : snapshot.ledgerAccountUSD.id;
 
     if (availableBalance < amount) {
       return NextResponse.json(

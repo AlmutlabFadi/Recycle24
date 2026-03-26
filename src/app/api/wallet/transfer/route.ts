@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import crypto from "crypto";
 
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -12,6 +11,10 @@ import { evaluateApproval } from "@/app/admin/finance/_lib/policy-engine";
 import { LedgerEnforcementService } from "@/lib/ledger/enforcement";
 import { LedgerPostingService } from "@/lib/ledger/service";
 import { Currency, HoldStatus, TransactionType } from "@/lib/ledger/types";
+import {
+  buildFinancialOTPReference,
+  SecurityOTPService,
+} from "@/lib/security/otp";
 import { enforceInMemoryRateLimit } from "@/lib/security/request-rate-limit";
 
 function getClientIp(request: NextRequest) {
@@ -23,17 +26,37 @@ function getClientIp(request: NextRequest) {
   return request.headers.get("x-real-ip")?.trim() || "unknown";
 }
 
+function buildTransferOtpReference(params: {
+  senderId: string;
+  receiverPhoneOrEmail: string;
+  amount: number;
+  currency: string;
+}) {
+  return buildFinancialOTPReference({
+    userId: params.senderId,
+    actionType: "TRANSFER",
+    amount: params.amount,
+    currency: params.currency,
+    target: params.receiverPhoneOrEmail,
+    note: null,
+  });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const senderId = session.user.id;
 
-    // Strict rate limiting: 3 transfers per minute
+    const senderId = session.user.id;
     const ip = getClientIp(request);
-    const rateLimit = enforceInMemoryRateLimit(`wallet:transfer:${senderId}:${ip}`, 3, 60 * 1000);
+    const rateLimit = enforceInMemoryRateLimit(
+      `wallet:transfer:${senderId}:${ip}`,
+      3,
+      60 * 1000
+    );
+
     if (!rateLimit.ok) {
       return NextResponse.json(
         { error: "Too many transfer attempts. Please try again later." },
@@ -42,57 +65,71 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { receiverPhoneOrEmail, idempotencyKey, otpCode } = body;
+    const { receiverPhoneOrEmail, otpCode } = body;
     const amount = Number(body.amount);
     const currency = normalizeCurrency(body.currency);
 
     if (!receiverPhoneOrEmail || !amount || !currency || amount <= 0) {
       return NextResponse.json(
-        { error: "Invalid transfer parameters. Receiver, amount, and valid currency are required." },
+        {
+          error:
+            "Invalid transfer parameters. Receiver, amount, and valid currency are required.",
+        },
         { status: 400 }
       );
     }
 
-    // 🛡️ FINANCIAL 2FA (OTP) INTERCEPTOR 🛡️
-    const { SecurityOTPService } = await import("@/lib/security/otp");
+    const otpReference = buildTransferOtpReference({
+      senderId,
+      receiverPhoneOrEmail,
+      amount,
+      currency,
+    });
+
     if (!otpCode) {
-      await SecurityOTPService.generateOTP(senderId, "TRANSFER", undefined, {
+      await SecurityOTPService.generateOTP(senderId, "TRANSFER", otpReference, {
         amount,
         currency,
         target: receiverPhoneOrEmail,
       });
+
       return NextResponse.json({
         requiresOTP: true,
-        message: "يرجى إدخال رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني. الرمز صالح لمدة 120 ثانية.",
-        expiresIn: 120
+        message:
+          "يرجى إدخال رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني. الرمز صالح لمدة 120 ثانية.",
+        expiresIn: 120,
       });
     }
 
-    const isValidOTP = await SecurityOTPService.verifyOTP(senderId, "TRANSFER", otpCode);
+    const isValidOTP = await SecurityOTPService.verifyOTP(
+      senderId,
+      "TRANSFER",
+      otpCode,
+      otpReference
+    );
+
     if (!isValidOTP) {
-      return NextResponse.json({ error: "رمز التحقق غير صحيح أو منتهي الصلاحية. يرجى طلب رمز جديد." }, { status: 400 });
+      return NextResponse.json(
+        { error: "رمز التحقق غير صحيح أو منتهي الصلاحية أو لا يخص هذه العملية." },
+        { status: 400 }
+      );
     }
 
-    // Standard payout policy limits apply loosely to P2P transfers
     try {
       validateWalletAmount(currency, "payout", amount);
     } catch (err: any) {
-      return NextResponse.json({ error: err.message || "Amount out of policy bounds" }, { status: 400 });
+      return NextResponse.json(
+        { error: err.message || "Amount out of policy bounds" },
+        { status: 400 }
+      );
     }
 
-    // Deduplication key
-    const safeIdempotencyKey = idempotencyKey || crypto.randomUUID();
-
     const result = await db.$transaction(async (tx) => {
-      // 1. Resolve receiver
       const receiver = await tx.user.findFirst({
         where: {
-          OR: [
-            { phone: receiverPhoneOrEmail },
-            { email: receiverPhoneOrEmail }
-          ]
+          OR: [{ phone: receiverPhoneOrEmail }, { email: receiverPhoneOrEmail }],
         },
-        select: { id: true, name: true, phone: true, email: true }
+        select: { id: true, name: true, phone: true, email: true },
       });
 
       if (!receiver) {
@@ -103,16 +140,14 @@ export async function POST(request: NextRequest) {
         throw new Error("SELF_TRANSFER_NOT_ALLOWED");
       }
 
-      // 2. Check Sender Debt Lock
       const senderDebtSnapshot = await LedgerEnforcementService.getDebtSnapshot(senderId);
       if (senderDebtSnapshot.isLocked) {
         throw new Error("SENDER_LOCKED_BY_DEBT");
       }
 
-      // 3. Sender Account Validation
       const senderLedgerDesc = `USER_${senderId}_${currency}`;
       const senderAccount = await tx.ledgerAccount.findUnique({
-        where: { slug: senderLedgerDesc }
+        where: { slug: senderLedgerDesc },
       });
 
       if (!senderAccount) {
@@ -121,8 +156,9 @@ export async function POST(request: NextRequest) {
 
       const activeHolds = await tx.ledgerHold.aggregate({
         where: { accountId: senderAccount.id, status: HoldStatus.OPEN },
-        _sum: { amount: true }
+        _sum: { amount: true },
       });
+
       const heldAmount = activeHolds._sum.amount ?? 0;
       const availableBalance = senderAccount.balance - heldAmount;
 
@@ -130,31 +166,29 @@ export async function POST(request: NextRequest) {
         throw new Error("INSUFFICIENT_FUNDS");
       }
 
-      // 4. Receiver Account Auto-Creation if missing (handled securely via service inside transaction context)
-      // Since LedgerPostingService isn't natively transactional, we mimic getOrCreate logic:
       const receiverLedgerDesc = `USER_${receiver.id}_${currency}`;
       let receiverAccount = await tx.ledgerAccount.findUnique({
-        where: { slug: receiverLedgerDesc }
+        where: { slug: receiverLedgerDesc },
       });
+
       if (!receiverAccount) {
         receiverAccount = await tx.ledgerAccount.create({
           data: {
             slug: receiverLedgerDesc,
-            currency: currency,
+            currency,
             ownerId: receiver.id,
             balance: 0,
             creditLimit: 0,
             debtStatus: "CLEAR",
-            lockedByDebt: false
-          }
+            lockedByDebt: false,
+          },
         });
       }
 
-      // 5. Anti-Fraud Velocity Check
       const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       const last24hRequests = await tx.transferRequest.findMany({
         where: {
-          senderId: senderId,
+          senderId,
           createdAt: { gte: oneDayAgo },
         },
         select: { createdAt: true },
@@ -165,41 +199,47 @@ export async function POST(request: NextRequest) {
       let validRequests: number[] = [];
 
       for (const req of last24hRequests) {
-        const t = req.createdAt.getTime();
-        if (t <= activePenaltyUntil) continue;
-        validRequests = validRequests.filter((vt) => t - vt <= 24 * 60 * 60 * 1000);
-        validRequests.push(t);
+        const timestamp = req.createdAt.getTime();
+        if (timestamp <= activePenaltyUntil) continue;
+
+        validRequests = validRequests.filter(
+          (existingTimestamp) =>
+            timestamp - existingTimestamp <= 24 * 60 * 60 * 1000
+        );
+        validRequests.push(timestamp);
 
         if (validRequests.length >= 3) {
-          activePenaltyUntil = t + 4 * 60 * 60 * 1000;
+          activePenaltyUntil = timestamp + 4 * 60 * 60 * 1000;
           validRequests = [];
         }
       }
 
       const now = Date.now();
       let velocityTriggered = false;
+
       if (now <= activePenaltyUntil) {
         velocityTriggered = true;
       } else {
-        validRequests = validRequests.filter((vt) => now - vt <= 24 * 60 * 60 * 1000);
+        validRequests = validRequests.filter(
+          (existingTimestamp) =>
+            now - existingTimestamp <= 24 * 60 * 60 * 1000
+        );
         validRequests.push(now);
+
         if (validRequests.length >= 3) {
           velocityTriggered = true;
         }
       }
 
-      // 6. Evaluate Policy
       const policy = evaluateApproval({
         type: "TRANSFER",
         amount,
         currency,
         userId: senderId,
-        velocityTriggered
+        velocityTriggered,
       });
 
       if (!policy.requiresFirstApproval) {
-        // --- AUTO-APPROVE PATH ---
-
         const transferReq = await tx.transferRequest.create({
           data: {
             senderId,
@@ -211,7 +251,7 @@ export async function POST(request: NextRequest) {
             status: "COMPLETED",
             referenceNote: `Auto P2P Transfer to ${receiver.phone || receiver.email || receiver.id}`,
             completedAt: new Date(),
-          }
+          },
         });
 
         const ledgerResult = await LedgerPostingService.postEntryInTransaction(
@@ -228,13 +268,13 @@ export async function POST(request: NextRequest) {
               },
               {
                 accountSlug: receiverAccount.slug,
-                amount: amount,
-                description: `Internal transfer received from ${session?.user?.name || senderId}`,
+                amount,
+                description: `Internal transfer received from ${session.user.name || senderId}`,
               },
             ],
             metadata: {
               transferRequestId: transferReq.id,
-              senderId: senderId,
+              senderId,
               receiverId: receiver.id,
             },
           }
@@ -242,33 +282,50 @@ export async function POST(request: NextRequest) {
 
         const updatedSenderAccount = await tx.ledgerAccount.findUnique({
           where: { id: senderAccount.id },
-          select: { balance: true }
+          select: { balance: true },
         });
+
         const updatedReceiverAccount = await tx.ledgerAccount.findUnique({
           where: { id: receiverAccount.id },
-          select: { balance: true }
+          select: { balance: true },
         });
 
-        // Update Sender Wallet Cache
         await tx.wallet.upsert({
           where: { userId: senderId },
-          update: currency === Currency.SYP ? { balanceSYP: updatedSenderAccount?.balance ?? 0 } : { balanceUSD: updatedSenderAccount?.balance ?? 0 },
+          update:
+            currency === Currency.SYP
+              ? { balanceSYP: updatedSenderAccount?.balance ?? 0 }
+              : { balanceUSD: updatedSenderAccount?.balance ?? 0 },
           create: {
             userId: senderId,
-            balanceSYP: currency === Currency.SYP ? updatedSenderAccount?.balance ?? 0 : 0,
-            balanceUSD: currency === Currency.USD ? updatedSenderAccount?.balance ?? 0 : 0,
-          }
+            balanceSYP:
+              currency === Currency.SYP
+                ? updatedSenderAccount?.balance ?? 0
+                : 0,
+            balanceUSD:
+              currency === Currency.USD
+                ? updatedSenderAccount?.balance ?? 0
+                : 0,
+          },
         });
 
-        // Update Receiver Wallet Cache
         await tx.wallet.upsert({
           where: { userId: receiver.id },
-          update: currency === Currency.SYP ? { balanceSYP: updatedReceiverAccount?.balance ?? 0 } : { balanceUSD: updatedReceiverAccount?.balance ?? 0 },
+          update:
+            currency === Currency.SYP
+              ? { balanceSYP: updatedReceiverAccount?.balance ?? 0 }
+              : { balanceUSD: updatedReceiverAccount?.balance ?? 0 },
           create: {
             userId: receiver.id,
-            balanceSYP: currency === Currency.SYP ? updatedReceiverAccount?.balance ?? 0 : 0,
-            balanceUSD: currency === Currency.USD ? updatedReceiverAccount?.balance ?? 0 : 0,
-          }
+            balanceSYP:
+              currency === Currency.SYP
+                ? updatedReceiverAccount?.balance ?? 0
+                : 0,
+            balanceUSD:
+              currency === Currency.USD
+                ? updatedReceiverAccount?.balance ?? 0
+                : 0,
+          },
         });
 
         await tx.auditLog.create({
@@ -280,7 +337,7 @@ export async function POST(request: NextRequest) {
             entityId: transferReq.id,
             beforeJson: { status: "PENDING" },
             afterJson: { status: "COMPLETED" },
-          }
+          },
         });
 
         return {
@@ -293,14 +350,13 @@ export async function POST(request: NextRequest) {
         };
       }
 
-      // --- PENDING APPROVAL PATH ---
       const hold = await tx.ledgerHold.create({
         data: {
           accountId: senderAccount.id,
-          amount: amount,
+          amount,
           status: "OPEN",
           referenceType: "TRANSFER_REQUEST",
-        }
+        },
       });
 
       const transferReq = await tx.transferRequest.create({
@@ -312,13 +368,13 @@ export async function POST(request: NextRequest) {
           amount,
           currency,
           status: "PENDING",
-          referenceNote: `P2P Transfer to ${receiver.phone || receiver.email || receiver.id}`
-        }
+          referenceNote: `P2P Transfer to ${receiver.phone || receiver.email || receiver.id}`,
+        },
       });
 
       await tx.ledgerHold.update({
         where: { id: hold.id },
-        data: { referenceId: transferReq.id }
+        data: { referenceId: transferReq.id },
       });
 
       return {
@@ -331,17 +387,17 @@ export async function POST(request: NextRequest) {
     });
 
     if (result.kind === "completed" && result.notifications) {
-      // Async dispatch notifications
       await LedgerPostingService.dispatchNotifications(result.notifications);
-      
+
       const { NotificationService } = await import("@/lib/notifications/service");
       await NotificationService.create({
         userId: senderId,
         title: "✅ تم التحويل بنجاح",
-        message: `تم تحويل ${amount.toLocaleString()} ${currency} إلى ${result.receiverName} فوراً وبدون الحاجة لأي موافقة طبقا لقواعد المحفظة.`,
+        message: `تم تحويل ${amount.toLocaleString()} ${currency} إلى ${result.receiverName} فوراً وبدون الحاجة لأي موافقة طبقاً لقواعد المحفظة.`,
         type: "SUCCESS",
         link: "/wallet/transactions",
       });
+
       await NotificationService.create({
         userId: result.receiverId,
         title: "💰 تحويل وارد جديد",
@@ -353,28 +409,42 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: result.kind === "completed" ? "تم التحويل بنجاح فوراً." : "Transfer request submitted successfully and is pending admin approval.",
-      data: result
+      message:
+        result.kind === "completed"
+          ? "تم التحويل بنجاح فوراً."
+          : "Transfer request submitted successfully and is pending admin approval.",
+      data: result,
     });
-
   } catch (error: any) {
-    if (error.code === 'P2002') { // Prisma unique constraint violation for idempotency key
-      return NextResponse.json({ error: "Duplicate transfer request detected" }, { status: 409 });
-    }
-
     const message = error.message;
+
     switch (message) {
       case "RECEIVER_NOT_FOUND":
-        return NextResponse.json({ error: "No user found with that phone or email number." }, { status: 404 });
+        return NextResponse.json(
+          { error: "No user found with that phone or email number." },
+          { status: 404 }
+        );
       case "SELF_TRANSFER_NOT_ALLOWED":
-        return NextResponse.json({ error: "You cannot transfer money to yourself." }, { status: 400 });
+        return NextResponse.json(
+          { error: "You cannot transfer money to yourself." },
+          { status: 400 }
+        );
       case "INSUFFICIENT_FUNDS":
-        return NextResponse.json({ error: "Insufficient available balance for this transfer." }, { status: 400 });
+        return NextResponse.json(
+          { error: "Insufficient available balance for this transfer." },
+          { status: 400 }
+        );
       case "SENDER_LOCKED_BY_DEBT":
-        return NextResponse.json({ error: "Your account is locked due to outstanding debts." }, { status: 423 });
+        return NextResponse.json(
+          { error: "Your account is locked due to outstanding debts." },
+          { status: 423 }
+        );
       default:
         console.error("Internal transfer error:", error);
-        return NextResponse.json({ error: "An unexpected error occurred processing your transfer." }, { status: 500 });
+        return NextResponse.json(
+          { error: "An unexpected error occurred processing your transfer." },
+          { status: 500 }
+        );
     }
   }
 }
