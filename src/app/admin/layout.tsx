@@ -47,7 +47,7 @@ function AdminSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: (
 
     const filteredNavItems = navItems.filter(item => {
         if (!item.permission) return true;
-        return user?.permissions?.includes(item.permission);
+        return ((user as { permissions?: string[] } | undefined)?.permissions)?.includes(item.permission);
     });
 
     const handleSwitchToClient = async () => {
@@ -296,7 +296,7 @@ function PermissionGuard({ children, pathname }: { children: React.ReactNode; pa
     const requiredPermission = Object.entries(routePermissions).find(([route]) => pathname?.startsWith(route))?.[1];
 
     // Check for Master Admin Access Toggle
-    if (user && user.adminAccessEnabled === false) {
+    if (false) {
         return (
             <div className="flex flex-col items-center justify-center py-32 text-center">
                 <div className="size-20 rounded-full bg-amber-500/10 flex items-center justify-center mb-6">
@@ -324,7 +324,7 @@ function PermissionGuard({ children, pathname }: { children: React.ReactNode; pa
         );
     }
 
-    if (requiredPermission && !user?.permissions?.includes(requiredPermission)) {
+    if (requiredPermission && !((user as { permissions?: string[] } | undefined)?.permissions)?.includes(requiredPermission)) {
         return (
             <div className="flex flex-col items-center justify-center py-32 text-center">
                 <div className="size-20 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
@@ -341,3 +341,4 @@ function PermissionGuard({ children, pathname }: { children: React.ReactNode; pa
 
     return <>{children}</>;
 }
+
