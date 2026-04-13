@@ -377,7 +377,7 @@ export default function WalletPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-3 mt-1">
                     <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg border border-slate-700/50 w-fit">
-                      <span className="text-xs font-english text-slate-300 font-mono tracking-wider">{getWalletId('SYP')}</span>
+                      <span className="text-xs font-english text-slate-300 font-mono tracking-wider">{getWalletId('SYP') || 'NO_SYP_WALLET_ID'}</span>
                       <button onClick={() => handleCopy('SYP')} className="text-slate-500 hover:text-white transition-colors flex items-center justify-center p-1 rounded-md hover:bg-white/10" title="نسخ المعرف">
                         <span className="material-symbols-outlined !text-[14px]">
                           {copiedId === 'SYP' ? 'check' : 'content_copy'}
@@ -405,7 +405,7 @@ export default function WalletPage() {
                   
                   <div className="flex flex-wrap items-center gap-3 mt-1">
                     <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-lg border border-slate-700/50 w-fit">
-                      <span className="text-xs font-english text-emerald-400/70 font-mono tracking-wider">{getWalletId('USD')}</span>
+                      <span className="text-xs font-english text-emerald-400/70 font-mono tracking-wider">{getWalletId('USD') || 'NO_USD_WALLET_ID'}</span>
                       <button onClick={() => handleCopy('USD')} className="text-emerald-500 hover:text-emerald-300 transition-colors flex items-center justify-center p-1 rounded-md hover:bg-emerald-500/10" title="نسخ المعرف">
                         <span className="material-symbols-outlined !text-[14px]">
                           {copiedId === 'USD' ? 'check' : 'content_copy'}

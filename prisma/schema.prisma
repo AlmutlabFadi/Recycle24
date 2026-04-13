@@ -486,16 +486,20 @@ model Deal {
 }
 
 model Wallet {
-  id           String        @id @default(cuid())
-  userId       String        @unique
-  balanceSYP   Float         @default(0)
-  balanceUSD   Float         @default(0)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  transactions Transaction[]
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String        @id @default(cuid())
+  userId           String        @unique
+  balanceSYP       Float         @default(0)
+  balanceUSD       Float         @default(0)
+  walletAddressSYP String?       @unique
+  walletAddressUSD String?       @unique
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  transactions     Transaction[]
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([walletAddressSYP])
+  @@index([walletAddressUSD])
 }
 
 model Transaction {

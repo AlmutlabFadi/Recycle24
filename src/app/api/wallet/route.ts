@@ -20,6 +20,7 @@ import {
   SecurityOTPService,
 } from "@/lib/security/otp";
 import { enforceInMemoryRateLimit } from "@/lib/security/request-rate-limit";
+import { buildWalletAddressPair } from "@/lib/wallet/address";
 
 interface SessionUser {
   id: string;
@@ -34,6 +35,8 @@ interface WalletSnapshot {
     userId: string;
     balanceSYP: number;
     balanceUSD: number;
+    walletAddressSYP: string | null;
+    walletAddressUSD: string | null;
     createdAt: Date;
     updatedAt: Date;
   };
@@ -176,7 +179,7 @@ async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
         status: HoldStatus.OPEN,
       },
       _sum: { amount: true },
-    })
+    }),
   ]);
 
   const holdsBreakdownSYP = holdsSYP.map((h) => ({
@@ -193,6 +196,8 @@ async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
   const totalHeldUSD = holdsBreakdownUSD.reduce((sum, h) => sum + h.amount, 0);
   const availableBalanceUSD = ledgerAccountUSD.balance - totalHeldUSD;
 
+  const walletAddresses = buildWalletAddressPair(userId);
+
   let wallet = await db.wallet.findUnique({
     where: {
       userId,
@@ -205,21 +210,32 @@ async function getWalletSnapshot(userId: string): Promise<WalletSnapshot> {
         userId,
         balanceSYP: ledgerAccountSYP.balance,
         balanceUSD: ledgerAccountUSD.balance,
+        walletAddressSYP: walletAddresses.walletAddressSYP,
+        walletAddressUSD: walletAddresses.walletAddressUSD,
       },
     });
-  } else if (
-    wallet.balanceSYP !== ledgerAccountSYP.balance ||
-    wallet.balanceUSD !== ledgerAccountUSD.balance
-  ) {
-    wallet = await db.wallet.update({
-      where: {
-        id: wallet.id,
-      },
-      data: {
-        balanceSYP: ledgerAccountSYP.balance,
-        balanceUSD: ledgerAccountUSD.balance,
-      },
-    });
+  } else {
+    const needsBalanceSync =
+      wallet.balanceSYP !== ledgerAccountSYP.balance ||
+      wallet.balanceUSD !== ledgerAccountUSD.balance;
+
+    const needsAddressSync =
+      wallet.walletAddressSYP !== walletAddresses.walletAddressSYP ||
+      wallet.walletAddressUSD !== walletAddresses.walletAddressUSD;
+
+    if (needsBalanceSync || needsAddressSync) {
+      wallet = await db.wallet.update({
+        where: {
+          id: wallet.id,
+        },
+        data: {
+          balanceSYP: ledgerAccountSYP.balance,
+          balanceUSD: ledgerAccountUSD.balance,
+          walletAddressSYP: walletAddresses.walletAddressSYP,
+          walletAddressUSD: walletAddresses.walletAddressUSD,
+        },
+      });
+    }
   }
 
   const debtSnapshot = await LedgerEnforcementService.getDebtSnapshot(userId);
@@ -405,15 +421,21 @@ export async function POST(request: NextRequest) {
     });
 
     if (!otpCode) {
-      await SecurityOTPService.generateOTP(auth.userId, "DEPOSIT", otpReference, {
-        amount,
-        currency,
-        target: method,
-      });
+      await SecurityOTPService.generateOTP(
+        auth.userId,
+        "DEPOSIT",
+        otpReference,
+        {
+          amount,
+          currency,
+          target: method,
+        }
+      );
 
       return NextResponse.json({
         requiresOTP: true,
-        message: "يرجى إدخال رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني. الرمز صالح لمدة 120 ثانية.",
+        message:
+          "يرجى إدخال رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني. الرمز صالح لمدة 120 ثانية.",
         expiresIn: 120,
       });
     }
@@ -427,7 +449,10 @@ export async function POST(request: NextRequest) {
 
     if (!isValidOTP) {
       return NextResponse.json(
-        { error: "رمز التحقق غير صحيح أو منتهي الصلاحية أو لا يخص هذه العملية." },
+        {
+          error:
+            "رمز التحقق غير صحيح أو منتهي الصلاحية أو لا يخص هذه العملية.",
+        },
         { status: 400 }
       );
     }
@@ -513,12 +538,17 @@ export async function POST(request: NextRequest) {
     });
 
     const { NotificationService } = await import("@/lib/notifications/service");
+
     await NotificationService.create({
       userId: createdRequest.userId,
-      title: "⏳ تم إنشاء طلب الإيداع",
+      title: "تم إنشاء طلب الإيداع",
       message: `تم استلام طلب إيداع بقيمة ${createdRequest.amount.toLocaleString()} ${createdRequest.currency} وهو الآن بانتظار المراجعة المالية.`,
       type: "INFO",
-      link: "/wallet",
+      link: `/wallet/transactions?focus=${createdRequest.id}&kind=deposit-request`,
+      metadata: {
+        entityType: "DEPOSIT_REQUEST",
+        entityId: createdRequest.id,
+      },
     });
 
     logPerf("api.wallet.post", {
@@ -533,7 +563,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Deposit request created successfully and is pending finance approval",
+      message:
+        "Deposit request created successfully and is pending finance approval",
       depositRequest: createdRequest,
     });
   } catch (error) {
@@ -594,7 +625,10 @@ export async function PUT(request: NextRequest) {
 
     if (!amount || !method || !destination || !currency) {
       return NextResponse.json(
-        { error: "Amount, method, destination, and valid currency are required" },
+        {
+          error:
+            "Amount, method, destination, and valid currency are required",
+        },
         { status: 400 }
       );
     }
@@ -634,7 +668,8 @@ export async function PUT(request: NextRequest) {
 
       return NextResponse.json({
         requiresOTP: true,
-        message: "يرجى إدخال رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني. الرمز صالح لمدة 120 ثانية.",
+        message:
+          "يرجى إدخال رمز التحقق (OTP) المرسل إلى بريدك الإلكتروني. الرمز صالح لمدة 120 ثانية.",
         expiresIn: 120,
       });
     }
@@ -648,7 +683,10 @@ export async function PUT(request: NextRequest) {
 
     if (!isValidOTP) {
       return NextResponse.json(
-        { error: "رمز التحقق غير صحيح أو منتهي الصلاحية أو لا يخص هذه العملية." },
+        {
+          error:
+            "رمز التحقق غير صحيح أو منتهي الصلاحية أو لا يخص هذه العملية.",
+        },
         { status: 400 }
       );
     }
@@ -676,7 +714,9 @@ export async function PUT(request: NextRequest) {
 
     if (availableBalance < amount) {
       return NextResponse.json(
-        { error: `Insufficient available ${currency} balance (${availableBalance} ${currency})` },
+        {
+          error: `Insufficient available ${currency} balance (${availableBalance} ${currency})`,
+        },
         { status: 400 }
       );
     }
@@ -734,10 +774,23 @@ export async function PUT(request: NextRequest) {
       },
     });
 
+    const { NotificationService } = await import("@/lib/notifications/service");
+
+    await NotificationService.create({
+      userId: createdRequest.userId,
+      title: "تم إنشاء طلب السحب",
+      message: `تم استلام طلب سحب بقيمة ${createdRequest.amount.toLocaleString()} ${createdRequest.currency} وهو الآن بانتظار المراجعة المالية.`,
+      type: "INFO",
+      link: `/wallet/transactions?focus=${createdRequest.id}&kind=payout-request`,
+      metadata: {
+        entityType: "PAYOUT_REQUEST",
+        entityId: createdRequest.id,
+      },
+    });
+
     logPerf("api.wallet.put", {
       ok: true,
       totalMs: elapsedMs(startedAt),
-      userId: auth.userId,
       amount,
       method,
       currency,
