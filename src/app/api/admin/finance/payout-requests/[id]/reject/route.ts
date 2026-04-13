@@ -15,7 +15,6 @@ function parseNonEmptyString(value: unknown) {
   }
 
   const normalized = value.trim();
-
   return normalized.length > 0 ? normalized : null;
 }
 
@@ -191,4 +190,3 @@ export async function POST(request: NextRequest, context: RouteContext) {
     );
   }
 }
-

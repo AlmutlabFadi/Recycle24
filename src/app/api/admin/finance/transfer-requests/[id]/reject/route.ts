@@ -13,6 +13,7 @@ function parseNonEmptyString(value: unknown) {
   if (typeof value !== "string") {
     return null;
   }
+
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
 }
@@ -60,6 +61,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
         throw new Error("ALREADY_REJECTED");
       }
 
+      if (transferReq.status === "COMPLETED") {
+        throw new Error("ALREADY_COMPLETED");
+      }
+
       if (!["PENDING", "UNDER_REVIEW"].includes(transferReq.status)) {
         throw new Error("INVALID_STATUS");
       }
@@ -68,34 +73,31 @@ export async function POST(request: NextRequest, context: RouteContext) {
         where: {
           referenceId: transferReq.id,
           referenceType: "TRANSFER_REQUEST",
-          status: "OPEN"
-        }
+          status: "OPEN",
+        },
       });
 
       if (hold) {
-        // Release the hold without executing
         await tx.ledgerHold.update({
           where: { id: hold.id },
           data: {
             status: "CANCELLED",
-            updatedAt: new Date()
-          }
+            updatedAt: new Date(),
+          },
         });
       }
 
-      // Update Transfer Request
       const rejectedReq = await tx.transferRequest.update({
         where: { id: transferReq.id },
         data: {
           status: "REJECTED",
-          reviewedById: auth.userId,
-          reviewedAt: new Date(),
+          reviewedById: transferReq.reviewedById ?? auth.userId,
+          reviewedAt: transferReq.reviewedAt ?? new Date(),
           failedAt: new Date(),
-          reviewNote: reviewNote,
-        }
+          reviewNote,
+        },
       });
 
-      // Audit Log
       await tx.auditLog.create({
         data: {
           actorRole: "ADMIN",
@@ -103,12 +105,18 @@ export async function POST(request: NextRequest, context: RouteContext) {
           action: "FINANCE_TRANSFER_REQUEST_REJECTED",
           entityType: "TransferRequest",
           entityId: rejectedReq.id,
-          beforeJson: { status: transferReq.status },
+          beforeJson: {
+            status: transferReq.status,
+            reviewedById: transferReq.reviewedById,
+            holdReleased: Boolean(hold),
+          },
           afterJson: {
             status: rejectedReq.status,
             reviewedById: rejectedReq.reviewedById,
+            reviewedAt: rejectedReq.reviewedAt,
             failedAt: rejectedReq.failedAt,
-            reviewNote: rejectedReq.reviewNote
+            reviewNote: rejectedReq.reviewNote,
+            holdStatus: hold ? "CANCELLED" : "NOT_FOUND",
           },
         },
       });
@@ -121,19 +129,37 @@ export async function POST(request: NextRequest, context: RouteContext) {
       message: "Transfer request rejected successfully",
       transferRequest: result,
     });
-
   } catch (error: any) {
     console.error("Admin transfer request reject error:", error);
 
-    const msg = error.message;
+    const msg = error?.message;
+
     if (msg === "TRANSFER_NOT_FOUND") {
-       return NextResponse.json({ error: "Transfer request not found." }, { status: 404 });
+      return NextResponse.json(
+        { error: "Transfer request not found." },
+        { status: 404 }
+      );
     }
+
     if (msg === "ALREADY_REJECTED") {
-       return NextResponse.json({ error: "Transfer request is already rejected." }, { status: 409 });
+      return NextResponse.json(
+        { error: "Transfer request is already rejected." },
+        { status: 409 }
+      );
     }
+
+    if (msg === "ALREADY_COMPLETED") {
+      return NextResponse.json(
+        { error: "Completed transfer request cannot be rejected." },
+        { status: 409 }
+      );
+    }
+
     if (msg === "INVALID_STATUS") {
-       return NextResponse.json({ error: "Transfer request is not in a pending state." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Transfer request is not in a pending state." },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json(

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { db } from "@/lib/db";
 import { evaluateApproval } from "@/app/admin/finance/_lib/policy-engine";
+import { db } from "@/lib/db";
 import { LedgerPostingService } from "@/lib/ledger/service";
-import { TransactionType } from "@/lib/ledger/types";
+import { Currency, TransactionType } from "@/lib/ledger/types";
 import { requirePermission } from "@/lib/rbac";
 
 interface RouteContext {
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (!auth.ok) {
       return NextResponse.json(
         { error: "Unauthorized" },
-        { status: auth.status },
+        { status: auth.status }
       );
     }
 
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (!requestId) {
       return NextResponse.json(
         { error: "Transfer request id is required" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -57,19 +57,30 @@ export async function POST(request: NextRequest, context: RouteContext) {
         return {
           kind: "error" as const,
           response: NextResponse.json(
-            { error: "Transfer request or associated hold not found." },
-            { status: 404 },
+            { error: "Transfer request not found." },
+            { status: 404 }
+          ),
+        };
+      }
+
+      if (!transferReq.senderAccount || !transferReq.receiverAccount) {
+        return {
+          kind: "error" as const,
+          response: NextResponse.json(
+            { error: "Transfer request ledger accounts are missing." },
+            { status: 409 }
           ),
         };
       }
 
       if (transferReq.status === "COMPLETED") {
         return {
-          kind: "error" as const,
-          response: NextResponse.json(
-            { error: "Transfer request is already completed." },
-            { status: 409 },
-          ),
+          kind: "success" as const,
+          response: NextResponse.json({
+            success: true,
+            message: "Transfer request already completed",
+            transferRequest: transferReq,
+          }),
         };
       }
 
@@ -78,31 +89,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
           kind: "error" as const,
           response: NextResponse.json(
             { error: "Transfer request is not in a pending state." },
-            { status: 400 },
+            { status: 409 }
           ),
         };
       }
-
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-      const recentTransactionsCount1h =
-        (await tx.transferRequest.count({
-          where: {
-            senderId: transferReq.senderId,
-            id: { not: transferReq.id },
-            createdAt: { gte: oneHourAgo },
-          },
-        })) + 1;
-
-      const recentTransactionsCount24h =
-        (await tx.transferRequest.count({
-          where: {
-            senderId: transferReq.senderId,
-            id: { not: transferReq.id },
-            createdAt: { gte: oneDayAgo },
-          },
-        })) + 1;
 
       const policy = evaluateApproval({
         type: "TRANSFER",
@@ -143,6 +133,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             entityId: stagedRequest.id,
             beforeJson: {
               status: transferReq.status,
+              reviewedById: transferReq.reviewedById,
             },
             afterJson: {
               status: stagedRequest.status,
@@ -168,9 +159,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
           kind: "error" as const,
           response: NextResponse.json(
             {
-              error: "Final approval requires a second finance admin different from the first reviewer",
+              error:
+                "Final approval requires a second finance admin different from the first reviewer",
             },
-            { status: 409 },
+            { status: 409 }
           ),
         };
       }
@@ -187,8 +179,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
         return {
           kind: "error" as const,
           response: NextResponse.json(
-            { error: "Transfer request or associated hold not found." },
-            { status: 404 },
+            { error: "Associated open hold was not found for this transfer request." },
+            { status: 404 }
           ),
         };
       }
@@ -204,29 +196,80 @@ export async function POST(request: NextRequest, context: RouteContext) {
       const ledgerResult = await LedgerPostingService.postEntryInTransaction(
         tx as never,
         {
-          type: "P2P_TRANSFER" as TransactionType,
-          description: `Approved P2P transfer ${transferReq.id} from ${transferReq.senderId} to ${transferReq.receiverId}`,
+          type: TransactionType.WALLET_TRANSFER,
+          description: `Approved internal transfer ${transferReq.id}`,
           idempotencyKey: `transfer-approve:${transferReq.id}`,
           lines: [
             {
-              accountSlug: transferReq.senderAccount!.slug,
+              accountSlug: transferReq.senderAccount.slug,
               amount: -transferReq.amount,
-              description: `P2P Transfer to ${transferReq.receiverId}`,
+              description: `Internal transfer ${transferReq.id} sent`,
             },
             {
-              accountSlug: transferReq.receiverAccount!.slug,
+              accountSlug: transferReq.receiverAccount.slug,
               amount: transferReq.amount,
-              description: `P2P Transfer from ${transferReq.senderId}`,
+              description: `Internal transfer ${transferReq.id} received`,
             },
           ],
           metadata: {
             transferRequestId: transferReq.id,
+            senderId: transferReq.senderId,
+            receiverId: transferReq.receiverId,
             reviewedByUserId: transferReq.reviewedById ?? auth.userId,
             approvedByUserId: policy.requiresFinalApproval ? auth.userId : null,
             policyFlags: policy.flags,
           },
-        },
+        }
       );
+
+      const [updatedSenderAccount, updatedReceiverAccount] = await Promise.all([
+        tx.ledgerAccount.findUnique({
+          where: { id: transferReq.senderAccountId ?? "" },
+          select: { balance: true },
+        }),
+        tx.ledgerAccount.findUnique({
+          where: { id: transferReq.receiverAccountId ?? "" },
+          select: { balance: true },
+        }),
+      ]);
+
+      await tx.wallet.upsert({
+        where: { userId: transferReq.senderId },
+        update:
+          transferReq.currency === Currency.SYP
+            ? { balanceSYP: updatedSenderAccount?.balance ?? transferReq.senderAccount.balance }
+            : { balanceUSD: updatedSenderAccount?.balance ?? transferReq.senderAccount.balance },
+        create: {
+          userId: transferReq.senderId,
+          balanceSYP:
+            transferReq.currency === Currency.SYP
+              ? updatedSenderAccount?.balance ?? transferReq.senderAccount.balance
+              : 0,
+          balanceUSD:
+            transferReq.currency === Currency.USD
+              ? updatedSenderAccount?.balance ?? transferReq.senderAccount.balance
+              : 0,
+        },
+      });
+
+      await tx.wallet.upsert({
+        where: { userId: transferReq.receiverId },
+        update:
+          transferReq.currency === Currency.SYP
+            ? { balanceSYP: updatedReceiverAccount?.balance ?? transferReq.receiverAccount.balance }
+            : { balanceUSD: updatedReceiverAccount?.balance ?? transferReq.receiverAccount.balance },
+        create: {
+          userId: transferReq.receiverId,
+          balanceSYP:
+            transferReq.currency === Currency.SYP
+              ? updatedReceiverAccount?.balance ?? transferReq.receiverAccount.balance
+              : 0,
+          balanceUSD:
+            transferReq.currency === Currency.USD
+              ? updatedReceiverAccount?.balance ?? transferReq.receiverAccount.balance
+              : 0,
+        },
+      });
 
       const completedReq = await tx.transferRequest.update({
         where: { id: transferReq.id },
@@ -249,11 +292,15 @@ export async function POST(request: NextRequest, context: RouteContext) {
           beforeJson: {
             status: transferReq.status,
             reviewedById: transferReq.reviewedById,
+            holdId: hold.id,
           },
           afterJson: {
             status: completedReq.status,
             reviewedById: completedReq.reviewedById,
             completedAt: completedReq.completedAt,
+            holdStatus: "EXECUTED",
+            senderBalanceAfter: updatedSenderAccount?.balance ?? null,
+            receiverBalanceAfter: updatedReceiverAccount?.balance ?? null,
             policyFlags: policy.flags,
           },
         },
@@ -285,7 +332,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     await NotificationService.create({
       userId: result.completedReq.senderId,
       title: "✅ تم تأكيد التحويل",
-      message: `تم تحويل مبلغ ${result.completedReq.amount.toLocaleString()} ${result.completedReq.currency} إلى ${result.completedReq.receiverId} بنجاح.`,
+      message: `تم تحويل مبلغ ${result.completedReq.amount.toLocaleString()} ${result.completedReq.currency} بنجاح.`,
       type: "SUCCESS",
       link: "/wallet",
     });
@@ -293,7 +340,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     await NotificationService.create({
       userId: result.completedReq.receiverId,
       title: "💰 استلام حوالة جديدة",
-      message: `لقد استلمت حوالة بمبلغ ${result.completedReq.amount.toLocaleString()} ${result.completedReq.currency} من ${result.completedReq.senderId}.`,
+      message: `لقد استلمت حوالة بمبلغ ${result.completedReq.amount.toLocaleString()} ${result.completedReq.currency}.`,
       type: "SUCCESS",
       link: "/wallet",
     });
@@ -311,7 +358,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         success: false,
         error: "Failed to approve transfer request",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

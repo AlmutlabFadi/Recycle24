@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { db } from "@/lib/db";
 import { evaluateApproval } from "@/app/admin/finance/_lib/policy-engine";
+import { db } from "@/lib/db";
 import { LedgerPostingService } from "@/lib/ledger/service";
-import { Currency, LedgerAccountSlug, TransactionType } from "@/lib/ledger/types";
+import {
+  Currency,
+  HoldStatus,
+  LedgerAccountSlug,
+  TransactionType,
+} from "@/lib/ledger/types";
 import { requirePermission } from "@/lib/rbac";
 
 interface RouteContext {
@@ -18,7 +23,6 @@ function parseNonEmptyString(value: unknown) {
   }
 
   const normalized = value.trim();
-
   return normalized.length > 0 ? normalized : null;
 }
 
@@ -29,7 +33,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (!auth.ok) {
       return NextResponse.json(
         { error: "Unauthorized" },
-        { status: auth.status },
+        { status: auth.status }
       );
     }
 
@@ -38,7 +42,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     if (!requestId) {
       return NextResponse.json(
         { error: "Payout request id is required" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -83,7 +87,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
           kind: "error" as const,
           response: NextResponse.json(
             { error: "Payout request not found" },
-            { status: 404 },
+            { status: 404 }
           ),
         };
       }
@@ -106,7 +110,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             {
               error: `Payout request cannot be approved from status ${payoutRequest.status}`,
             },
-            { status: 409 },
+            { status: 409 }
           ),
         };
       }
@@ -118,8 +122,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
         return {
           kind: "error" as const,
           response: NextResponse.json(
-            { error: "Only SYP and USD payout approvals are supported currently" },
-            { status: 400 },
+            { error: "Only SYP and USD payout approvals are supported حاليا" },
+            { status: 400 }
           ),
         };
       }
@@ -141,11 +145,14 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
       for (const req of last24hRequests) {
         const t = req.createdAt.getTime();
+
         if (t <= activePenaltyUntil) {
-          continue; // Made during an active penalty, doesn't count toward a new break
+          continue;
         }
 
-        validRequests = validRequests.filter((vt) => t - vt <= 24 * 60 * 60 * 1000);
+        validRequests = validRequests.filter(
+          (vt) => t - vt <= 24 * 60 * 60 * 1000
+        );
         validRequests.push(t);
 
         if (validRequests.length >= 3) {
@@ -160,8 +167,11 @@ export async function POST(request: NextRequest, context: RouteContext) {
       if (now <= activePenaltyUntil) {
         velocityTriggered = true;
       } else {
-        validRequests = validRequests.filter((vt) => now - vt <= 24 * 60 * 60 * 1000);
+        validRequests = validRequests.filter(
+          (vt) => now - vt <= 24 * 60 * 60 * 1000
+        );
         validRequests.push(now);
+
         if (validRequests.length >= 3) {
           velocityTriggered = true;
         }
@@ -237,9 +247,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
           kind: "error" as const,
           response: NextResponse.json(
             {
-              error: "Final approval requires a second finance admin different from the first reviewer",
+              error:
+                "Final approval requires a second finance admin different from the first reviewer",
             },
-            { status: 409 },
+            { status: 409 }
           ),
         };
       }
@@ -249,17 +260,31 @@ export async function POST(request: NextRequest, context: RouteContext) {
           kind: "error" as const,
           response: NextResponse.json(
             { error: "Account is locked by debt rules" },
-            { status: 423 },
+            { status: 423 }
           ),
         };
       }
 
-      if (payoutRequest.account.balance < payoutRequest.amount) {
+      const openHoldsAggregate = await tx.ledgerHold.aggregate({
+        where: {
+          accountId: payoutRequest.accountId,
+          status: HoldStatus.OPEN,
+        },
+        _sum: { amount: true },
+      });
+
+      const openHoldsAmount = openHoldsAggregate._sum.amount ?? 0;
+      const availableBalance = payoutRequest.account.balance - openHoldsAmount;
+
+      if (availableBalance < payoutRequest.amount) {
         return {
           kind: "error" as const,
           response: NextResponse.json(
-            { error: "Insufficient ledger balance for payout approval" },
-            { status: 409 },
+            {
+              error:
+                "Insufficient available ledger balance for payout approval",
+            },
+            { status: 409 }
           ),
         };
       }
@@ -293,7 +318,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             approvedByUserId: policy.requiresFinalApproval ? auth.userId : null,
             policyFlags: policy.flags,
           },
-        },
+        }
       );
 
       const updatedAccount = await tx.ledgerAccount.findUnique({
@@ -375,6 +400,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
             status: payoutRequest.status,
             approvalStage: payoutRequest.approvalStage,
             reviewedById: payoutRequest.reviewedById,
+            availableBalanceBefore: availableBalance,
           },
           afterJson: {
             status: completedRequest.status,
@@ -414,6 +440,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     await LedgerPostingService.dispatchNotifications(result.notifications);
 
     const { NotificationService } = await import("@/lib/notifications/service");
+
     await NotificationService.create({
       userId: result.completedRequest.userId,
       title: "✅ تم قبول طلب السحب",
@@ -436,7 +463,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
         success: false,
         error: "Failed to approve payout request",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
